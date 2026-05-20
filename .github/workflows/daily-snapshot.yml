@@ -2,7 +2,7 @@ name: Daily flight deal snapshot
 
 on:
   schedule:
-    - cron: "0 21 * * *"   # 21:00 UTC = 06:00 KST
+    - cron: "0 * * * *"   # every hour, on the hour (UTC)
   workflow_dispatch:
 
 permissions:
