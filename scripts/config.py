@@ -42,9 +42,10 @@ MIN_HISTORY_DAYS = 14
 ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO = 0.65
 OUTLIER_MIN_N = 20
 
-# Cache freshness: drop any fare whose cached search date is at least this many
-# days old (today - cache_date >= value). Staler cache diverges further from the
-# real, bookable price, so those fares are excluded before judging/alerting.
+# Cache freshness: drop any fare last found (found_at, cross-checked via
+# get_latest_prices) at least this many days ago; staler cache diverges further
+# from the real, bookable price. Fares the seller marks actual=false are dropped
+# regardless of age.
 MAX_CACHE_AGE_DAYS = 3
 
 # Low-trust gates (sellers): fares from these are dropped before judging so they

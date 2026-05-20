@@ -49,24 +49,46 @@ def cheapest_item(items):
     return min(valid, key=lambda it: it["price"]) if valid else None
 
 
-def filter_items(items, today_date, now):
-    """Drop fares we don't trust enough to alert on: those sold through a
-    low-trust gate, those whose cached search date is too old (stale cache
-    drifts further from the real, bookable price), and those departing too soon
-    to realistically book. Applied before summarizing so neither the deal price
-    nor the baseline is built from these fares."""
+def freshness_index(latest_items):
+    """Map (gate, price, departure_at) -> latest-prices entry. get_latest_prices
+    mirrors prices_for_dates fare-for-fare but carries the freshness fields
+    (actual, found_at) that prices_for_dates omits; the price/depart fields are
+    named value/depart_date there."""
+    return {
+        (it.get("gate"), it.get("value"), it.get("depart_date")): it
+        for it in latest_items
+    }
+
+
+def is_stale(latest, now):
+    """A matched latest-prices entry is stale if the seller marks it not current
+    (actual is False) or it was last found at least MAX_CACHE_AGE_DAYS ago."""
+    if latest.get("actual") is False:
+        return True
+    found_at = latest.get("found_at")
+    if found_at:
+        try:
+            found_dt = dt.datetime.fromisoformat(found_at.replace("Z", "+00:00"))
+            if (now - found_dt).total_seconds() / 86400 >= MAX_CACHE_AGE_DAYS:
+                return True
+        except (ValueError, TypeError):
+            pass
+    return False
+
+
+def filter_items(items, latest_items, now):
+    """Drop fares we don't trust enough to alert on: those from a low-trust gate,
+    those departing too soon to realistically book, and those the latest-prices
+    endpoint marks stale/expired (cross-checked, since prices_for_dates carries
+    the booking link but no freshness fields). Unmatched fares are kept so a
+    missing/failed freshness lookup degrades gracefully instead of emptying the
+    feed. Applied before summarizing so neither the deal price nor the baseline
+    is built from these fares."""
+    fresh = freshness_index(latest_items)
     kept = []
     for it in items:
         if it.get("gate") in BLOCKED_GATES:
             continue
-        cache_date = cache_date_from_link(it.get("link"))
-        if cache_date:
-            try:
-                age = (today_date - dt.date.fromisoformat(cache_date)).days
-            except ValueError:
-                age = 0
-            if age >= MAX_CACHE_AGE_DAYS:
-                continue
         depart_at = it.get("departure_at")
         if depart_at:
             try:
@@ -75,6 +97,9 @@ def filter_items(items, today_date, now):
                     continue
             except (ValueError, TypeError):
                 pass
+        latest = fresh.get((it.get("gate"), it.get("price"), it.get("departure_at")))
+        if latest is not None and is_stale(latest, now):
+            continue
         kept.append(it)
     return kept
 
@@ -95,8 +120,7 @@ def judge(stats, history):
 
 def main():
     token = tpclient.get_token()
-    today_date = dt.date.today()
-    today = today_date.isoformat()
+    today = dt.date.today().isoformat()
     now = dt.datetime.now(dt.timezone.utc)
     conn = dealdb.connect()
 
@@ -112,7 +136,17 @@ def main():
             finally:
                 time.sleep(REQUEST_DELAY_SEC)
 
-            items = filter_items(items, today_date, now)
+            # Freshness oracle: get_latest_prices carries actual/found_at. If it
+            # fails, fall back to no freshness filtering this round (degrade
+            # gracefully rather than drop the whole route).
+            try:
+                latest = tpclient.fetch_latest(ORIGIN, dest, one_way, token)
+            except Exception:
+                latest = []
+            finally:
+                time.sleep(REQUEST_DELAY_SEC)
+
+            items = filter_items(items, latest, now)
             stats = summarize(items)
             if not stats:
                 results.append({"dest": dest, "trip": trip_label, "status": "no-data"})
