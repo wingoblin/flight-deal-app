@@ -26,8 +26,18 @@ jobs:
         env:
           TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
         run: |
+          set -o pipefail
           mkdir -p logs
           python scripts/snapshot.py | tee "logs/$(date -u +%F).md"
+
+      - name: Back up DB as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flight-deals-db-${{ github.run_id }}
+          path: data/flight_deals.db
+          retention-days: 90
+          if-no-files-found: warn
 
       - name: Commit snapshot data and log
         run: |
