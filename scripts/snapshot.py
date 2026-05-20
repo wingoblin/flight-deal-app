@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+import re
 import statistics
 import time
 from pathlib import Path
@@ -116,6 +117,16 @@ def select_deals(results):
     return [r for r in results if r.get("status") == "ok" and r["is_deal"]]
 
 
+def cache_date_from_link(link):
+    """Travelpayouts deeplinks embed the cache search date as search_date=DDMMYYYY;
+    expose it as an ISO date so the site can show/flag how fresh a fare is."""
+    m = re.search(r"search_date=(\d{2})(\d{2})(\d{4})", link or "")
+    if not m:
+        return None
+    dd, mm, yyyy = m.groups()
+    return f"{yyyy}-{mm}-{dd}"
+
+
 def write_deals_json(results):
     deals = select_deals(results)
     deals.sort(key=lambda r: r["discount"], reverse=True)
@@ -124,6 +135,11 @@ def write_deals_json(results):
         "origin": ORIGIN,
         "currency": "KRW",
         "threshold_pct": DEAL_THRESHOLD_PCT,
+        "refresh_interval_hours": 1,
+        "disclaimer": (
+            "캐시 기반 가격으로 실시간이 아닙니다. 좌석이 빠르게 팔릴 수 있어 "
+            "클릭 시 이미 매진되었거나 가격이 변동됐을 수 있습니다."
+        ),
         "deals": [
             {
                 "destination": r["dest"],
@@ -135,6 +151,7 @@ def write_deals_json(results):
                 "return_at": r["cheap"].get("return_at") or None,
                 "airline": r["cheap"].get("airline"),
                 "gate": r["cheap"].get("gate"),
+                "cache_date": cache_date_from_link(r["cheap"].get("link")),
                 "link": r["cheap"].get("link"),
             }
             for r in deals
