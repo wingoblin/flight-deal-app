@@ -20,6 +20,10 @@ DEALS_JSON = Path(__file__).resolve().parent.parent / "deals.json"
 REQUEST_DELAY_SEC = 0.5
 
 
+def scrub_secret(text, secret):
+    return text.replace(secret, "***") if secret else text
+
+
 def summarize(items):
     prices = sorted(
         it["price"] for it in items if isinstance(it.get("price"), (int, float))
@@ -64,7 +68,8 @@ def main():
             try:
                 items = tpclient.fetch_prices(ORIGIN, dest, one_way, token)
             except Exception as e:
-                results.append({"dest": dest, "trip": trip_label, "status": f"error: {e!r}"})
+                msg = scrub_secret(repr(e), token)
+                results.append({"dest": dest, "trip": trip_label, "status": f"error: {msg}"})
                 continue
             finally:
                 time.sleep(REQUEST_DELAY_SEC)

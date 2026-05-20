@@ -25,13 +25,14 @@ def fetch_prices(origin, destination, one_way, token, currency="krw", limit=1000
         "unique": "false",
         "sorting": "price",
         "limit": limit,
-        "token": token,
     }
+    # Token goes in a header, never the URL, so it can't leak into logs or errors.
     url = f"{API_URL}?{urllib.parse.urlencode(params)}"
+    req = urllib.request.Request(url, headers={"X-Access-Token": token})
     delay = backoff
     for attempt in range(retries):
         try:
-            with urllib.request.urlopen(url, timeout=30) as resp:
+            with urllib.request.urlopen(req, timeout=30) as resp:
                 body = json.loads(resp.read())
             return body.get("data") or []
         except urllib.error.HTTPError as e:
