@@ -12,7 +12,7 @@ from config import (
     MIN_HISTORY_DAYS,
     ORIGIN,
     OUTLIER_MIN_N,
-    OUTLIER_P10_DISCOUNT_PCT,
+    ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO,
     TRIPS,
 )
 
@@ -29,7 +29,6 @@ def summarize(items):
     return {
         "n": len(prices),
         "min": prices[0],
-        "p10": statistics.quantiles(prices, n=10)[0] if len(prices) >= 2 else prices[0],
         "p25": statistics.quantiles(prices, n=4)[0] if len(prices) >= 4 else prices[0],
         "median": statistics.median(prices),
         "mean": round(statistics.mean(prices)),
@@ -97,30 +96,15 @@ def main():
             baseline, discount, is_deal, basis = judge(stats, history)
             results.append({
                 "dest": dest, "trip": trip_label, "status": "ok",
-                "min": stats["min"], "p10": stats["p10"], "n": stats["n"],
+                "min": stats["min"], "median": stats["median"], "n": stats["n"],
                 "baseline": baseline, "discount": discount,
                 "is_deal": is_deal, "basis": basis, "cheap": cheap,
             })
 
     conn.close()
-    drop_distribution_outliers(results)
     drop_impossible_roundtrips(results)
     write_deals_json(results)
     report(results, today)
-
-
-def drop_distribution_outliers(results):
-    """A minimum sitting >= OUTLIER_P10_DISCOUNT_PCT below the route's P10 is
-    detached from the legit-cheap cluster (cache error), so exclude it."""
-    floor_ratio = 1 - OUTLIER_P10_DISCOUNT_PCT / 100
-    for r in results:
-        if r.get("status") != "ok" or r["n"] < OUTLIER_MIN_N:
-            continue
-        if r["min"] < r["p10"] * floor_ratio:
-            r["is_deal"] = False
-            r["sanity_note"] = (
-                f"DATA-ERR min {r['min']:,} < {floor_ratio:.0%} of P10 {round(r['p10']):,}"
-            )
 
 
 def select_deals(results):
@@ -157,22 +141,31 @@ def write_deals_json(results):
 
 
 def drop_impossible_roundtrips(results):
-    """A roundtrip cheaper than the same route's one-way is an impossible fare
-    (cache error), so flag it and exclude it from alerts."""
-    oneway_min = {
-        r["dest"]: r["min"]
+    """A roundtrip can't realistically cost less than a single one-way leg.
+    Flag (and exclude from alerts) any roundtrip priced below its route's
+    cheapest one-way, or below ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO of the one-way
+    median -- both are clear cache errors. One-way fares are never touched, so
+    genuine deep deals are preserved; the raw snapshot is still recorded."""
+    oneway = {
+        r["dest"]: r
         for r in results
         if r["status"] == "ok" and r["trip"] == "oneway"
     }
     for r in results:
-        if (
-            r["status"] == "ok"
-            and r["trip"] == "roundtrip"
-            and r["dest"] in oneway_min
-            and r["min"] < oneway_min[r["dest"]]
-        ):
+        if r.get("status") != "ok" or r["trip"] != "roundtrip":
+            continue
+        ow = oneway.get(r["dest"])
+        if not ow:
+            continue
+        if r["min"] < ow["min"]:
             r["is_deal"] = False
-            r["sanity_note"] = f"DATA-ERR rt {r['min']:,} < ow {oneway_min[r['dest']]:,}"
+            r["sanity_note"] = f"DATA-ERR rt {r['min']:,} < ow min {ow['min']:,}"
+        elif ow["n"] >= OUTLIER_MIN_N and r["min"] < ow["median"] * ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO:
+            r["is_deal"] = False
+            r["sanity_note"] = (
+                f"DATA-ERR rt {r['min']:,} < {ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO:.0%} "
+                f"of ow median {round(ow['median']):,}"
+            )
 
 
 def report(results, today):

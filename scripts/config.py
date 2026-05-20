@@ -20,9 +20,11 @@ DEAL_THRESHOLD_PCT = 25.0
 # snapshots exist, after which it switches to the median of past daily minimums.
 MIN_HISTORY_DAYS = 14
 
-# Outlier guard: a minimum sitting this far below the route's 10th percentile
-# (P10) is detached from the legit-cheap cluster, so treat it as a cache error
-# and exclude it from alerts. Only applied when the route has >= OUTLIER_MIN_N
-# samples so P10 is meaningful.
-OUTLIER_P10_DISCOUNT_PCT = 50.0
-OUTLIER_MIN_N = 10
+# Error guard: a roundtrip can't realistically cost less than a single one-way
+# leg, so flag (and exclude from alerts) any roundtrip priced below its route's
+# cheapest one-way, or below this fraction of the one-way median -- both are
+# clear cache errors. One-way fares are never touched, so genuine deep deals are
+# preserved. The median check only applies when the one-way side has enough
+# samples for the median to be meaningful.
+ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO = 0.65
+OUTLIER_MIN_N = 20
