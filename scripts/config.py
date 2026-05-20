@@ -1,12 +1,23 @@
 ORIGIN = "ICN"
 DESTINATIONS = [
-    # Asia
-    "TYO", "OSA", "FUK", "NGO", "OKA", "BKK", "DAD", "HAN", "SGN",
-    "CEB", "MNL", "TPE", "HKG", "SIN", "KUL", "CGK", "DPS",
+    # Japan — major
+    "TYO", "OSA", "FUK", "NGO", "OKA",
+    # Japan — regional (Korean direct, mostly LCC)
+    "TOY", "KMI", "KCZ", "KMQ", "TAK", "KOJ", "OIT", "KMJ", "HSG",
+    "AOJ", "MYJ", "HIJ", "FSZ",
+    # Southeast Asia / resort
+    "BKK", "DAD", "HAN", "SGN", "CEB", "MNL", "SIN", "KUL", "CGK", "DPS",
+    "KLO", "USM", "HKT", "KBV", "PNH", "SAI", "CNX", "CXR", "PQC", "VTE",
+    "BKI",
+    # East Asia
+    "TPE", "HKG",
     # Europe
     "CDG", "LHR", "FCO", "BCN", "FRA", "AMS", "IST",
+    "ZRH", "VIE", "MUC", "PRG", "MAD", "HEL",
     # Americas
-    "JFK", "LAX", "HNL", "YVR",
+    "JFK", "LAX", "HNL", "YVR", "SEA", "ATL", "DFW", "IAD", "LAS", "YYZ",
+    # Pacific resort
+    "GUM", "SPN",
     # Oceania
     "SYD",
 ]
