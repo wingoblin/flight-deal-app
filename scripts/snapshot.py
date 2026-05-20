@@ -1,5 +1,9 @@
 import datetime as dt
+import json
+import re
 import statistics
+import time
+from pathlib import Path
 
 import dealdb
 import tpclient
@@ -8,8 +12,18 @@ from config import (
     DESTINATIONS,
     MIN_HISTORY_DAYS,
     ORIGIN,
+    OUTLIER_MIN_N,
+    ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO,
     TRIPS,
+    USE_HISTORICAL_BASELINE,
 )
+
+DEALS_JSON = Path(__file__).resolve().parent.parent / "deals.json"
+REQUEST_DELAY_SEC = 0.5
+
+
+def scrub_secret(text, secret):
+    return text.replace(secret, "***") if secret else text
 
 
 def summarize(items):
@@ -33,14 +47,15 @@ def cheapest_item(items):
 
 
 def judge(stats, history):
-    """Pick baseline (historical median once enough days, else current median),
-    compute discount of current min vs baseline, and flag deals."""
-    if len(history) >= MIN_HISTORY_DAYS:
+    """Compute discount of current min vs baseline and flag deals. Baseline is
+    fixed to bootstrap (current cross-sectional median); the historical mode is
+    only used when USE_HISTORICAL_BASELINE is enabled and enough days exist."""
+    if USE_HISTORICAL_BASELINE and len(history) >= MIN_HISTORY_DAYS:
         baseline = statistics.median(history)
         basis = f"historical ({len(history)}d)"
     else:
         baseline = stats["median"]
-        basis = f"current ({len(history)}/{MIN_HISTORY_DAYS}d)"
+        basis = f"bootstrap (history {len(history)}d)"
     discount = (baseline - stats["min"]) / baseline * 100
     return baseline, discount, discount >= DEAL_THRESHOLD_PCT, basis
 
@@ -56,8 +71,11 @@ def main():
             try:
                 items = tpclient.fetch_prices(ORIGIN, dest, one_way, token)
             except Exception as e:
-                results.append({"dest": dest, "trip": trip_label, "status": f"error: {e!r}"})
+                msg = scrub_secret(repr(e), token)
+                results.append({"dest": dest, "trip": trip_label, "status": f"error: {msg}"})
                 continue
+            finally:
+                time.sleep(REQUEST_DELAY_SEC)
 
             stats = summarize(items)
             if not stats:
@@ -86,32 +104,92 @@ def main():
             baseline, discount, is_deal, basis = judge(stats, history)
             results.append({
                 "dest": dest, "trip": trip_label, "status": "ok",
-                "min": stats["min"], "baseline": baseline, "discount": discount,
+                "min": stats["min"], "median": stats["median"], "n": stats["n"],
+                "baseline": baseline, "discount": discount,
                 "is_deal": is_deal, "basis": basis, "cheap": cheap,
             })
 
     conn.close()
     drop_impossible_roundtrips(results)
+    write_deals_json(results)
     report(results, today)
 
 
+def select_deals(results):
+    return [r for r in results if r.get("status") == "ok" and r["is_deal"]]
+
+
+def cache_date_from_link(link):
+    """Travelpayouts deeplinks embed the cache search date as search_date=DDMMYYYY;
+    expose it as an ISO date so the site can show/flag how fresh a fare is."""
+    m = re.search(r"search_date=(\d{2})(\d{2})(\d{4})", link or "")
+    if not m:
+        return None
+    dd, mm, yyyy = m.groups()
+    return f"{yyyy}-{mm}-{dd}"
+
+
+def write_deals_json(results):
+    deals = select_deals(results)
+    deals.sort(key=lambda r: r["discount"], reverse=True)
+    payload = {
+        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "origin": ORIGIN,
+        "currency": "KRW",
+        "threshold_pct": DEAL_THRESHOLD_PCT,
+        "refresh_interval_hours": 1,
+        "disclaimer": (
+            "캐시 기반 가격으로 실시간이 아닙니다. 좌석이 빠르게 팔릴 수 있어 "
+            "클릭 시 이미 매진되었거나 가격이 변동됐을 수 있습니다."
+        ),
+        "deals": [
+            {
+                "destination": r["dest"],
+                "trip": r["trip"],
+                "price": r["min"],
+                "baseline": round(r["baseline"]),
+                "discount_pct": round(r["discount"], 1),
+                "departure_at": r["cheap"].get("departure_at"),
+                "return_at": r["cheap"].get("return_at") or None,
+                "airline": r["cheap"].get("airline"),
+                "gate": r["cheap"].get("gate"),
+                "cache_date": cache_date_from_link(r["cheap"].get("link")),
+                "link": r["cheap"].get("link"),
+            }
+            for r in deals
+        ],
+    }
+    DEALS_JSON.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+
+
 def drop_impossible_roundtrips(results):
-    """A roundtrip cheaper than the same route's one-way is an impossible fare
-    (cache error), so flag it and exclude it from alerts."""
-    oneway_min = {
-        r["dest"]: r["min"]
+    """A roundtrip can't realistically cost less than a single one-way leg.
+    Flag (and exclude from alerts) any roundtrip priced below its route's
+    cheapest one-way, or below ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO of the one-way
+    median -- both are clear cache errors. One-way fares are never touched, so
+    genuine deep deals are preserved; the raw snapshot is still recorded."""
+    oneway = {
+        r["dest"]: r
         for r in results
         if r["status"] == "ok" and r["trip"] == "oneway"
     }
     for r in results:
-        if (
-            r["status"] == "ok"
-            and r["trip"] == "roundtrip"
-            and r["dest"] in oneway_min
-            and r["min"] < oneway_min[r["dest"]]
-        ):
+        if r.get("status") != "ok" or r["trip"] != "roundtrip":
+            continue
+        ow = oneway.get(r["dest"])
+        if not ow:
+            continue
+        if r["min"] < ow["min"]:
             r["is_deal"] = False
-            r["sanity_note"] = f"DATA-ERR rt {r['min']:,} < ow {oneway_min[r['dest']]:,}"
+            r["sanity_note"] = f"DATA-ERR rt {r['min']:,} < ow min {ow['min']:,}"
+        elif ow["n"] >= OUTLIER_MIN_N and r["min"] < ow["median"] * ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO:
+            r["is_deal"] = False
+            r["sanity_note"] = (
+                f"DATA-ERR rt {r['min']:,} < {ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO:.0%} "
+                f"of ow median {round(ow['median']):,}"
+            )
 
 
 def report(results, today):
@@ -120,7 +198,6 @@ def report(results, today):
     print(header)
     print("-" * len(header))
 
-    deals = []
     for r in results:
         route = f"{ORIGIN}->{r['dest']}"
         if r["status"] != "ok":
@@ -132,9 +209,8 @@ def report(results, today):
             f"{route:<10}{r['trip']:<11}{r['min']:>10,}{round(r['baseline']):>11,}"
             f"{r['discount']:>7.1f}%  {mark:<4} {basis}"
         )
-        if r["is_deal"]:
-            deals.append(r)
 
+    deals = select_deals(results)
     print()
     if not deals:
         print("## 특가 없음")

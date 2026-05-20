@@ -1,5 +1,7 @@
 import json
 import os
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -13,7 +15,8 @@ def get_token():
     return token
 
 
-def fetch_prices(origin, destination, one_way, token, currency="krw", limit=1000):
+def fetch_prices(origin, destination, one_way, token, currency="krw", limit=1000,
+                 retries=3, backoff=2.0):
     params = {
         "origin": origin,
         "destination": destination,
@@ -22,9 +25,26 @@ def fetch_prices(origin, destination, one_way, token, currency="krw", limit=1000
         "unique": "false",
         "sorting": "price",
         "limit": limit,
-        "token": token,
     }
+    # Token goes in a header, never the URL, so it can't leak into logs or errors.
     url = f"{API_URL}?{urllib.parse.urlencode(params)}"
-    with urllib.request.urlopen(url, timeout=30) as resp:
-        body = json.loads(resp.read())
-    return body.get("data") or []
+    req = urllib.request.Request(url, headers={"X-Access-Token": token})
+    delay = backoff
+    for attempt in range(retries):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                body = json.loads(resp.read())
+            return body.get("data") or []
+        except urllib.error.HTTPError as e:
+            # Retry rate limits and transient server errors; fail fast otherwise.
+            if e.code in (429, 500, 502, 503, 504) and attempt < retries - 1:
+                time.sleep(delay)
+                delay *= 2
+                continue
+            raise
+        except (urllib.error.URLError, TimeoutError):
+            if attempt < retries - 1:
+                time.sleep(delay)
+                delay *= 2
+                continue
+            raise
