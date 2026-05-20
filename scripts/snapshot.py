@@ -13,6 +13,7 @@ from config import (
     DESTINATIONS,
     MAX_CACHE_AGE_DAYS,
     MIN_HISTORY_DAYS,
+    MIN_HOURS_BEFORE_DEPARTURE,
     ORIGIN,
     OUTLIER_MIN_N,
     ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO,
@@ -48,11 +49,12 @@ def cheapest_item(items):
     return min(valid, key=lambda it: it["price"]) if valid else None
 
 
-def filter_items(items, today_date):
+def filter_items(items, today_date, now):
     """Drop fares we don't trust enough to alert on: those sold through a
-    low-trust gate, and those whose cached search date is too old. Stale cache
-    drifts further from the real, bookable price. Applied before summarizing so
-    neither the deal price nor the baseline is built from these fares."""
+    low-trust gate, those whose cached search date is too old (stale cache
+    drifts further from the real, bookable price), and those departing too soon
+    to realistically book. Applied before summarizing so neither the deal price
+    nor the baseline is built from these fares."""
     kept = []
     for it in items:
         if it.get("gate") in BLOCKED_GATES:
@@ -65,6 +67,14 @@ def filter_items(items, today_date):
                 age = 0
             if age >= MAX_CACHE_AGE_DAYS:
                 continue
+        depart_at = it.get("departure_at")
+        if depart_at:
+            try:
+                hours_left = (dt.datetime.fromisoformat(depart_at) - now).total_seconds() / 3600
+                if hours_left < MIN_HOURS_BEFORE_DEPARTURE:
+                    continue
+            except (ValueError, TypeError):
+                pass
         kept.append(it)
     return kept
 
@@ -87,6 +97,7 @@ def main():
     token = tpclient.get_token()
     today_date = dt.date.today()
     today = today_date.isoformat()
+    now = dt.datetime.now(dt.timezone.utc)
     conn = dealdb.connect()
 
     results = []
@@ -101,7 +112,7 @@ def main():
             finally:
                 time.sleep(REQUEST_DELAY_SEC)
 
-            items = filter_items(items, today_date)
+            items = filter_items(items, today_date, now)
             stats = summarize(items)
             if not stats:
                 results.append({"dest": dest, "trip": trip_label, "status": "no-data"})

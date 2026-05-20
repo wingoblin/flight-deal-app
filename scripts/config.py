@@ -57,3 +57,7 @@ BLOCKED_GATES = {
     "Clickavia",
     "Tickets",
 }
+
+# Departure validity: drop fares departing in less than this many hours. Too
+# little lead time means it's effectively unbookable by the time the alert lands.
+MIN_HOURS_BEFORE_DEPARTURE = 24
