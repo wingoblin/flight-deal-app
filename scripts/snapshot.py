@@ -7,16 +7,20 @@ import urllib.parse
 from pathlib import Path
 
 import dealdb
+import realtime
 import tpclient
 from config import (
     BLOCKED_GATES,
     DEAL_THRESHOLD_PCT,
     DESTINATIONS,
     MAX_CACHE_AGE_DAYS,
+    MAX_PRICE_DIVERGENCE_PCT,
     MIN_HISTORY_DAYS,
     MIN_HOURS_BEFORE_DEPARTURE,
     ORIGIN,
     OUTLIER_MIN_N,
+    REALTIME_CROSSCHECK,
+    REALTIME_REQUEST_DELAY_SEC,
     ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO,
     TRIPS,
     USE_HISTORICAL_BASELINE,
@@ -182,8 +186,52 @@ def main():
 
     conn.close()
     drop_impossible_roundtrips(results)
+    crosscheck_realtime(results)
     write_deals_json(results)
     report(results, today)
+
+
+def crosscheck_realtime(results):
+    """Drop deal candidates whose live Google Flights price (via fast-flights) is
+    at least MAX_PRICE_DIVERGENCE_PCT above the cached Travelpayouts price -- a
+    large gap means the cached fare is likely stale/unbookable. Every failure
+    path (FX lookup, scrape error/timeout, missing dependency, no price) keeps
+    the candidate, so a flaky check never empties the feed. Drops are logged."""
+    if not REALTIME_CROSSCHECK:
+        return
+    deals = select_deals(results)
+    if not deals:
+        return
+    try:
+        fx = realtime.usd_to_krw()
+    except Exception as e:
+        print(f"# realtime cross-check skipped (FX lookup failed: {e!r})")
+        return
+    print(f"\n# realtime cross-check: {len(deals)} candidate(s), FX {fx:,.1f} KRW/USD")
+    for r in deals:
+        cheap = r["cheap"]
+        depart = (cheap.get("departure_at") or "")[:10]
+        ret = (cheap.get("return_at") or "")[:10] if r["trip"] == "roundtrip" else None
+        if not depart:
+            continue
+        try:
+            live = realtime.cheapest_krw(ORIGIN, r["dest"], depart, ret, fx)
+        except Exception as e:
+            print(f"#   keep {ORIGIN}->{r['dest']} [{r['trip']}] (live lookup failed: {e!r})")
+            continue
+        finally:
+            time.sleep(REALTIME_REQUEST_DELAY_SEC)
+        if not live:
+            continue
+        divergence = (live - r["min"]) / r["min"] * 100
+        r["realtime_krw"] = live
+        r["divergence_pct"] = round(divergence, 1)
+        if divergence >= MAX_PRICE_DIVERGENCE_PCT:
+            r["is_deal"] = False
+            r["realtime_note"] = f"REALTIME-GAP TP {r['min']:,} vs live {live:,} (+{divergence:.0f}%)"
+            print(f"#   DROP {ORIGIN}->{r['dest']} [{r['trip']}] TP {r['min']:,} vs live {live:,} (+{divergence:.0f}%)")
+        else:
+            print(f"#   keep {ORIGIN}->{r['dest']} [{r['trip']}] TP {r['min']:,} vs live {live:,} ({divergence:+.0f}%)")
 
 
 def select_deals(results):

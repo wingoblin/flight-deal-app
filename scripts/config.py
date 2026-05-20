@@ -62,3 +62,12 @@ BLOCKED_GATES = {
 # Departure validity: drop fares departing in less than this many hours. Too
 # little lead time means it's effectively unbookable by the time the alert lands.
 MIN_HOURS_BEFORE_DEPARTURE = 24
+
+# Real-time cross-check (fast-flights / Google Flights): drop a deal candidate
+# whose live cheapest fare exceeds the Travelpayouts price by at least
+# MAX_PRICE_DIVERGENCE_PCT percent -- a large gap means the cached fare is
+# likely stale/unbookable. Any failure (scrape error/timeout, FX lookup, missing
+# dependency) keeps the candidate so a flaky check never empties the feed.
+REALTIME_CROSSCHECK = True
+MAX_PRICE_DIVERGENCE_PCT = 50.0
+REALTIME_REQUEST_DELAY_SEC = 1.0
