@@ -2,7 +2,7 @@ name: Daily flight deal snapshot
 
 on:
   schedule:
-    - cron: "0 * * * *"   # every hour, on the hour (UTC)
+    - cron: "*/15 * * * *"   # every 15 minutes (UTC)
   workflow_dispatch:
 
 permissions:
