@@ -16,8 +16,11 @@ TRIPS = [("oneway", True), ("roundtrip", False)]
 # median baseline (whole-route distribution, no date/trip-duration grouping).
 DEAL_THRESHOLD_PCT = 25.0
 
-# Baseline is the current cross-sectional median until this many prior daily
-# snapshots exist, after which it switches to the median of past daily minimums.
+# Judgment baseline is fixed to bootstrap mode (the current cache's
+# cross-sectional median). Snapshots keep accumulating either way, so when
+# enough history exists this can be flipped on to compare/switch to the median
+# of past daily minimums after MIN_HISTORY_DAYS.
+USE_HISTORICAL_BASELINE = False
 MIN_HISTORY_DAYS = 14
 
 # Error guard: a roundtrip can't realistically cost less than a single one-way

@@ -15,6 +15,7 @@ from config import (
     OUTLIER_MIN_N,
     ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO,
     TRIPS,
+    USE_HISTORICAL_BASELINE,
 )
 
 DEALS_JSON = Path(__file__).resolve().parent.parent / "deals.json"
@@ -46,14 +47,15 @@ def cheapest_item(items):
 
 
 def judge(stats, history):
-    """Pick baseline (historical median once enough days, else current median),
-    compute discount of current min vs baseline, and flag deals."""
-    if len(history) >= MIN_HISTORY_DAYS:
+    """Compute discount of current min vs baseline and flag deals. Baseline is
+    fixed to bootstrap (current cross-sectional median); the historical mode is
+    only used when USE_HISTORICAL_BASELINE is enabled and enough days exist."""
+    if USE_HISTORICAL_BASELINE and len(history) >= MIN_HISTORY_DAYS:
         baseline = statistics.median(history)
         basis = f"historical ({len(history)}d)"
     else:
         baseline = stats["median"]
-        basis = f"current ({len(history)}/{MIN_HISTORY_DAYS}d)"
+        basis = f"bootstrap (history {len(history)}d)"
     discount = (baseline - stats["min"]) / baseline * 100
     return baseline, discount, discount >= DEAL_THRESHOLD_PCT, basis
 
