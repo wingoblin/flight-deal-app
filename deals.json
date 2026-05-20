@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-20T08:29:48+00:00",
+  "generated_at": "2026-05-20T08:34:42+00:00",
   "origin": "ICN",
   "currency": "KRW",
   "threshold_pct": 25.0,
@@ -309,8 +309,8 @@
       "destination": "SIN",
       "trip": "roundtrip",
       "price": 362603,
-      "baseline": 504141,
-      "discount_pct": 28.1,
+      "baseline": 507619,
+      "discount_pct": 28.6,
       "departure_at": "2026-08-23T15:50:00+09:00",
       "return_at": "2026-08-27T23:00:00+08:00",
       "airline": "TW",
