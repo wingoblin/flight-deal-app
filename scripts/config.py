@@ -41,3 +41,19 @@ MIN_HISTORY_DAYS = 14
 # samples for the median to be meaningful.
 ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO = 0.65
 OUTLIER_MIN_N = 20
+
+# Cache freshness: drop any fare whose cached search date is at least this many
+# days old (today - cache_date >= value). Staler cache diverges further from the
+# real, bookable price, so those fares are excluded before judging/alerting.
+MAX_CACHE_AGE_DAYS = 3
+
+# Low-trust gates (sellers): fares from these are dropped before judging so they
+# never become a deal or set the baseline. Keep results to trustworthy gates
+# (e.g. Trip.com, City.Travel, Kiwi.com, Mytrip.com). Tune as needed.
+BLOCKED_GATES = {
+    "Авиасейлс",
+    "Farera",
+    "Biletix",
+    "Clickavia",
+    "Tickets",
+}

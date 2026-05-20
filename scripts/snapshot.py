@@ -8,8 +8,10 @@ from pathlib import Path
 import dealdb
 import tpclient
 from config import (
+    BLOCKED_GATES,
     DEAL_THRESHOLD_PCT,
     DESTINATIONS,
+    MAX_CACHE_AGE_DAYS,
     MIN_HISTORY_DAYS,
     ORIGIN,
     OUTLIER_MIN_N,
@@ -46,6 +48,27 @@ def cheapest_item(items):
     return min(valid, key=lambda it: it["price"]) if valid else None
 
 
+def filter_items(items, today_date):
+    """Drop fares we don't trust enough to alert on: those sold through a
+    low-trust gate, and those whose cached search date is too old. Stale cache
+    drifts further from the real, bookable price. Applied before summarizing so
+    neither the deal price nor the baseline is built from these fares."""
+    kept = []
+    for it in items:
+        if it.get("gate") in BLOCKED_GATES:
+            continue
+        cache_date = cache_date_from_link(it.get("link"))
+        if cache_date:
+            try:
+                age = (today_date - dt.date.fromisoformat(cache_date)).days
+            except ValueError:
+                age = 0
+            if age >= MAX_CACHE_AGE_DAYS:
+                continue
+        kept.append(it)
+    return kept
+
+
 def judge(stats, history):
     """Compute discount of current min vs baseline and flag deals. Baseline is
     fixed to bootstrap (current cross-sectional median); the historical mode is
@@ -62,7 +85,8 @@ def judge(stats, history):
 
 def main():
     token = tpclient.get_token()
-    today = dt.date.today().isoformat()
+    today_date = dt.date.today()
+    today = today_date.isoformat()
     conn = dealdb.connect()
 
     results = []
@@ -77,6 +101,7 @@ def main():
             finally:
                 time.sleep(REQUEST_DELAY_SEC)
 
+            items = filter_items(items, today_date)
             stats = summarize(items)
             if not stats:
                 results.append({"dest": dest, "trip": trip_label, "status": "no-data"})
