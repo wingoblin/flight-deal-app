@@ -17,7 +17,7 @@
       "airline": "TW",
       "gate": "Trip.com",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN2506DAD29061?t=TW17824233001782433500000290ICNDAD17826963001782720900000290DADICN_12450df361c01e3a62473cc9ed58e991_6482&search_date=20052026&expected_price_uuid=019e433b-ccc0-8030-65c4-46a189162a86&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=137009"
+      "link": "/search/ICN2506DAD29061?t=TW17824233001782433500000290ICNDAD17826963001782720900000290DADICN_12450df361c01e3a62473cc9ed58e991_6482&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "TYO",
@@ -30,7 +30,7 @@
       "airline": "TW",
       "gate": "City.Travel",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN1507TYO1?t=TW17841045001784113500000150ICNNRT_ac2b91d8ba9d659f3c45ba9ceb195aa6_3062&search_date=20052026&expected_price_uuid=019e4347-1523-8030-e054-ed0d89bb92a7&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH1%7CR0%7CTBC0&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=64721"
+      "link": "/search/ICN1507TYO1?t=TW17841045001784113500000150ICNNRT_ac2b91d8ba9d659f3c45ba9ceb195aa6_3062&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH1%7CR0%7CTBC0&origin_airports=0"
     },
     {
       "destination": "DAD",
@@ -43,7 +43,7 @@
       "airline": "TW",
       "gate": "City.Travel",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN1907DAD1?t=TW17844969001784507100000290ICNDAD_5432a5cc2d8c7aabcdeed7f29bc9b508_3941&search_date=20052026&expected_price_uuid=019e4368-6de6-8030-ad28-bf7e61604208&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH1%7CR0%7CTBC0&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=83300"
+      "link": "/search/ICN1907DAD1?t=TW17844969001784507100000290ICNDAD_5432a5cc2d8c7aabcdeed7f29bc9b508_3941&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH1%7CR0%7CTBC0&origin_airports=0"
     },
     {
       "destination": "MAD",
@@ -56,7 +56,7 @@
       "airline": "MU",
       "gate": "Aviakassa",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN2306MAD1?t=MU17822193001782290400001605ICNPVGMAD_522ed3ea45c46cff3130662e931a4a97_16448&search_date=20052026&expected_price_uuid=019e42ae-f012-8030-eee2-ca5262f18519&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=347675"
+      "link": "/search/ICN2306MAD1?t=MU17822193001782290400001605ICNPVGMAD_522ed3ea45c46cff3130662e931a4a97_16448&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0"
     },
     {
       "destination": "TYO",
@@ -69,7 +69,7 @@
       "airline": "TW",
       "gate": "City.Travel",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN1607TYO20071?t=TW17842140001784223600000160ICNNRT17845491001784559300000170NRTICN_640b980596ba2740da7a2e116ac59167_7442&search_date=20052026&expected_price_uuid=019e436c-c053-8030-62a2-bfe9aa4e91fc&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH1%7CR0%7CTBC0&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=157300"
+      "link": "/search/ICN1607TYO20071?t=TW17842140001784223600000160ICNNRT17845491001784559300000170NRTICN_640b980596ba2740da7a2e116ac59167_7442&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH1%7CR0%7CTBC0&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "SAI",
@@ -82,7 +82,7 @@
       "airline": "VJ",
       "gate": "City.Travel",
       "cache_date": "2026-05-18",
-      "link": "/search/ICN0406SAI1?t=VJ17805543001780596300000820ICNHANSAI_9eb23fad4c372b4fc9aebb74d607d480_11535&search_date=18052026&expected_price_uuid=019e3aa3-7cd3-8030-e022-301927bd29e7&static_fare_key=TY%7CP1%7CH0%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=237648"
+      "link": "/search/ICN0406SAI1?t=VJ17805543001780596300000820ICNHANSAI_9eb23fad4c372b4fc9aebb74d607d480_11535&search_date=18052026&static_fare_key=TY%7CP1%7CH0%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0"
     },
     {
       "destination": "VIE",
@@ -95,7 +95,7 @@
       "airline": "TW",
       "gate": "Kiwi.com",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN0106VIE1?t=TW17803119001780399200001875ICNBCNVIE_0b1c1cd8d3047b418acb25f91fa9618a_17099&search_date=20052026&expected_price_uuid=019e4361-7e39-8030-e865-09d29c7ee2ee&static_fare_key=TY%7CP0%7CH0%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=361419"
+      "link": "/search/ICN0106VIE1?t=TW17803119001780399200001875ICNBCNVIE_0b1c1cd8d3047b418acb25f91fa9618a_17099&search_date=20052026&static_fare_key=TY%7CP0%7CH0%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0"
     },
     {
       "destination": "CXR",
@@ -108,7 +108,7 @@
       "airline": "TW",
       "gate": "City.Travel",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN3006CXR10071?t=TW17828460001782858600000330ICNCXR17836419001783667400000305CXRICN_fab2eb516a9c5844bd30f3238a27b214_10488&search_date=20052026&expected_price_uuid=019e436e-ac41-8030-21b1-073ed24ccb8a&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0,1&destination_airports=0,1&expected_price_source=share&expected_price_currency=krw&expected_price=221683"
+      "link": "/search/ICN3006CXR10071?t=TW17828460001782858600000330ICNCXR17836419001783667400000305CXRICN_fab2eb516a9c5844bd30f3238a27b214_10488&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0%2C1&destination_airports=0%2C1"
     },
     {
       "destination": "NGO",
@@ -121,7 +121,7 @@
       "airline": "7C",
       "gate": "Mytrip.com",
       "cache_date": "2026-05-19",
-      "link": "/search/ICN3005NGO01061?t=7C17801535001780160400000115ICNNGO17803308001780338300000125NGOICN_056809c91193ee8aecb2ca844a5833e9_13291&search_date=19052026&expected_price_uuid=019e3fe4-4cda-8030-e637-5fd73cb01bc6&static_fare_key=TY%7CP0%7CH1%7CL1_1_15%7CCH0%7CR0%7CTBC1&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=282158"
+      "link": "/search/ICN3005NGO01061?t=7C17801535001780160400000115ICNNGO17803308001780338300000125NGOICN_056809c91193ee8aecb2ca844a5833e9_13291&search_date=19052026&static_fare_key=TY%7CP0%7CH1%7CL1_1_15%7CCH0%7CR0%7CTBC1&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "OSA",
@@ -134,7 +134,7 @@
       "airline": "TW",
       "gate": "Kiwi.com",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN2306OSA1?t=TW17822301001782237900000130ICNKIX_05d77a02a9a949ccd46e5cd0ea676c03_3357&search_date=20052026&expected_price_uuid=019e436a-3833-8030-a75d-97abc559a3b3&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=70956"
+      "link": "/search/ICN2306OSA1?t=TW17822301001782237900000130ICNKIX_05d77a02a9a949ccd46e5cd0ea676c03_3357&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0"
     },
     {
       "destination": "OKA",
@@ -147,7 +147,7 @@
       "airline": "ZE",
       "gate": "Kiwi.com",
       "cache_date": "2026-05-18",
-      "link": "/search/ICN0706OKA1?t=ZE17808318001780840800000150ICNOKA_86f747d9aa091601faa22a7f37c913c7_6870&search_date=18052026&expected_price_uuid=019e3a69-ef02-8030-a3f5-aedea0deb873&static_fare_key=TY%7CP1%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=141379"
+      "link": "/search/ICN0706OKA1?t=ZE17808318001780840800000150ICNOKA_86f747d9aa091601faa22a7f37c913c7_6870&search_date=18052026&static_fare_key=TY%7CP1%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0"
     },
     {
       "destination": "DPS",
@@ -160,7 +160,7 @@
       "airline": "VJ",
       "gate": "Trip.com",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN1010DPS1?t=VJ17916324001791723300001575ICNSGNDPS_d8c260897f13e38e8b68ab62f08c246f_11678&search_date=20052026&expected_price_uuid=019e436c-3ae6-8030-27bb-19a06f1040e0&static_fare_key=TY%7CP1%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=246836"
+      "link": "/search/ICN1010DPS1?t=VJ17916324001791723300001575ICNSGNDPS_d8c260897f13e38e8b68ab62f08c246f_11678&search_date=20052026&static_fare_key=TY%7CP1%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0"
     },
     {
       "destination": "SGN",
@@ -173,7 +173,7 @@
       "airline": "VJ",
       "gate": "Kupi.com",
       "cache_date": "2026-05-19",
-      "link": "/search/ICN2103SGN1?t=VJ18056262001805638800000330ICNSGN_c7f0599212271b7745a2a08304c01eb7_8405&search_date=19052026&expected_price_uuid=019e3e71-94ed-8030-22dc-ade2dce8fe03&static_fare_key=TY%7CP1%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=174140"
+      "link": "/search/ICN2103SGN1?t=VJ18056262001805638800000330ICNSGN_c7f0599212271b7745a2a08304c01eb7_8405&search_date=19052026&static_fare_key=TY%7CP1%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0"
     },
     {
       "destination": "BKK",
@@ -186,7 +186,7 @@
       "airline": "TW",
       "gate": "Trip.com",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN0909BKK1?t=TW17889768001788991500000365ICNBKK_d39c11c016241d02821ab77906925ee5_7334&search_date=20052026&expected_price_uuid=019e43fa-0a61-8030-ac29-bfc6f35e5606&static_fare_key=TY%7CP1_JW%7CH1%7CL1_1_15%7CCH0%7CR0%7CTBC1&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=155021"
+      "link": "/search/ICN0909BKK1?t=TW17889768001788991500000365ICNBKK_d39c11c016241d02821ab77906925ee5_7334&search_date=20052026&static_fare_key=TY%7CP1_JW%7CH1%7CL1_1_15%7CCH0%7CR0%7CTBC1&origin_airports=0"
     },
     {
       "destination": "CEB",
@@ -199,7 +199,7 @@
       "airline": "5J",
       "gate": "City.Travel",
       "cache_date": "2026-05-19",
-      "link": "/search/ICN1010CEB17101?t=5J17916681001791681600000285ICNCEB17922486001792269300000285CEBICN_36b51760808fbd29f10c4423aed1b5da_17410&search_date=19052026&expected_price_uuid=019e3f28-7275-8030-21a8-8c0bb785545b&static_fare_key=TY%7CP1_JW%7CH1%7CL0%7CCH1%7CR0%7CTBC0&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=362327"
+      "link": "/search/ICN1010CEB17101?t=5J17916681001791681600000285ICNCEB17922486001792269300000285CEBICN_36b51760808fbd29f10c4423aed1b5da_17410&search_date=19052026&static_fare_key=TY%7CP1_JW%7CH1%7CL0%7CCH1%7CR0%7CTBC0&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "ZRH",
@@ -212,7 +212,7 @@
       "airline": "EY",
       "gate": "Turna.com",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN1007ZRH17071?t=EY17837055001783776600001605ICNAUHZRH17843049001784458200002135ZRHAUHICN_aeba14b2bf26068d62b1c0015d02dd0e_51670&search_date=20052026&expected_price_uuid=019e457d-1cb0-8030-ad12-cc77b84bbb35&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=1093700"
+      "link": "/search/ICN1007ZRH17071?t=EY17837055001783776600001605ICNAUHZRH17843049001784458200002135ZRHAUHICN_aeba14b2bf26068d62b1c0015d02dd0e_51670&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "LHR",
@@ -225,7 +225,7 @@
       "airline": "FM",
       "gate": "Mytrip.com",
       "cache_date": "2026-05-18",
-      "link": "/search/ICN1106LHR1?t=MU17811948001781289600002060ICNPVGLHR_9b5c7622e91ad4e8a7291c4ce28c978e_17776&search_date=18052026&expected_price_uuid=019e388d-2a96-8030-ab33-7f7d353ad9a6&static_fare_key=TY%7CP0%7CH1%7CL1_2_0%7CCH1%7CR0%7CTBC1&origin_airports=0&destination_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=363480"
+      "link": "/search/ICN1106LHR1?t=MU17811948001781289600002060ICNPVGLHR_9b5c7622e91ad4e8a7291c4ce28c978e_17776&search_date=18052026&static_fare_key=TY%7CP0%7CH1%7CL1_2_0%7CCH1%7CR0%7CTBC1&origin_airports=0&destination_airports=0"
     },
     {
       "destination": "DPS",
@@ -238,7 +238,7 @@
       "airline": "TR",
       "gate": "Mytrip.com",
       "cache_date": "2026-05-19",
-      "link": "/search/ICN1708DPS03091?t=TR17869644001787048400001460ICNSINDPS17883975001788471900001180DPSSINICN_e93b8ade064bf002bc91c6a842940008_21341&search_date=19052026&expected_price_uuid=019e3fb0-3f99-8030-a399-271df0ce1629&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=451329"
+      "link": "/search/ICN1708DPS03091?t=TR17869644001787048400001460ICNSINDPS17883975001788471900001180DPSSINICN_e93b8ade064bf002bc91c6a842940008_21341&search_date=19052026&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "HNL",
@@ -251,7 +251,7 @@
       "airline": "ZG",
       "gate": "Kiwi.com",
       "cache_date": "2026-05-19",
-      "link": "/search/ICN2805HNL1?t=ZG17799729001779953100000810ICNNRTHNL_5b7a62a4011c69e4fffcdb348f919f8e_21049&search_date=19052026&expected_price_uuid=019e3fa4-837e-8030-a5f4-c8ab09f60b01&static_fare_key=TY%7CP1%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=445154"
+      "link": "/search/ICN2805HNL1?t=ZG17799729001779953100000810ICNNRTHNL_5b7a62a4011c69e4fffcdb348f919f8e_21049&search_date=19052026&static_fare_key=TY%7CP1%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0"
     },
     {
       "destination": "MAD",
@@ -264,7 +264,7 @@
       "airline": "CA",
       "gate": "Gotogate",
       "cache_date": "2026-05-19",
-      "link": "/search/ICN1708MAD23081?t=CA17869638001787000400001030ICNPEKMAD17875062001787608800001290MADPEKICN_f7cfd69297e1abb5ad1d9bf42acde62a_48511&search_date=19052026&expected_price_uuid=019e3e62-6be3-8030-ef18-02f11ab4a26e&static_fare_key=TY%7CP0%7CH1%7CL1_1_23%7CCH0%7CR0%7CTBC1&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=1005079"
+      "link": "/search/ICN1708MAD23081?t=CA17869638001787000400001030ICNPEKMAD17875062001787608800001290MADPEKICN_f7cfd69297e1abb5ad1d9bf42acde62a_48511&search_date=19052026&static_fare_key=TY%7CP0%7CH1%7CL1_1_23%7CCH0%7CR0%7CTBC1&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "IST",
@@ -277,7 +277,7 @@
       "airline": "MU",
       "gate": "City.Travel",
       "cache_date": "2026-05-18",
-      "link": "/search/ICN2805IST12061?t=MU17799849001780042200001315ICNPVGIST17812794001781370000001150ISTCANICN_ec3438587cfb64befeb6b63f10c3a27d_31088&search_date=18052026&expected_price_uuid=019e38e2-b531-8030-eee3-a94e1a66c4cf&static_fare_key=TY%7CP1%7CH1%7CL0%7CCH1%7CR1%7CTBC0&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=635591"
+      "link": "/search/ICN2805IST12061?t=MU17799849001780042200001315ICNPVGIST17812794001781370000001150ISTCANICN_ec3438587cfb64befeb6b63f10c3a27d_31088&search_date=18052026&static_fare_key=TY%7CP1%7CH1%7CL0%7CCH1%7CR1%7CTBC0&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "IST",
@@ -290,7 +290,7 @@
       "airline": "MU",
       "gate": "City.Travel",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN2405IST1?t=MU17796393001779696600001315ICNPVGIST_785997817c962a54e0d2281d51fa66aa_16397&search_date=20052026&expected_price_uuid=019e439c-3457-8030-2f4d-17f2bb83c54c&static_fare_key=TY%7CP1%7CH1%7CL0%7CCH1%7CR1%7CTBC0&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=346585"
+      "link": "/search/ICN2405IST1?t=MU17796393001779696600001315ICNPVGIST_785997817c962a54e0d2281d51fa66aa_16397&search_date=20052026&static_fare_key=TY%7CP1%7CH1%7CL0%7CCH1%7CR1%7CTBC0&origin_airports=0"
     },
     {
       "destination": "HAN",
@@ -303,7 +303,7 @@
       "airline": "ZE",
       "gate": "City.Travel",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN0806HAN1?t=ZE17809509001780988400000745ICNDADHAN_c1d2ecd117657661ce9323a6a6813146_7318&search_date=20052026&expected_price_uuid=019e44a5-04d5-8030-ef0e-216ba870c41d&static_fare_key=TY%7CP1%7CH0%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=154897"
+      "link": "/search/ICN0806HAN1?t=ZE17809509001780988400000745ICNDADHAN_c1d2ecd117657661ce9323a6a6813146_7318&search_date=20052026&static_fare_key=TY%7CP1%7CH0%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0"
     },
     {
       "destination": "KLO",
@@ -316,7 +316,7 @@
       "airline": "TW",
       "gate": "Trip.com",
       "cache_date": "2026-05-19",
-      "link": "/search/ICN2505KLO01061?t=TW17796978001779710400000270ICNKLO17803188001780338000000260KLOICN_8ddecd41b88424b281b624f96e1ec7e3_17494&search_date=19052026&expected_price_uuid=019e3d97-f265-8030-e2b1-a1adce843d0e&static_fare_key=TY%7CP1_JW%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=362460"
+      "link": "/search/ICN2505KLO01061?t=TW17796978001779710400000270ICNKLO17803188001780338000000260KLOICN_8ddecd41b88424b281b624f96e1ec7e3_17494&search_date=19052026&static_fare_key=TY%7CP1_JW%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "LAX",
@@ -329,7 +329,7 @@
       "airline": "MF",
       "gate": "Mytrip.com",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN1510LAX1?t=MF17920710001792094400001350ICNXMNLAX_b7dc43ecda652128eb2ab1a2fb8d7d47_30132&search_date=20052026&expected_price_uuid=019e4301-eb5b-8030-e520-8a5f4c9c487e&static_fare_key=TY%7CP0%7CH1%7CL1_1_23%7CCH0%7CR0%7CTBC1&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=636912"
+      "link": "/search/ICN1510LAX1?t=MF17920710001792094400001350ICNXMNLAX_b7dc43ecda652128eb2ab1a2fb8d7d47_30132&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL1_1_23%7CCH0%7CR0%7CTBC1&origin_airports=0"
     },
     {
       "destination": "BKK",
@@ -342,7 +342,7 @@
       "airline": "SC",
       "gate": "Mytrip.com",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN2805BKK04061?t=SC17799867001780019400000665ICNTAOBKK17805399001780612800001095BKKTNAICN_420bab581de5fc663d7d92a3952f82b4_16635&search_date=20052026&expected_price_uuid=019e4583-37e2-8030-a372-74e9c8bff3d2&static_fare_key=TY%7CP0%7CH1%7CL1_1_23%7CCH0%7CR0%7CTBC1&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=352114"
+      "link": "/search/ICN2805BKK04061?t=SC17799867001780019400000665ICNTAOBKK17805399001780612800001095BKKTNAICN_420bab581de5fc663d7d92a3952f82b4_16635&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL1_1_23%7CCH0%7CR0%7CTBC1&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "SYD",
@@ -355,7 +355,7 @@
       "airline": "MU",
       "gate": "City.Travel",
       "cache_date": "2026-05-19",
-      "link": "/search/ICN1906SYD29061?t=MU17818785001781958900001280ICNWEHPVGSYD17827650001782852300001515SYDPVGICN_13a25c65f3448e99d9bea3cd03db7292_39648&search_date=19052026&expected_price_uuid=019e3dca-9902-8030-6358-171a63a1b462&static_fare_key=TY%7CP0%7CH1%7CL1_2_0%7CCH1%7CR0%7CTBC1&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=821451"
+      "link": "/search/ICN1906SYD29061?t=MU17818785001781958900001280ICNWEHPVGSYD17827650001782852300001515SYDPVGICN_13a25c65f3448e99d9bea3cd03db7292_39648&search_date=19052026&static_fare_key=TY%7CP0%7CH1%7CL1_2_0%7CCH1%7CR0%7CTBC1&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "OSA",
@@ -368,7 +368,7 @@
       "airline": "MM",
       "gate": "Trip.com",
       "cache_date": "2026-05-18",
-      "link": "/search/ICN1509OSA01101?t=MM17894574001789464000000110ICNKIX17908836001790890500000115KIXICN_2bf40f9227008f3a056ae8416569eeb1_9981&search_date=18052026&expected_price_uuid=019e3926-b7de-8030-e01f-902747baf36f&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=204130"
+      "link": "/search/ICN1509OSA01101?t=MM17894574001789464000000110ICNKIX17908836001790890500000115KIXICN_2bf40f9227008f3a056ae8416569eeb1_9981&search_date=18052026&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "CEB",
@@ -381,7 +381,7 @@
       "airline": "7C",
       "gate": "Gotogate",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN2107CEB1?t=H117846673001784681100000290ICNCEB_ba7a12dea258e7d86da6b847f84f5bee_10139&search_date=20052026&expected_price_uuid=019e4322-e13a-8030-60b2-cbeb9aa8c1e6&static_fare_key=TY%7CP0%7CH1%7CL1_1_15%7CCH0%7CR0%7CTBC1&origin_airports=0&expected_price_source=share&expected_price_currency=krw&expected_price=214311"
+      "link": "/search/ICN2107CEB1?t=H117846673001784681100000290ICNCEB_ba7a12dea258e7d86da6b847f84f5bee_10139&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL1_1_15%7CCH0%7CR0%7CTBC1&origin_airports=0"
     },
     {
       "destination": "SIN",
@@ -394,7 +394,7 @@
       "airline": "SC",
       "gate": "Mytrip.com",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN2207SIN27071?t=SC17847207001784765400000805ICNTNASIN17851149001785196200001295SINTNAICN_ddf33a0a8491cf17800a96974741ed14_19658&search_date=20052026&expected_price_uuid=019e4406-2180-8030-ebe7-b0308e1aad3f&static_fare_key=TY%7CP0%7CH1%7CL1_1_23%7CCH0%7CR0%7CTBC1&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=415517"
+      "link": "/search/ICN2207SIN27071?t=SC17847207001784765400000805ICNTNASIN17851149001785196200001295SINTNAICN_ddf33a0a8491cf17800a96974741ed14_19658&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL1_1_23%7CCH0%7CR0%7CTBC1&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "TPE",
@@ -407,7 +407,7 @@
       "airline": "IT",
       "gate": "Kiwi.com",
       "cache_date": "2026-05-19",
-      "link": "/search/ICN0606TPE08061?t=ZE17807058001780712100000165ICNTPE17809146001780929600000190TPEICN_978daa9a584475223b977ece822e276c_11281&search_date=19052026&expected_price_uuid=019e3ea6-8247-8030-a4eb-1541bc1dd100&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=233728"
+      "link": "/search/ICN0606TPE08061?t=ZE17807058001780712100000165ICNTPE17809146001780929600000190TPEICN_978daa9a584475223b977ece822e276c_11281&search_date=19052026&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1"
     },
     {
       "destination": "HKT",
@@ -420,7 +420,7 @@
       "airline": "TR",
       "gate": "Flightnetwork",
       "cache_date": "2026-05-20",
-      "link": "/search/ICN1006HKT14061?t=TR17810910001781183700001665ICNSINHKT17814288001781516700001345HKTSINICN_ce4829c51596db2eac466663efd10bc4_19091&search_date=20052026&expected_price_uuid=019e4408-c247-8030-e345-8871ec33e231&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1&expected_price_source=share&expected_price_currency=krw&expected_price=403532"
+      "link": "/search/ICN1006HKT14061?t=TR17810910001781183700001665ICNSINHKT17814288001781516700001345HKTSINICN_ce4829c51596db2eac466663efd10bc4_19091&search_date=20052026&static_fare_key=TY%7CP0%7CH1%7CL0%7CCH0%7CR0%7CTBC0&origin_airports=0&destination_airports=1"
     }
   ]
 }

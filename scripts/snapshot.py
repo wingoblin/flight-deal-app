@@ -3,6 +3,7 @@ import json
 import re
 import statistics
 import time
+import urllib.parse
 from pathlib import Path
 
 import dealdb
@@ -199,6 +200,21 @@ def cache_date_from_link(link):
     return f"{yyyy}-{mm}-{dd}"
 
 
+def strip_expected_price(link):
+    """Drop the expected_price* params from the deeplink. With them, Aviasales
+    runs a price comparison against our cached number and can surface a
+    'price changed' state; without them it just shows the current live price."""
+    if not link or "?" not in link:
+        return link
+    path, query = link.split("?", 1)
+    kept = [
+        (k, v)
+        for k, v in urllib.parse.parse_qsl(query, keep_blank_values=True)
+        if not k.startswith("expected_price")
+    ]
+    return f"{path}?{urllib.parse.urlencode(kept)}"
+
+
 def write_deals_json(results):
     deals = select_deals(results)
     deals.sort(key=lambda r: r["discount"], reverse=True)
@@ -224,7 +240,7 @@ def write_deals_json(results):
                 "airline": r["cheap"].get("airline"),
                 "gate": r["cheap"].get("gate"),
                 "cache_date": cache_date_from_link(r["cheap"].get("link")),
-                "link": r["cheap"].get("link"),
+                "link": strip_expected_price(r["cheap"].get("link")),
             }
             for r in deals
         ],
