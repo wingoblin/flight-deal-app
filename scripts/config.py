@@ -26,6 +26,23 @@ TRIPS = [("oneway", True), ("roundtrip", False)]
 # median baseline (whole-route distribution, no date/trip-duration grouping).
 DEAL_THRESHOLD_PCT = 25.0
 
+# Per-destination overrides for the deal threshold. Long-haul routes (Europe,
+# Americas) swing less in percentage terms, so a smaller discount already counts
+# as a deal. Destinations not listed fall back to DEAL_THRESHOLD_PCT.
+DEAL_THRESHOLD_PCT_BY_DEST = {
+    d: 15.0 for d in (
+        # Europe
+        "CDG", "LHR", "FCO", "BCN", "FRA", "AMS", "IST",
+        "ZRH", "VIE", "MUC", "PRG", "MAD", "HEL",
+        # Americas
+        "JFK", "LAX", "HNL", "YVR", "SEA", "ATL", "DFW", "IAD", "LAS", "YYZ",
+    )
+}
+
+
+def deal_threshold(dest):
+    return DEAL_THRESHOLD_PCT_BY_DEST.get(dest, DEAL_THRESHOLD_PCT)
+
 # Judgment baseline is fixed to bootstrap mode (the current cache's
 # cross-sectional median). Snapshots keep accumulating either way, so when
 # enough history exists this can be flipped on to compare/switch to the median

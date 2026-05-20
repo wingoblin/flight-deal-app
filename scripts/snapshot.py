@@ -12,6 +12,7 @@ import tpclient
 from config import (
     BLOCKED_GATES,
     DEAL_THRESHOLD_PCT,
+    deal_threshold,
     DESTINATIONS,
     MAX_CACHE_AGE_DAYS,
     MAX_PRICE_DIVERGENCE_PCT,
@@ -109,10 +110,11 @@ def filter_items(items, latest_items, now):
     return kept
 
 
-def judge(stats, history):
-    """Compute discount of current min vs baseline and flag deals. Baseline is
-    fixed to bootstrap (current cross-sectional median); the historical mode is
-    only used when USE_HISTORICAL_BASELINE is enabled and enough days exist."""
+def judge(stats, history, threshold):
+    """Compute discount of current min vs baseline and flag deals against the
+    route's threshold. Baseline is fixed to bootstrap (current cross-sectional
+    median); the historical mode is only used when USE_HISTORICAL_BASELINE is
+    enabled and enough days exist."""
     if USE_HISTORICAL_BASELINE and len(history) >= MIN_HISTORY_DAYS:
         baseline = statistics.median(history)
         basis = f"historical ({len(history)}d)"
@@ -120,7 +122,7 @@ def judge(stats, history):
         baseline = stats["median"]
         basis = f"bootstrap (history {len(history)}d)"
     discount = (baseline - stats["min"]) / baseline * 100
-    return baseline, discount, discount >= DEAL_THRESHOLD_PCT, basis
+    return baseline, discount, discount >= threshold, basis
 
 
 def main():
@@ -176,11 +178,12 @@ def main():
             })
 
             history = dealdb.historical_mins(conn, ORIGIN, dest, trip_label, today)
-            baseline, discount, is_deal, basis = judge(stats, history)
+            threshold = deal_threshold(dest)
+            baseline, discount, is_deal, basis = judge(stats, history, threshold)
             results.append({
                 "dest": dest, "trip": trip_label, "status": "ok",
                 "min": stats["min"], "median": stats["median"], "n": stats["n"],
-                "baseline": baseline, "discount": discount,
+                "baseline": baseline, "discount": discount, "threshold": threshold,
                 "is_deal": is_deal, "basis": basis, "cheap": cheap,
             })
 
@@ -284,6 +287,7 @@ def write_deals_json(results):
                 "price": r["min"],
                 "baseline": round(r["baseline"]),
                 "discount_pct": round(r["discount"], 1),
+                "threshold_pct": r["threshold"],
                 "departure_at": r["cheap"].get("departure_at"),
                 "return_at": r["cheap"].get("return_at") or None,
                 "airline": r["cheap"].get("airline"),
@@ -339,7 +343,7 @@ def report(results, today):
             print(f"{route:<10}{r['trip']:<11}{'-':>10}{'-':>11}{'-':>8}  {'-':<4} {r['status']}")
             continue
         mark = "DROP" if r.get("sanity_note") else ("YES" if r["is_deal"] else "no")
-        basis = r.get("sanity_note") or r["basis"]
+        basis = r.get("sanity_note") or f"{r['basis']}  thr-{r['threshold']:.0f}%"
         print(
             f"{route:<10}{r['trip']:<11}{r['min']:>10,}{round(r['baseline']):>11,}"
             f"{r['discount']:>7.1f}%  {mark:<4} {basis}"
