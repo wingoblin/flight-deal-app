@@ -18,7 +18,7 @@ from config import (
     MAX_PRICE_DIVERGENCE_PCT,
     MIN_HISTORY_DAYS,
     MIN_HOURS_BEFORE_DEPARTURE,
-    ORIGIN,
+    ORIGINS,
     OUTLIER_MIN_N,
     REALTIME_CROSSCHECK,
     REALTIME_REQUEST_DELAY_SEC,
@@ -132,60 +132,61 @@ def main():
     conn = dealdb.connect()
 
     results = []
-    for dest in DESTINATIONS:
-        for trip_label, one_way in TRIPS:
-            try:
-                items = tpclient.fetch_prices(ORIGIN, dest, one_way, token)
-            except Exception as e:
-                msg = scrub_secret(repr(e), token)
-                results.append({"dest": dest, "trip": trip_label, "status": f"error: {msg}"})
-                continue
-            finally:
-                time.sleep(REQUEST_DELAY_SEC)
+    for origin in ORIGINS:
+        for dest in DESTINATIONS:
+            for trip_label, one_way in TRIPS:
+                try:
+                    items = tpclient.fetch_prices(origin, dest, one_way, token)
+                except Exception as e:
+                    msg = scrub_secret(repr(e), token)
+                    results.append({"origin": origin, "dest": dest, "trip": trip_label, "status": f"error: {msg}"})
+                    continue
+                finally:
+                    time.sleep(REQUEST_DELAY_SEC)
 
-            # Freshness oracle: get_latest_prices carries actual/found_at. If it
-            # fails, fall back to no freshness filtering this round (degrade
-            # gracefully rather than drop the whole route).
-            try:
-                latest = tpclient.fetch_latest(ORIGIN, dest, one_way, token)
-            except Exception:
-                latest = []
-            finally:
-                time.sleep(REQUEST_DELAY_SEC)
+                # Freshness oracle: get_latest_prices carries actual/found_at. If
+                # it fails, fall back to no freshness filtering this round
+                # (degrade gracefully rather than drop the whole route).
+                try:
+                    latest = tpclient.fetch_latest(origin, dest, one_way, token)
+                except Exception:
+                    latest = []
+                finally:
+                    time.sleep(REQUEST_DELAY_SEC)
 
-            items = filter_items(items, latest, now)
-            stats = summarize(items)
-            if not stats:
-                results.append({"dest": dest, "trip": trip_label, "status": "no-data"})
-                continue
+                items = filter_items(items, latest, now)
+                stats = summarize(items)
+                if not stats:
+                    results.append({"origin": origin, "dest": dest, "trip": trip_label, "status": "no-data"})
+                    continue
 
-            cheap = cheapest_item(items)
-            dealdb.upsert_snapshot(conn, {
-                "snapshot_date": today,
-                "origin": ORIGIN,
-                "destination": dest,
-                "trip": trip_label,
-                "n": stats["n"],
-                "min_price": stats["min"],
-                "p25": stats["p25"],
-                "median": stats["median"],
-                "mean": stats["mean"],
-                "cheapest_depart_at": cheap.get("departure_at"),
-                "cheapest_return_at": cheap.get("return_at") or None,
-                "cheapest_airline": cheap.get("airline"),
-                "cheapest_gate": cheap.get("gate"),
-                "cheapest_link": cheap.get("link"),
-            })
+                cheap = cheapest_item(items)
+                dealdb.upsert_snapshot(conn, {
+                    "snapshot_date": today,
+                    "origin": origin,
+                    "destination": dest,
+                    "trip": trip_label,
+                    "n": stats["n"],
+                    "min_price": stats["min"],
+                    "p25": stats["p25"],
+                    "median": stats["median"],
+                    "mean": stats["mean"],
+                    "cheapest_depart_at": cheap.get("departure_at"),
+                    "cheapest_return_at": cheap.get("return_at") or None,
+                    "cheapest_airline": cheap.get("airline"),
+                    "cheapest_gate": cheap.get("gate"),
+                    "cheapest_link": cheap.get("link"),
+                })
 
-            history = dealdb.historical_mins(conn, ORIGIN, dest, trip_label, today)
-            threshold = deal_threshold(dest)
-            baseline, discount, is_deal, basis = judge(stats, history, threshold)
-            results.append({
-                "dest": dest, "trip": trip_label, "status": "ok",
-                "min": stats["min"], "median": stats["median"], "n": stats["n"],
-                "baseline": baseline, "discount": discount, "threshold": threshold,
-                "is_deal": is_deal, "basis": basis, "cheap": cheap,
-            })
+                history = dealdb.historical_mins(conn, origin, dest, trip_label, today)
+                threshold = deal_threshold(dest)
+                baseline, discount, is_deal, basis = judge(stats, history, threshold)
+                results.append({
+                    "origin": origin, "dest": dest, "trip": trip_label, "status": "ok",
+                    "min": stats["min"], "median": stats["median"], "n": stats["n"],
+                    "baseline": baseline, "discount": discount, "threshold": threshold,
+                    "is_deal": is_deal, "basis": basis, "cheap": cheap,
+                })
 
     conn.close()
     drop_impossible_roundtrips(results)
@@ -218,9 +219,9 @@ def crosscheck_realtime(results):
         if not depart:
             continue
         try:
-            live = realtime.cheapest_krw(ORIGIN, r["dest"], depart, ret, fx)
+            live = realtime.cheapest_krw(r["origin"], r["dest"], depart, ret, fx)
         except Exception as e:
-            print(f"#   keep {ORIGIN}->{r['dest']} [{r['trip']}] (live lookup failed: {e!r})")
+            print(f"#   keep {r['origin']}->{r['dest']} [{r['trip']}] (live lookup failed: {e!r})")
             continue
         finally:
             time.sleep(REALTIME_REQUEST_DELAY_SEC)
@@ -232,9 +233,9 @@ def crosscheck_realtime(results):
         if divergence >= MAX_PRICE_DIVERGENCE_PCT:
             r["is_deal"] = False
             r["realtime_note"] = f"REALTIME-GAP TP {r['min']:,} vs live {live:,} (+{divergence:.0f}%)"
-            print(f"#   DROP {ORIGIN}->{r['dest']} [{r['trip']}] TP {r['min']:,} vs live {live:,} (+{divergence:.0f}%)")
+            print(f"#   DROP {r['origin']}->{r['dest']} [{r['trip']}] TP {r['min']:,} vs live {live:,} (+{divergence:.0f}%)")
         else:
-            print(f"#   keep {ORIGIN}->{r['dest']} [{r['trip']}] TP {r['min']:,} vs live {live:,} ({divergence:+.0f}%)")
+            print(f"#   keep {r['origin']}->{r['dest']} [{r['trip']}] TP {r['min']:,} vs live {live:,} ({divergence:+.0f}%)")
 
 
 def select_deals(results):
@@ -272,7 +273,8 @@ def write_deals_json(results):
     deals.sort(key=lambda r: r["discount"], reverse=True)
     payload = {
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-        "origin": ORIGIN,
+        "origin": ORIGINS[0],
+        "origins": ORIGINS,
         "currency": "KRW",
         "threshold_pct": DEAL_THRESHOLD_PCT,
         "refresh_interval_hours": 1,
@@ -282,6 +284,7 @@ def write_deals_json(results):
         ),
         "deals": [
             {
+                "from": r["origin"],
                 "destination": r["dest"],
                 "trip": r["trip"],
                 "price": r["min"],
@@ -310,14 +313,14 @@ def drop_impossible_roundtrips(results):
     median -- both are clear cache errors. One-way fares are never touched, so
     genuine deep deals are preserved; the raw snapshot is still recorded."""
     oneway = {
-        r["dest"]: r
+        (r["origin"], r["dest"]): r
         for r in results
         if r["status"] == "ok" and r["trip"] == "oneway"
     }
     for r in results:
         if r.get("status") != "ok" or r["trip"] != "roundtrip":
             continue
-        ow = oneway.get(r["dest"])
+        ow = oneway.get((r["origin"], r["dest"]))
         if not ow:
             continue
         if r["min"] < ow["min"]:
@@ -338,7 +341,7 @@ def report(results, today):
     print("-" * len(header))
 
     for r in results:
-        route = f"{ORIGIN}->{r['dest']}"
+        route = f"{r['origin']}->{r['dest']}"
         if r["status"] != "ok":
             print(f"{route:<10}{r['trip']:<11}{'-':>10}{'-':>11}{'-':>8}  {'-':<4} {r['status']}")
             continue
@@ -359,7 +362,7 @@ def report(results, today):
         c = r["cheap"]
         ret = f" ~ {c['return_at'][:10]}" if c.get("return_at") else ""
         print(
-            f"- {ORIGIN}->{r['dest']} [{r['trip']}] {r['min']:,} KRW "
+            f"- {r['origin']}->{r['dest']} [{r['trip']}] {r['min']:,} KRW "
             f"(baseline {round(r['baseline']):,}, -{r['discount']:.1f}%) "
             f"출발 {(c.get('departure_at') or '')[:10]}{ret} "
             f"{c.get('airline', '')}/{c.get('gate', '')}"
