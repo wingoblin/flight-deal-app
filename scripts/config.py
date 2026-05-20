@@ -19,3 +19,10 @@ DEAL_THRESHOLD_PCT = 25.0
 # Baseline is the current cross-sectional median until this many prior daily
 # snapshots exist, after which it switches to the median of past daily minimums.
 MIN_HISTORY_DAYS = 14
+
+# Outlier guard: a minimum sitting this far below the route's 10th percentile
+# (P10) is detached from the legit-cheap cluster, so treat it as a cache error
+# and exclude it from alerts. Only applied when the route has >= OUTLIER_MIN_N
+# samples so P10 is meaningful.
+OUTLIER_P10_DISCOUNT_PCT = 50.0
+OUTLIER_MIN_N = 10

@@ -1,6 +1,7 @@
 import datetime as dt
 import json
 import statistics
+import time
 from pathlib import Path
 
 import dealdb
@@ -10,10 +11,13 @@ from config import (
     DESTINATIONS,
     MIN_HISTORY_DAYS,
     ORIGIN,
+    OUTLIER_MIN_N,
+    OUTLIER_P10_DISCOUNT_PCT,
     TRIPS,
 )
 
 DEALS_JSON = Path(__file__).resolve().parent.parent / "deals.json"
+REQUEST_DELAY_SEC = 0.5
 
 
 def summarize(items):
@@ -25,6 +29,7 @@ def summarize(items):
     return {
         "n": len(prices),
         "min": prices[0],
+        "p10": statistics.quantiles(prices, n=10)[0] if len(prices) >= 2 else prices[0],
         "p25": statistics.quantiles(prices, n=4)[0] if len(prices) >= 4 else prices[0],
         "median": statistics.median(prices),
         "mean": round(statistics.mean(prices)),
@@ -62,6 +67,8 @@ def main():
             except Exception as e:
                 results.append({"dest": dest, "trip": trip_label, "status": f"error: {e!r}"})
                 continue
+            finally:
+                time.sleep(REQUEST_DELAY_SEC)
 
             stats = summarize(items)
             if not stats:
@@ -90,14 +97,30 @@ def main():
             baseline, discount, is_deal, basis = judge(stats, history)
             results.append({
                 "dest": dest, "trip": trip_label, "status": "ok",
-                "min": stats["min"], "baseline": baseline, "discount": discount,
+                "min": stats["min"], "p10": stats["p10"], "n": stats["n"],
+                "baseline": baseline, "discount": discount,
                 "is_deal": is_deal, "basis": basis, "cheap": cheap,
             })
 
     conn.close()
+    drop_distribution_outliers(results)
     drop_impossible_roundtrips(results)
     write_deals_json(results)
     report(results, today)
+
+
+def drop_distribution_outliers(results):
+    """A minimum sitting >= OUTLIER_P10_DISCOUNT_PCT below the route's P10 is
+    detached from the legit-cheap cluster (cache error), so exclude it."""
+    floor_ratio = 1 - OUTLIER_P10_DISCOUNT_PCT / 100
+    for r in results:
+        if r.get("status") != "ok" or r["n"] < OUTLIER_MIN_N:
+            continue
+        if r["min"] < r["p10"] * floor_ratio:
+            r["is_deal"] = False
+            r["sanity_note"] = (
+                f"DATA-ERR min {r['min']:,} < {floor_ratio:.0%} of P10 {round(r['p10']):,}"
+            )
 
 
 def select_deals(results):
