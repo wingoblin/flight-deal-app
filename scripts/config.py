@@ -69,5 +69,5 @@ MIN_HOURS_BEFORE_DEPARTURE = 24
 # likely stale/unbookable. Any failure (scrape error/timeout, FX lookup, missing
 # dependency) keeps the candidate so a flaky check never empties the feed.
 REALTIME_CROSSCHECK = True
-MAX_PRICE_DIVERGENCE_PCT = 50.0
+MAX_PRICE_DIVERGENCE_PCT = 30.0
 REALTIME_REQUEST_DELAY_SEC = 1.0
