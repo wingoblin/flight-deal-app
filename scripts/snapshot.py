@@ -3,16 +3,24 @@ import json
 import re
 import statistics
 import time
+import urllib.parse
 from pathlib import Path
 
 import dealdb
+import realtime
 import tpclient
 from config import (
+    BLOCKED_GATES,
     DEAL_THRESHOLD_PCT,
     DESTINATIONS,
+    MAX_CACHE_AGE_DAYS,
+    MAX_PRICE_DIVERGENCE_PCT,
     MIN_HISTORY_DAYS,
+    MIN_HOURS_BEFORE_DEPARTURE,
     ORIGIN,
     OUTLIER_MIN_N,
+    REALTIME_CROSSCHECK,
+    REALTIME_REQUEST_DELAY_SEC,
     ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO,
     TRIPS,
     USE_HISTORICAL_BASELINE,
@@ -46,6 +54,61 @@ def cheapest_item(items):
     return min(valid, key=lambda it: it["price"]) if valid else None
 
 
+def freshness_index(latest_items):
+    """Map (gate, price, departure_at) -> latest-prices entry. get_latest_prices
+    mirrors prices_for_dates fare-for-fare but carries the freshness fields
+    (actual, found_at) that prices_for_dates omits; the price/depart fields are
+    named value/depart_date there."""
+    return {
+        (it.get("gate"), it.get("value"), it.get("depart_date")): it
+        for it in latest_items
+    }
+
+
+def is_stale(latest, now):
+    """A matched latest-prices entry is stale if the seller marks it not current
+    (actual is False) or it was last found at least MAX_CACHE_AGE_DAYS ago."""
+    if latest.get("actual") is False:
+        return True
+    found_at = latest.get("found_at")
+    if found_at:
+        try:
+            found_dt = dt.datetime.fromisoformat(found_at.replace("Z", "+00:00"))
+            if (now - found_dt).total_seconds() / 86400 >= MAX_CACHE_AGE_DAYS:
+                return True
+        except (ValueError, TypeError):
+            pass
+    return False
+
+
+def filter_items(items, latest_items, now):
+    """Drop fares we don't trust enough to alert on: those from a low-trust gate,
+    those departing too soon to realistically book, and those the latest-prices
+    endpoint marks stale/expired (cross-checked, since prices_for_dates carries
+    the booking link but no freshness fields). Unmatched fares are kept so a
+    missing/failed freshness lookup degrades gracefully instead of emptying the
+    feed. Applied before summarizing so neither the deal price nor the baseline
+    is built from these fares."""
+    fresh = freshness_index(latest_items)
+    kept = []
+    for it in items:
+        if it.get("gate") in BLOCKED_GATES:
+            continue
+        depart_at = it.get("departure_at")
+        if depart_at:
+            try:
+                hours_left = (dt.datetime.fromisoformat(depart_at) - now).total_seconds() / 3600
+                if hours_left < MIN_HOURS_BEFORE_DEPARTURE:
+                    continue
+            except (ValueError, TypeError):
+                pass
+        latest = fresh.get((it.get("gate"), it.get("price"), it.get("departure_at")))
+        if latest is not None and is_stale(latest, now):
+            continue
+        kept.append(it)
+    return kept
+
+
 def judge(stats, history):
     """Compute discount of current min vs baseline and flag deals. Baseline is
     fixed to bootstrap (current cross-sectional median); the historical mode is
@@ -63,6 +126,7 @@ def judge(stats, history):
 def main():
     token = tpclient.get_token()
     today = dt.date.today().isoformat()
+    now = dt.datetime.now(dt.timezone.utc)
     conn = dealdb.connect()
 
     results = []
@@ -77,6 +141,17 @@ def main():
             finally:
                 time.sleep(REQUEST_DELAY_SEC)
 
+            # Freshness oracle: get_latest_prices carries actual/found_at. If it
+            # fails, fall back to no freshness filtering this round (degrade
+            # gracefully rather than drop the whole route).
+            try:
+                latest = tpclient.fetch_latest(ORIGIN, dest, one_way, token)
+            except Exception:
+                latest = []
+            finally:
+                time.sleep(REQUEST_DELAY_SEC)
+
+            items = filter_items(items, latest, now)
             stats = summarize(items)
             if not stats:
                 results.append({"dest": dest, "trip": trip_label, "status": "no-data"})
@@ -111,8 +186,52 @@ def main():
 
     conn.close()
     drop_impossible_roundtrips(results)
+    crosscheck_realtime(results)
     write_deals_json(results)
     report(results, today)
+
+
+def crosscheck_realtime(results):
+    """Drop deal candidates whose live Google Flights price (via fast-flights) is
+    at least MAX_PRICE_DIVERGENCE_PCT above the cached Travelpayouts price -- a
+    large gap means the cached fare is likely stale/unbookable. Every failure
+    path (FX lookup, scrape error/timeout, missing dependency, no price) keeps
+    the candidate, so a flaky check never empties the feed. Drops are logged."""
+    if not REALTIME_CROSSCHECK:
+        return
+    deals = select_deals(results)
+    if not deals:
+        return
+    try:
+        fx = realtime.usd_to_krw()
+    except Exception as e:
+        print(f"# realtime cross-check skipped (FX lookup failed: {e!r})")
+        return
+    print(f"\n# realtime cross-check: {len(deals)} candidate(s), FX {fx:,.1f} KRW/USD")
+    for r in deals:
+        cheap = r["cheap"]
+        depart = (cheap.get("departure_at") or "")[:10]
+        ret = (cheap.get("return_at") or "")[:10] if r["trip"] == "roundtrip" else None
+        if not depart:
+            continue
+        try:
+            live = realtime.cheapest_krw(ORIGIN, r["dest"], depart, ret, fx)
+        except Exception as e:
+            print(f"#   keep {ORIGIN}->{r['dest']} [{r['trip']}] (live lookup failed: {e!r})")
+            continue
+        finally:
+            time.sleep(REALTIME_REQUEST_DELAY_SEC)
+        if not live:
+            continue
+        divergence = (live - r["min"]) / r["min"] * 100
+        r["realtime_krw"] = live
+        r["divergence_pct"] = round(divergence, 1)
+        if divergence >= MAX_PRICE_DIVERGENCE_PCT:
+            r["is_deal"] = False
+            r["realtime_note"] = f"REALTIME-GAP TP {r['min']:,} vs live {live:,} (+{divergence:.0f}%)"
+            print(f"#   DROP {ORIGIN}->{r['dest']} [{r['trip']}] TP {r['min']:,} vs live {live:,} (+{divergence:.0f}%)")
+        else:
+            print(f"#   keep {ORIGIN}->{r['dest']} [{r['trip']}] TP {r['min']:,} vs live {live:,} ({divergence:+.0f}%)")
 
 
 def select_deals(results):
@@ -127,6 +246,22 @@ def cache_date_from_link(link):
         return None
     dd, mm, yyyy = m.groups()
     return f"{yyyy}-{mm}-{dd}"
+
+
+def strip_link_params(link):
+    """Drop tracking/comparison params from the deeplink: expected_price* (which
+    make Aviasales compare against our cached number and can surface a 'price
+    changed' state) and static_fare_key. The fare token (t=) and search params
+    remain so the link still resolves to the fare and just shows the live price."""
+    if not link or "?" not in link:
+        return link
+    path, query = link.split("?", 1)
+    kept = [
+        (k, v)
+        for k, v in urllib.parse.parse_qsl(query, keep_blank_values=True)
+        if not (k.startswith("expected_price") or k == "static_fare_key")
+    ]
+    return f"{path}?{urllib.parse.urlencode(kept)}"
 
 
 def write_deals_json(results):
@@ -154,7 +289,7 @@ def write_deals_json(results):
                 "airline": r["cheap"].get("airline"),
                 "gate": r["cheap"].get("gate"),
                 "cache_date": cache_date_from_link(r["cheap"].get("link")),
-                "link": r["cheap"].get("link"),
+                "link": strip_link_params(r["cheap"].get("link")),
             }
             for r in deals
         ],

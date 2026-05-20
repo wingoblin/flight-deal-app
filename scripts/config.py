@@ -41,3 +41,33 @@ MIN_HISTORY_DAYS = 14
 # samples for the median to be meaningful.
 ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO = 0.65
 OUTLIER_MIN_N = 20
+
+# Cache freshness: drop any fare last found (found_at, cross-checked via
+# get_latest_prices) at least this many days ago; staler cache diverges further
+# from the real, bookable price. Fares the seller marks actual=false are dropped
+# regardless of age.
+MAX_CACHE_AGE_DAYS = 3
+
+# Low-trust gates (sellers): fares from these are dropped before judging so they
+# never become a deal or set the baseline. Keep results to trustworthy gates
+# (e.g. Trip.com, City.Travel, Kiwi.com, Mytrip.com). Tune as needed.
+BLOCKED_GATES = {
+    "Авиасейлс",
+    "Farera",
+    "Biletix",
+    "Clickavia",
+    "Tickets",
+}
+
+# Departure validity: drop fares departing in less than this many hours. Too
+# little lead time means it's effectively unbookable by the time the alert lands.
+MIN_HOURS_BEFORE_DEPARTURE = 24
+
+# Real-time cross-check (fast-flights / Google Flights): drop a deal candidate
+# whose live cheapest fare exceeds the Travelpayouts price by at least
+# MAX_PRICE_DIVERGENCE_PCT percent -- a large gap means the cached fare is
+# likely stale/unbookable. Any failure (scrape error/timeout, FX lookup, missing
+# dependency) keeps the candidate so a flaky check never empties the feed.
+REALTIME_CROSSCHECK = True
+MAX_PRICE_DIVERGENCE_PCT = 50.0
+REALTIME_REQUEST_DELAY_SEC = 1.0

@@ -6,6 +6,7 @@ import urllib.parse
 import urllib.request
 
 API_URL = "https://api.travelpayouts.com/aviasales/v3/prices_for_dates"
+LATEST_URL = "https://api.travelpayouts.com/aviasales/v3/get_latest_prices"
 
 
 def get_token():
@@ -15,19 +16,8 @@ def get_token():
     return token
 
 
-def fetch_prices(origin, destination, one_way, token, currency="krw", limit=1000,
-                 retries=3, backoff=2.0):
-    params = {
-        "origin": origin,
-        "destination": destination,
-        "currency": currency,
-        "one_way": "true" if one_way else "false",
-        "unique": "false",
-        "sorting": "price",
-        "limit": limit,
-    }
+def _get_data(url, token, retries, backoff):
     # Token goes in a header, never the URL, so it can't leak into logs or errors.
-    url = f"{API_URL}?{urllib.parse.urlencode(params)}"
     req = urllib.request.Request(url, headers={"X-Access-Token": token})
     delay = backoff
     for attempt in range(retries):
@@ -48,3 +38,34 @@ def fetch_prices(origin, destination, one_way, token, currency="krw", limit=1000
                 delay *= 2
                 continue
             raise
+
+
+def fetch_prices(origin, destination, one_way, token, currency="krw", limit=1000,
+                 retries=3, backoff=2.0):
+    params = {
+        "origin": origin,
+        "destination": destination,
+        "currency": currency,
+        "one_way": "true" if one_way else "false",
+        "unique": "false",
+        "sorting": "price",
+        "limit": limit,
+    }
+    url = f"{API_URL}?{urllib.parse.urlencode(params)}"
+    return _get_data(url, token, retries, backoff)
+
+
+def fetch_latest(origin, destination, one_way, token, currency="krw", limit=1000,
+                 retries=3, backoff=2.0):
+    """get_latest_prices mirrors prices_for_dates fare-for-fare but exposes the
+    freshness fields (actual, found_at) that prices_for_dates omits, so it's used
+    only to validate freshness -- it has no booking link."""
+    params = {
+        "origin": origin,
+        "destination": destination,
+        "currency": currency,
+        "one_way": "true" if one_way else "false",
+        "limit": limit,
+    }
+    url = f"{LATEST_URL}?{urllib.parse.urlencode(params)}"
+    return _get_data(url, token, retries, backoff)
