@@ -34,9 +34,11 @@ def connect(db_path=DB_PATH):
 
 
 def upsert_snapshot(conn, row):
+    """Keep the lowest minimum seen for the day: on conflict, replace the row
+    only when the new run found a cheaper price."""
     conn.execute(
         """
-        INSERT OR REPLACE INTO snapshots
+        INSERT INTO snapshots
             (snapshot_date, origin, destination, trip, n, min_price,
              p25, median, mean, cheapest_depart_at, cheapest_return_at,
              cheapest_airline, cheapest_gate, cheapest_link)
@@ -44,6 +46,19 @@ def upsert_snapshot(conn, row):
             (:snapshot_date, :origin, :destination, :trip, :n, :min_price,
              :p25, :median, :mean, :cheapest_depart_at, :cheapest_return_at,
              :cheapest_airline, :cheapest_gate, :cheapest_link)
+        ON CONFLICT(snapshot_date, origin, destination, trip) DO UPDATE SET
+            n = excluded.n,
+            min_price = excluded.min_price,
+            p25 = excluded.p25,
+            median = excluded.median,
+            mean = excluded.mean,
+            cheapest_depart_at = excluded.cheapest_depart_at,
+            cheapest_return_at = excluded.cheapest_return_at,
+            cheapest_airline = excluded.cheapest_airline,
+            cheapest_gate = excluded.cheapest_gate,
+            cheapest_link = excluded.cheapest_link,
+            created_at = datetime('now')
+        WHERE excluded.min_price < snapshots.min_price
         """,
         row,
     )
