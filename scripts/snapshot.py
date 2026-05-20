@@ -91,7 +91,27 @@ def main():
             })
 
     conn.close()
+    drop_impossible_roundtrips(results)
     report(results, today)
+
+
+def drop_impossible_roundtrips(results):
+    """A roundtrip cheaper than the same route's one-way is an impossible fare
+    (cache error), so flag it and exclude it from alerts."""
+    oneway_min = {
+        r["dest"]: r["min"]
+        for r in results
+        if r["status"] == "ok" and r["trip"] == "oneway"
+    }
+    for r in results:
+        if (
+            r["status"] == "ok"
+            and r["trip"] == "roundtrip"
+            and r["dest"] in oneway_min
+            and r["min"] < oneway_min[r["dest"]]
+        ):
+            r["is_deal"] = False
+            r["sanity_note"] = f"DATA-ERR rt {r['min']:,} < ow {oneway_min[r['dest']]:,}"
 
 
 def report(results, today):
@@ -106,10 +126,11 @@ def report(results, today):
         if r["status"] != "ok":
             print(f"{route:<10}{r['trip']:<11}{'-':>10}{'-':>11}{'-':>8}  {'-':<4} {r['status']}")
             continue
-        mark = "YES" if r["is_deal"] else "no"
+        mark = "DROP" if r.get("sanity_note") else ("YES" if r["is_deal"] else "no")
+        basis = r.get("sanity_note") or r["basis"]
         print(
             f"{route:<10}{r['trip']:<11}{r['min']:>10,}{round(r['baseline']):>11,}"
-            f"{r['discount']:>7.1f}%  {mark:<4} {r['basis']}"
+            f"{r['discount']:>7.1f}%  {mark:<4} {basis}"
         )
         if r["is_deal"]:
             deals.append(r)
