@@ -3,13 +3,13 @@ import statistics
 
 import dealdb
 import tpclient
-
-ORIGIN = "ICN"
-DESTINATIONS = ["TYO", "OSA", "BKK", "DAD", "CEB", "TPE"]
-TRIPS = [("oneway", True), ("roundtrip", False)]
-
-DEAL_THRESHOLD_PCT = 30.0   # current min must sit at least this far below baseline
-MIN_HISTORY_DAYS = 14       # switch to historical baseline once this many prior days exist
+from config import (
+    DEAL_THRESHOLD_PCT,
+    DESTINATIONS,
+    MIN_HISTORY_DAYS,
+    ORIGIN,
+    TRIPS,
+)
 
 
 def summarize(items):
