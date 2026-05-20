@@ -1,5 +1,15 @@
 ORIGIN = "ICN"
-DESTINATIONS = ["TYO", "OSA", "BKK", "DAD", "CEB", "TPE"]
+DESTINATIONS = [
+    # Asia
+    "TYO", "OSA", "FUK", "NGO", "OKA", "BKK", "DAD", "HAN", "SGN",
+    "CEB", "MNL", "TPE", "HKG", "SIN", "KUL", "CGK", "DPS",
+    # Europe
+    "CDG", "LHR", "FCO", "BCN", "FRA", "AMS", "IST",
+    # Americas
+    "JFK", "LAX", "HNL", "YVR",
+    # Oceania
+    "SYD",
+]
 TRIPS = [("oneway", True), ("roundtrip", False)]
 
 # A deal is flagged when the current minimum sits at least this far below the

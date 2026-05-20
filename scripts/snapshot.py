@@ -1,5 +1,7 @@
 import datetime as dt
+import json
 import statistics
+from pathlib import Path
 
 import dealdb
 import tpclient
@@ -10,6 +12,8 @@ from config import (
     ORIGIN,
     TRIPS,
 )
+
+DEALS_JSON = Path(__file__).resolve().parent.parent / "deals.json"
 
 
 def summarize(items):
@@ -92,7 +96,41 @@ def main():
 
     conn.close()
     drop_impossible_roundtrips(results)
+    write_deals_json(results)
     report(results, today)
+
+
+def select_deals(results):
+    return [r for r in results if r.get("status") == "ok" and r["is_deal"]]
+
+
+def write_deals_json(results):
+    deals = select_deals(results)
+    deals.sort(key=lambda r: r["discount"], reverse=True)
+    payload = {
+        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "origin": ORIGIN,
+        "currency": "KRW",
+        "threshold_pct": DEAL_THRESHOLD_PCT,
+        "deals": [
+            {
+                "destination": r["dest"],
+                "trip": r["trip"],
+                "price": r["min"],
+                "baseline": round(r["baseline"]),
+                "discount_pct": round(r["discount"], 1),
+                "departure_at": r["cheap"].get("departure_at"),
+                "return_at": r["cheap"].get("return_at") or None,
+                "airline": r["cheap"].get("airline"),
+                "gate": r["cheap"].get("gate"),
+                "link": r["cheap"].get("link"),
+            }
+            for r in deals
+        ],
+    }
+    DEALS_JSON.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
 
 
 def drop_impossible_roundtrips(results):
@@ -120,7 +158,6 @@ def report(results, today):
     print(header)
     print("-" * len(header))
 
-    deals = []
     for r in results:
         route = f"{ORIGIN}->{r['dest']}"
         if r["status"] != "ok":
@@ -132,9 +169,8 @@ def report(results, today):
             f"{route:<10}{r['trip']:<11}{r['min']:>10,}{round(r['baseline']):>11,}"
             f"{r['discount']:>7.1f}%  {mark:<4} {basis}"
         )
-        if r["is_deal"]:
-            deals.append(r)
 
+    deals = select_deals(results)
     print()
     if not deals:
         print("## 특가 없음")
