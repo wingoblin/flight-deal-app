@@ -1,4 +1,4 @@
-ORIGIN = "ICN"
+ORIGINS = ["ICN", "GMP", "PUS", "TAE", "CJU"]
 DESTINATIONS = [
     # Japan — major
     "TYO", "OSA", "FUK", "NGO", "OKA",
