@@ -50,3 +50,24 @@ jobs:
             git commit -m "Daily snapshot $(date -u +%F)"
             git push
           fi
+
+      - name: Mirror deals.json to airpick-legal (public)
+        env:
+          AIRPICK_TOKEN: ${{ secrets.AIRPICK_DEPLOY_TOKEN }}
+        run: |
+          set -e
+          DIR="${RUNNER_TEMP}/airpick-mirror"
+          rm -rf "$DIR"
+          git clone --depth 1 \
+            "https://x-access-token:${AIRPICK_TOKEN}@github.com/wingoblin/airpick-legal.git" "$DIR"
+          cp deals.json "$DIR/deals.json"
+          cd "$DIR"
+          if git diff --quiet -- deals.json; then
+            echo "deals.json unchanged in airpick-legal; nothing to push"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add deals.json
+          git commit -m "Update deals.json from flight-deal-app ($(date -u +%FT%TZ))"
+          git push origin HEAD:main
