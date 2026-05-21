@@ -202,21 +202,29 @@ def crosscheck_realtime(results):
     path (FX lookup, scrape error/timeout, missing dependency, no price) keeps
     the candidate, so a flaky check never empties the feed. Drops are logged."""
     if not REALTIME_CROSSCHECK:
+        print("\n# realtime cross-check: disabled (REALTIME_CROSSCHECK=False)")
         return
     deals = select_deals(results)
+    print(f"\n# realtime cross-check: {len(deals)} candidate(s)")
     if not deals:
+        return
+    try:
+        import fast_flights  # noqa: F401
+    except Exception as e:
+        print(f"#   SKIPPED: fast-flights unavailable, all candidates kept ({e!r})")
         return
     try:
         fx = realtime.usd_to_krw()
     except Exception as e:
-        print(f"# realtime cross-check skipped (FX lookup failed: {e!r})")
+        print(f"#   SKIPPED: FX lookup failed, all candidates kept ({e!r})")
         return
-    print(f"\n# realtime cross-check: {len(deals)} candidate(s), FX {fx:,.1f} KRW/USD")
+    print(f"#   FX {fx:,.1f} KRW/USD")
     for r in deals:
         cheap = r["cheap"]
         depart = (cheap.get("departure_at") or "")[:10]
         ret = (cheap.get("return_at") or "")[:10] if r["trip"] == "roundtrip" else None
         if not depart:
+            print(f"#   keep {r['origin']}->{r['dest']} [{r['trip']}] (no departure date)")
             continue
         try:
             live = realtime.cheapest_krw(r["origin"], r["dest"], depart, ret, fx)
@@ -226,6 +234,7 @@ def crosscheck_realtime(results):
         finally:
             time.sleep(REALTIME_REQUEST_DELAY_SEC)
         if not live:
+            print(f"#   keep {r['origin']}->{r['dest']} [{r['trip']}] (no live price found)")
             continue
         divergence = (live - r["min"]) / r["min"] * 100
         r["realtime_krw"] = live
