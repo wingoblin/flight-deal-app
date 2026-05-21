@@ -302,6 +302,7 @@ def write_deals_json(results):
                 "threshold_pct": r["threshold"],
                 "departure_at": r["cheap"].get("departure_at"),
                 "return_at": r["cheap"].get("return_at") or None,
+                "transfers": max(r["cheap"].get("transfers") or 0, r["cheap"].get("return_transfers") or 0),
                 "airline": r["cheap"].get("airline"),
                 "gate": r["cheap"].get("gate"),
                 "cache_date": cache_date_from_link(r["cheap"].get("link")),
