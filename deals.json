@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-23T21:42:11+00:00",
+  "generated_at": "2026-05-23T22:42:05+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -28,6 +28,22 @@
       "gate": "MEGO.travel",
       "cache_date": "2026-05-23",
       "link": "/search/GMP1809HAN25091?t=CA17897415001789818900001410GMPPEKHAN17903427001790427900001300HANPEKGMP_07336d758fcc6e6bcd42d31ddcad1ca3_59274&search_date=23052026&origin_airports=0&destination_airports=1"
+    },
+    {
+      "from": "GMP",
+      "destination": "SGN",
+      "trip": "roundtrip",
+      "price": 1141909,
+      "baseline": 3778366,
+      "discount_pct": 69.8,
+      "threshold_pct": 25.0,
+      "departure_at": "2026-06-20T07:20:00+09:00",
+      "return_at": "2026-06-21T01:10:00+07:00",
+      "transfers": 1,
+      "airline": "BX",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-05-21",
+      "link": "/search/GMP2006SGN21061?t=VN17819400001781960100000455GMPPUSSGN17820042001782042900000525SGNPUSGMP_3bcfcf686a832146ffdfaabf71e238cf_54045&search_date=21052026&origin_airports=0&destination_airports=1"
     },
     {
       "from": "GMP",
@@ -124,22 +140,6 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-05-21",
       "link": "/search/PUS0606CEB1?t=LJ17807832001780794900000255PUSCEB_7ceb67faae4565fb2b1a3c046c9e2e1d_8727&search_date=21052026"
-    },
-    {
-      "from": "CJU",
-      "destination": "TYO",
-      "trip": "oneway",
-      "price": 181718,
-      "baseline": 307617,
-      "discount_pct": 40.9,
-      "threshold_pct": 25.0,
-      "departure_at": "2026-06-02T20:00:00+09:00",
-      "return_at": null,
-      "transfers": 1,
-      "airline": "7C",
-      "gate": "Trip.com",
-      "cache_date": "2026-05-20",
-      "link": "/search/CJU0206TYO1?t=7C17804304001780479000000810CJUPUSNRT_aa20a8046dd19013381ce2192ddd895f_8648&search_date=20052026"
     },
     {
       "from": "ICN",
@@ -242,8 +242,8 @@
       "destination": "CXR",
       "trip": "roundtrip",
       "price": 516934,
-      "baseline": 802935,
-      "discount_pct": 35.6,
+      "baseline": 798554,
+      "discount_pct": 35.3,
       "threshold_pct": 25.0,
       "departure_at": "2026-06-29T07:20:00+09:00",
       "return_at": "2026-07-06T23:55:00+07:00",
@@ -252,22 +252,6 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-05-23",
       "link": "/search/GMP2906CXR06071?t=LJ17827176001782740100000495GMPPUSCXR17833821001783431900000710CXRPUSGMP_2764ed33716907f42490cc3ffc347924_24409&search_date=23052026&origin_airports=0%2C1&destination_airports=0%2C1"
-    },
-    {
-      "from": "GMP",
-      "destination": "SGN",
-      "trip": "roundtrip",
-      "price": 1141909,
-      "baseline": 1771986,
-      "discount_pct": 35.6,
-      "threshold_pct": 25.0,
-      "departure_at": "2026-06-20T07:20:00+09:00",
-      "return_at": "2026-06-21T01:10:00+07:00",
-      "transfers": 1,
-      "airline": "BX",
-      "gate": "Kiwi.com",
-      "cache_date": "2026-05-21",
-      "link": "/search/GMP2006SGN21061?t=VN17819400001781960100000455GMPPUSSGN17820042001782042900000525SGNPUSGMP_3bcfcf686a832146ffdfaabf71e238cf_54045&search_date=21052026&origin_airports=0&destination_airports=1"
     },
     {
       "from": "ICN",
@@ -300,6 +284,38 @@
       "gate": "Trip.com",
       "cache_date": "2026-05-21",
       "link": "/search/ICN1306KLO20061?t=TW17813394001781352000000270ICNKLO17819604001781979600000260KLOICN_a8ed89f8f7280dc98fe36c9d56d900fc_17522&search_date=21052026&origin_airports=0&destination_airports=1"
+    },
+    {
+      "from": "PUS",
+      "destination": "SIN",
+      "trip": "roundtrip",
+      "price": 475637,
+      "baseline": 712625,
+      "discount_pct": 33.3,
+      "threshold_pct": 25.0,
+      "departure_at": "2026-06-10T17:40:00+09:00",
+      "return_at": "2026-06-14T00:25:00+08:00",
+      "transfers": 0,
+      "airline": "7C",
+      "gate": "Trip.com",
+      "cache_date": "2026-05-23",
+      "link": "/search/PUS1006SIN14061?t=7C17811132001781133900000405PUSSIN17813967001781424600000405SINPUS_dcc88d6d57a61d64d86d56befc4d46ff_22459&search_date=23052026"
+    },
+    {
+      "from": "CJU",
+      "destination": "TYO",
+      "trip": "oneway",
+      "price": 214067,
+      "baseline": 320636,
+      "discount_pct": 33.2,
+      "threshold_pct": 25.0,
+      "departure_at": "2026-06-06T13:00:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "LJ",
+      "gate": "OneTwoTrip",
+      "cache_date": "2026-05-23",
+      "link": "/search/CJU0606TYO1?t=BX17807508001780826400001260CJUPUSNRT_9e0379dcfe4d544f653477df6af7db68_10108&search_date=23052026"
     },
     {
       "from": "PUS",
@@ -530,7 +546,7 @@
       "destination": "HKT",
       "trip": "oneway",
       "price": 209274,
-      "baseline": 285480,
+      "baseline": 285340,
       "discount_pct": 26.7,
       "threshold_pct": 25.0,
       "departure_at": "2027-03-01T11:35:00+09:00",
@@ -725,13 +741,13 @@
       "baseline": 487772,
       "discount_pct": 17.6,
       "threshold_pct": 15.0,
-      "departure_at": "2026-06-10T09:25:00+09:00",
+      "departure_at": "2026-05-27T09:25:00+09:00",
       "return_at": null,
       "transfers": 1,
       "airline": "CZ",
       "gate": "OneTwoTrip",
       "cache_date": "2026-05-23",
-      "link": "/search/ICN1006IST1?t=CZ17810835001781159700001630ICNPKXIST_f3725e45734b48f0900dba3965032f6d_18972&search_date=23052026&origin_airports=0"
+      "link": "/search/ICN2705IST1?t=CZ17798739001779950100001630ICNPKXIST_80767798cf7f67a252bbb468a74bc328_18972&search_date=23052026&origin_airports=0"
     },
     {
       "from": "GMP",
