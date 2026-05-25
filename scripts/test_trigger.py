@@ -1,191 +1,154 @@
 """
-Unit tests for trigger.py.
+Tests for the per-user trigger.
 
-Two layers:
-1. Pure-logic tests with hand-crafted dicts — verify each branch.
-2. Backtest against the real SQLite snapshots — verify the configured
-   thresholds produce a sane volume of notifications.
+Only the pure helpers are tested here. I/O paths (Supabase, Expo) are
+mocked at the boundary — see _matches_user.
 
 Run: python scripts/test_trigger.py
 """
 
 from __future__ import annotations
 
-import datetime as dt
-import sqlite3
 import sys
 import unittest
 from pathlib import Path
 
-# Make scripts/ importable when running this file directly.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from trigger import evaluate_deals, format_notification
+from trigger import _matches_user, _route_key, _is_long_haul
 
 
-def _deal(**overrides):
-    """Builder for test deal dicts — fill in sensible defaults, override per-test."""
+def _deal(**over):
     base = {
         "from": "ICN",
-        "destination": "BKK",
+        "destination": "BKK",          # 단거리 (default)
         "trip": "roundtrip",
         "price": 200_000,
         "baseline": 500_000,
         "discount_pct": 60.0,
-        "departure_at": "2026-08-01T10:00:00+09:00",
-        "return_at": "2026-08-08T15:00:00+07:00",
-        "transfers": 0,
         "airline": "KE",
-        "gate": "Trip.com",
-        "n": 30,
     }
-    base.update(overrides)
+    base.update(over)
     return base
 
 
-NOW = dt.datetime(2026, 5, 24, 12, 0, tzinfo=dt.timezone.utc)
+def _user(**over):
+    base = {
+        "token": "ExponentPushToken[abc]",
+        "origins": [],            # 빈 배열 = 전체 허용
+        "destinations": [],       # 빈 배열 = 전체 허용
+        "alarm_master": True,
+        "disc_short_pct": 25,
+        "disc_long_pct": 15,
+        "lang": "ko",
+    }
+    base.update(over)
+    return base
 
 
-class PureLogicTests(unittest.TestCase):
+class RouteAndHaulTests(unittest.TestCase):
 
-    def test_passes_at_exact_threshold(self):
-        """60% deal should fire when cut is 60% — boundary inclusive."""
-        decisions = evaluate_deals([_deal(discount_pct=60.0)], {}, NOW)
-        self.assertTrue(decisions[0].should_notify)
-        self.assertEqual(decisions[0].reason, "ok")
+    def test_route_key_format(self):
+        self.assertEqual(_route_key(_deal()), "ICN|BKK|roundtrip")
 
-    def test_below_cut_dropped(self):
-        decisions = evaluate_deals([_deal(discount_pct=59.9)], {}, NOW)
-        self.assertFalse(decisions[0].should_notify)
-        self.assertEqual(decisions[0].reason, "below_cut")
-
-    def test_low_n_dropped(self):
-        """High discount but tiny sample = untrustworthy baseline → drop."""
-        decisions = evaluate_deals([_deal(discount_pct=85.0, n=2)], {}, NOW)
-        self.assertFalse(decisions[0].should_notify)
-        self.assertEqual(decisions[0].reason, "low_n")
-
-    def test_missing_n_passes_n_gate(self):
-        """deals.json doesn't carry n today — absent n must not block firing
-        (otherwise the gate silently mutes everything in prod)."""
-        deal = _deal(discount_pct=70.0)
-        deal.pop("n")
-        decisions = evaluate_deals([deal], {}, NOW)
-        self.assertTrue(decisions[0].should_notify)
-
-    def test_dedup_suppresses_recent(self):
-        """Same route pushed 3 days ago → suppress."""
-        recent = (NOW - dt.timedelta(days=3)).isoformat()
-        history = {"ICN|BKK|roundtrip": recent}
-        decisions = evaluate_deals([_deal()], history, NOW)
-        self.assertFalse(decisions[0].should_notify)
-        self.assertEqual(decisions[0].reason, "dup_recent")
-
-    def test_dedup_lets_old_push_through(self):
-        """Same route pushed 8 days ago → fire (past dedup window)."""
-        old = (NOW - dt.timedelta(days=8)).isoformat()
-        history = {"ICN|BKK|roundtrip": old}
-        decisions = evaluate_deals([_deal()], history, NOW)
-        self.assertTrue(decisions[0].should_notify)
-
-    def test_dedup_keys_on_trip_type(self):
-        """ICN-BKK roundtrip and ICN-BKK oneway are different products."""
-        history = {"ICN|BKK|roundtrip": NOW.isoformat()}
-        oneway = _deal(trip="oneway", return_at=None)
-        decisions = evaluate_deals([oneway], history, NOW)
-        self.assertTrue(decisions[0].should_notify)
-
-    def test_diagnostics_always_populated(self):
-        """Every decision must carry full diagnostics for post-hoc tuning."""
-        decisions = evaluate_deals(
-            [_deal(discount_pct=30), _deal(discount_pct=70), _deal(discount_pct=80, n=2)],
-            {}, NOW,
-        )
-        for d in decisions:
-            self.assertIn("discount_pct", d.diagnostics)
-            self.assertIn("threshold_pct", d.diagnostics)
-            self.assertIn("route", d.diagnostics)
-
-    def test_threshold_kwarg_overrides_config(self):
-        """Backtesting needs to sweep thresholds without reimporting config."""
-        deal = _deal(discount_pct=45.0)
-        # At default 60% cut: dropped.
-        self.assertFalse(evaluate_deals([deal], {}, NOW)[0].should_notify)
-        # Sweep down to 40%: passes.
-        self.assertTrue(evaluate_deals([deal], {}, NOW, threshold_pct=40.0)[0].should_notify)
-
-    def test_format_notification_uses_man_unit(self):
-        """Push body shows price in 만원 — Korean users read it instantly."""
-        title, body = format_notification(_deal(price=523_400, discount_pct=70))
-        self.assertIn("70%", title)
-        self.assertIn("52만원", body)
+    def test_long_haul_detection(self):
+        # CDG = Paris, in long-haul list
+        self.assertTrue(_is_long_haul("CDG"))
+        # BKK = Bangkok, not in long-haul list
+        self.assertFalse(_is_long_haul("BKK"))
 
 
-class BacktestAgainstRealData(unittest.TestCase):
-    """Run trigger over actual SQLite snapshots — verify notification volume
-    matches what we expect (≥60%, n≥5, dedup 7d should yield a handful per day)."""
-
-    DB = Path(__file__).resolve().parent.parent / "data" / "flight_deals.db"
+class MatchingTests(unittest.TestCase):
 
     def setUp(self):
-        if not self.DB.exists():
-            self.skipTest(f"Backtest DB not present at {self.DB}")
+        self.empty_history = set()
 
-    def test_volume_with_real_snapshots(self):
-        """Simulate running trigger on each day's deals, with rolling 7d dedup."""
-        conn = sqlite3.connect(self.DB)
-        cur = conn.cursor()
+    def test_alarm_off_blocks_everything(self):
+        ok, reason = _matches_user(_deal(), _user(alarm_master=False), self.empty_history)
+        self.assertFalse(ok)
+        self.assertEqual(reason, "alarm_off")
 
-        # Build pseudo-deals from snapshots: each row = a route's cheapest that day.
-        # We use route-wide AVG(median) as baseline (proxy for what deals.json's
-        # baseline would look like once enough history exists).
-        cur.execute("""
-            WITH route_baseline AS (
-                SELECT origin, destination, trip,
-                       AVG(median) AS baseline,
-                       COUNT(*) AS days_seen
-                FROM snapshots
-                GROUP BY origin, destination, trip
-            )
-            SELECT s.snapshot_date, s.origin, s.destination, s.trip,
-                   s.min_price, ROUND(r.baseline) AS baseline,
-                   ROUND(100.0 * (r.baseline - s.min_price) / r.baseline, 1) AS disc_pct,
-                   s.n
-            FROM snapshots s
-            JOIN route_baseline r USING (origin, destination, trip)
-            WHERE r.baseline > 0 AND r.days_seen >= 3
-            ORDER BY s.snapshot_date
-        """)
-        rows = cur.fetchall()
-        conn.close()
+    def test_origin_filter_match(self):
+        u = _user(origins=["ICN", "GMP"])
+        ok, _ = _matches_user(_deal(**{"from": "ICN"}), u, self.empty_history)
+        self.assertTrue(ok)
 
-        # Group by day, simulate sequential evaluation with growing history.
-        sent_history: dict = {}
-        per_day_fires: dict = {}
-        for date, origin, dest, trip, price, baseline, disc, n in rows:
-            deal = {
-                "from": origin, "destination": dest, "trip": trip,
-                "price": price, "baseline": baseline,
-                "discount_pct": disc, "n": n, "airline": "",
-            }
-            day_dt = dt.datetime.fromisoformat(date).replace(tzinfo=dt.timezone.utc)
-            decisions = evaluate_deals([deal], sent_history, day_dt)
-            if decisions[0].should_notify:
-                per_day_fires.setdefault(date, 0)
-                per_day_fires[date] += 1
-                sent_history["|".join([origin, dest, trip])] = day_dt.isoformat()
+    def test_origin_filter_miss(self):
+        u = _user(origins=["GMP"])
+        ok, reason = _matches_user(_deal(**{"from": "ICN"}), u, self.empty_history)
+        self.assertFalse(ok)
+        self.assertEqual(reason, "origin_filtered")
 
-        total = sum(per_day_fires.values())
-        days = len({date for date, *_ in [(r[0],) for r in rows]})
-        print(f"\n[backtest] {total} pushes over {days} days; per-day: {per_day_fires}")
+    def test_empty_origins_allows_all(self):
+        """빈 배열 = '전체 허용'. 모든 출발지 통과해야 함."""
+        u = _user(origins=[])
+        ok, _ = _matches_user(_deal(**{"from": "ICN"}), u, self.empty_history)
+        self.assertTrue(ok)
 
-        # Sanity bounds — not exact assertions, just guardrails. If the
-        # configured thresholds suddenly produce 0 or 100+ per day, something
-        # is wrong with either the data or the config.
-        self.assertGreater(total, 0, "Configured thresholds emit nothing — too strict?")
-        if days:
-            avg = total / days
-            self.assertLess(avg, 20, f"Too many pushes/day ({avg:.1f}) — cut too low?")
+    def test_destination_filter(self):
+        u = _user(destinations=["FUK", "NRT"])
+        ok, reason = _matches_user(_deal(destination="BKK"), u, self.empty_history)
+        self.assertFalse(ok)
+        self.assertEqual(reason, "destination_filtered")
+
+    def test_empty_destinations_allows_all(self):
+        u = _user(destinations=[])
+        ok, _ = _matches_user(_deal(destination="BKK"), u, self.empty_history)
+        self.assertTrue(ok)
+
+    def test_short_haul_uses_short_cut(self):
+        """단거리 deal 은 disc_short_pct 와 비교."""
+        u = _user(disc_short_pct=50, disc_long_pct=10)
+        # discount 40% < short cut 50% → 거부
+        ok, reason = _matches_user(_deal(destination="BKK", discount_pct=40), u, self.empty_history)
+        self.assertFalse(ok)
+        self.assertEqual(reason, "below_user_cut")
+
+    def test_long_haul_uses_long_cut(self):
+        """장거리 deal 은 disc_long_pct 와 비교."""
+        u = _user(disc_short_pct=50, disc_long_pct=10)
+        # 같은 40% 인데 장거리(CDG)면 long cut 10% 와 비교 → 통과
+        ok, _ = _matches_user(_deal(destination="CDG", discount_pct=40), u, self.empty_history)
+        self.assertTrue(ok)
+
+    def test_at_exact_cut_passes(self):
+        """경계값 포함 (>=)."""
+        u = _user(disc_short_pct=25)
+        ok, _ = _matches_user(_deal(discount_pct=25), u, self.empty_history)
+        self.assertTrue(ok)
+
+    def test_dedup_blocks_recent(self):
+        history = {f"{_user()['token']}|{_route_key(_deal())}"}
+        ok, reason = _matches_user(_deal(), _user(), history)
+        self.assertFalse(ok)
+        self.assertEqual(reason, "dup_recent")
+
+    def test_dedup_is_per_user(self):
+        """A 사용자에게 보낸 게 B 사용자 dedup 에 영향 주면 안 됨."""
+        history = {"ExponentPushToken[A]|ICN|BKK|roundtrip"}
+        u_b = _user(token="ExponentPushToken[B]")
+        ok, _ = _matches_user(_deal(), u_b, history)
+        self.assertTrue(ok)
+
+    def test_dedup_is_per_route(self):
+        """ICN-BKK 보낸 게 ICN-NRT dedup 에 영향 주면 안 됨."""
+        history = {f"{_user()['token']}|ICN|BKK|roundtrip"}
+        ok, _ = _matches_user(_deal(destination="NRT"), _user(), history)
+        self.assertTrue(ok)
+
+    def test_oneway_and_roundtrip_dedup_separately(self):
+        """왕복/편도는 다른 상품 → 따로 dedup."""
+        history = {f"{_user()['token']}|ICN|BKK|roundtrip"}
+        ok, _ = _matches_user(_deal(trip="oneway"), _user(), history)
+        self.assertTrue(ok)
+
+    def test_all_filters_in_order(self):
+        """필터 우선순위: alarm → origin → destination → cut → dedup."""
+        u = _user(alarm_master=False, origins=["GMP"], disc_short_pct=99)
+        ok, reason = _matches_user(_deal(**{"from": "ICN"}), u, self.empty_history)
+        self.assertFalse(ok)
+        # alarm_off 가 가장 먼저 잡혀야 (early return)
+        self.assertEqual(reason, "alarm_off")
 
 
 if __name__ == "__main__":
