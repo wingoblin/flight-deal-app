@@ -88,3 +88,11 @@ MIN_HOURS_BEFORE_DEPARTURE = 24
 REALTIME_CROSSCHECK = True
 MAX_PRICE_DIVERGENCE_PCT = 30.0
 REALTIME_REQUEST_DELAY_SEC = 1.0
+
+# --- Push notification trigger (second-stage cut, on top of deal display cut) ---
+# deals.json holds everything past the 25%/15% DISPLAY cut. These extras decide
+# which of those also earn a push notification. Tunable from one place, no code
+# changes needed elsewhere.
+PUSH_RARE_DEAL_THRESHOLD_PCT = 60.0   # ≥ this discount → eligible for push
+PUSH_MIN_SAMPLES = 5                  # require n≥this for baseline to be trusted
+PUSH_DEDUP_DAYS = 7                   # same (from, dest, trip) → 1 push per 7d
