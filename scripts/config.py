@@ -93,6 +93,9 @@ REALTIME_REQUEST_DELAY_SEC = 1.0
 # deals.json holds everything past the 25%/15% DISPLAY cut. These extras decide
 # which of those also earn a push notification. Tunable from one place, no code
 # changes needed elsewhere.
-PUSH_RARE_DEAL_THRESHOLD_PCT = 60.0   # ≥ this discount → eligible for push
-PUSH_MIN_SAMPLES = 5                  # require n≥this for baseline to be trusted
-PUSH_DEDUP_DAYS = 7                   # same (from, dest, trip) → 1 push per 7d
+# --- Push notification trigger ---
+# Per-user filtering: each subscriber's discount cuts (single short-haul,
+# single long-haul) and origin/destination filters come from their
+# Supabase push_tokens row. No global cut applies on top.
+# Only the dedup window stays global (idempotency across all users).
+PUSH_DEDUP_DAYS = 7                   # same (token, from, dest, trip) → 1 push per 7d
