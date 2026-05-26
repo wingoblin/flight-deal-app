@@ -50,6 +50,7 @@ def fetch_prices(origin, destination, one_way, token, currency="krw", limit=1000
         "unique": "false",
         "sorting": "price",
         "limit": limit,
+        "trip_class": 0,    # economy only (0=economy, 1=business per TP docs)
     }
     url = f"{API_URL}?{urllib.parse.urlencode(params)}"
     return _get_data(url, token, retries, backoff)
@@ -66,6 +67,7 @@ def fetch_latest(origin, destination, one_way, token, currency="krw", limit=1000
         "currency": currency,
         "one_way": "true" if one_way else "false",
         "limit": limit,
+        "trip_class": 0,    # mirror fetch_prices so freshness keys align
     }
     url = f"{LATEST_URL}?{urllib.parse.urlencode(params)}"
     return _get_data(url, token, retries, backoff)

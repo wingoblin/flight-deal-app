@@ -9,6 +9,10 @@ on:
         description: "Dry run — skip snapshot/commit/mirror; run trigger.py read-only (no Expo / no INSERT / no PATCH / no DELETE). Default ON for safety."
         type: boolean
         default: true
+      diagnose_api:
+        description: "One-off API diagnostic. Forces snapshot.py to run with DUMP_RAW_API=1 for GMP→CEB/KLO/FUK roundtrip. commit/mirror always skipped when ON. Use to see what Travelpayouts cache actually returns. Default OFF."
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -17,10 +21,11 @@ concurrency:
   group: daily-snapshot
   cancel-in-progress: false
 
-# Schedule events have no inputs, so dry_run resolves to '' → 'false'. Cron path
+# Schedule events have no inputs, so both resolve to '' → 'false'. Cron path
 # behaves exactly as before. Manual dispatch defaults dry_run=true (safe).
 env:
   DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+  DIAGNOSE_API: ${{ github.event.inputs.diagnose_api || 'false' }}
 
 jobs:
   snapshot:
@@ -36,9 +41,10 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run snapshot and judge deals
-        if: env.DRY_RUN != 'true'
+        if: env.DRY_RUN != 'true' || env.DIAGNOSE_API == 'true'
         env:
           TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
+          DUMP_RAW_API: ${{ env.DIAGNOSE_API == 'true' && '1' || '' }}
         run: |
           set -o pipefail
           mkdir -p logs
@@ -59,7 +65,7 @@ jobs:
           fi
 
       - name: Back up DB as artifact
-        if: always() && env.DRY_RUN != 'true'
+        if: always() && env.DRY_RUN != 'true' && env.DIAGNOSE_API != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: flight-deals-db-${{ github.run_id }}
@@ -68,7 +74,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Commit snapshot data and log
-        if: env.DRY_RUN != 'true'
+        if: env.DRY_RUN != 'true' && env.DIAGNOSE_API != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -81,7 +87,7 @@ jobs:
           fi
 
       - name: Mirror deals.json to airpick-legal (public)
-        if: env.DRY_RUN != 'true'
+        if: env.DRY_RUN != 'true' && env.DIAGNOSE_API != 'true'
         env:
           AIRPICK_TOKEN: ${{ secrets.AIRPICK_DEPLOY_TOKEN }}
         run: |

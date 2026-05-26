@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+import os
 import re
 import statistics
 import time
@@ -33,6 +34,50 @@ REQUEST_DELAY_SEC = 0.5
 
 def scrub_secret(text, secret):
     return text.replace(secret, "***") if secret else text
+
+
+# One-off diagnostic: dump raw Travelpayouts items for a few target routes so
+# we can see field names (esp. cabin-related), value distributions, and price
+# spread. Triggered by DUMP_RAW_API=1 (set via workflow_dispatch diagnose_api
+# input). Removed in Step 2 once the cabin question is answered.
+DUMP_RAW_API = os.environ.get("DUMP_RAW_API") == "1"
+DUMP_ROUTES = {("GMP", "CEB"), ("GMP", "KLO"), ("GMP", "FUK")}
+
+
+def _diag_dump_raw(origin, dest, trip_label, items, stage):
+    """Dump field names, cabin distribution, price stats, and top/bottom 5
+    fares (whitelisted fields only — 'link' deliberately excluded so deep-link
+    fare tokens don't leak into workflow logs). Items contain no API token;
+    the token only lives in the request header (tpclient._get_data)."""
+    print(f"\n# === RAW DUMP {origin}->{dest} {trip_label} ({stage}) ===")
+    print(f"# items count: {len(items)}")
+    if not items:
+        print("# (empty)\n# === END DUMP ===\n")
+        return
+    print(f"# fields in first item: {sorted(items[0].keys())}")
+    cabin_like = [k for k in items[0].keys() if "class" in k.lower() or "cabin" in k.lower()]
+    print(f"# cabin-like fields: {cabin_like}")
+    for fld in cabin_like:
+        dist = {}
+        for it in items:
+            dist[it.get(fld)] = dist.get(it.get(fld), 0) + 1
+        print(f"# distribution of '{fld}': {dist}")
+    valid = [it for it in items if isinstance(it.get("price"), (int, float))]
+    if valid:
+        valid.sort(key=lambda x: x["price"])
+        n = len(valid)
+        print(f"# price stats: n={n} min={valid[0]['price']:,} "
+              f"median={valid[n//2]['price']:,} max={valid[-1]['price']:,}")
+        SAFE_KEYS = ["price", "airline", "transfers", "return_transfers",
+                     "duration", "duration_to", "duration_back",
+                     "departure_at", "return_at"] + cabin_like
+        print("# bottom 5 cheapest:")
+        for it in valid[:5]:
+            print(f"#   {json.dumps({k: it.get(k) for k in SAFE_KEYS if k in it}, ensure_ascii=False)}")
+        print("# top 5 expensive:")
+        for it in valid[-5:][::-1]:
+            print(f"#   {json.dumps({k: it.get(k) for k in SAFE_KEYS if k in it}, ensure_ascii=False)}")
+    print("# === END DUMP ===\n")
 
 
 def summarize(items):
@@ -154,7 +199,11 @@ def main():
                 finally:
                     time.sleep(REQUEST_DELAY_SEC)
 
+                if DUMP_RAW_API and (origin, dest) in DUMP_ROUTES and trip_label == "roundtrip":
+                    _diag_dump_raw(origin, dest, trip_label, items, "pre-filter")
                 items = filter_items(items, latest, now)
+                if DUMP_RAW_API and (origin, dest) in DUMP_ROUTES and trip_label == "roundtrip":
+                    _diag_dump_raw(origin, dest, trip_label, items, "post-filter")
                 stats = summarize(items)
                 if not stats:
                     results.append({"origin": origin, "dest": dest, "trip": trip_label, "status": "no-data"})
