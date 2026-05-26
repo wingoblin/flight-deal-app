@@ -234,7 +234,17 @@ def send_pushes(push_plan: list[tuple]) -> list[dict]:
             # One batch fail shouldn't kill all the others.
             print(f"WARN: Expo batch failed: {e}")
             continue
-        for j, item in enumerate(resp.get("data") or []):
+        data = resp.get("data") or []
+        # Expo's contract is data[i] ↔ batch[i] in order, same length. If a
+        # partial-failure ever returns a short/long array, the index→token
+        # mapping is unreliable — skip rather than misclassify a live token.
+        if len(data) != len(batch):
+            print(
+                f"WARN: Expo response length {len(data)} != batch {len(batch)}; "
+                "skipping DeviceNotRegistered scan for this batch"
+            )
+            continue
+        for j, item in enumerate(data):
             if (item.get("status") == "error"
                     and (item.get("details") or {}).get("error") == "DeviceNotRegistered"):
                 expired.append(batch[j]["to"])
@@ -250,19 +260,34 @@ def send_pushes(push_plan: list[tuple]) -> list[dict]:
     return sent_records
 
 
+DEACTIVATE_CHUNK = 100  # Cap PATCH ?in.() list size; URL ~100 chars/token encoded.
+
+
 def deactivate_tokens(tokens: list[str]) -> None:
     """Soft-disable expired Expo tokens by flipping alarm_master=false.
     Soft instead of DELETE so the row survives if the user re-opens the app
     (the client will refresh the token and re-enable on the next subscribe).
     Expo's DeviceNotRegistered is the only error we treat as permanent here;
-    other errors (rate limit, message too big, sender mismatch) stay transient."""
+    other errors (rate limit, message too big, sender mismatch) stay transient.
+
+    Chunked at DEACTIVATE_CHUNK because mass-expiry events (OS update, bulk
+    sign-out) can produce hundreds of tokens in one run — a single ?in.() URL
+    would blow past PostgREST's URL-length limit and silently drop the lot."""
     if not tokens:
         return
-    # PostgREST `in.()` value list: URL-encode each token so '[' ']' from
-    # ExponentPushToken[...] don't trip the filter parser.
-    encoded = ",".join(urllib.parse.quote(t, safe="") for t in tokens)
-    _supabase_patch(f"push_tokens?token=in.({encoded})", {"alarm_master": False})
-    print(f"Deactivated {len(tokens)} expired tokens")
+    total = 0
+    for i in range(0, len(tokens), DEACTIVATE_CHUNK):
+        chunk = tokens[i:i + DEACTIVATE_CHUNK]
+        # PostgREST `in.()` value list: URL-encode each token so '[' ']' from
+        # ExponentPushToken[...] don't trip the filter parser.
+        encoded = ",".join(urllib.parse.quote(t, safe="") for t in chunk)
+        try:
+            _supabase_patch(f"push_tokens?token=in.({encoded})", {"alarm_master": False})
+            total += len(chunk)
+        except Exception as e:
+            # Don't let one bad chunk lose the rest.
+            print(f"WARN: deactivate chunk {i // DEACTIVATE_CHUNK} failed: {e}")
+    print(f"Deactivated {total}/{len(tokens)} expired tokens")
 
 
 def record_sent(sent_records: list[dict], now: dt.datetime) -> None:
