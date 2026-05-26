@@ -230,6 +230,13 @@ class AlarmWindowTests(unittest.TestCase):
         ok, _ = _match(_deal(departure_at=self._dep(0)), u, self.empty_history)
         self.assertTrue(ok)
 
+    def test_alarm_window_invalid_value_blocks(self):
+        """사양에 없는 값 ('abc' 등) 은 추측하지 않고 차단."""
+        u = _user(alarm_window="abc")
+        ok, reason = _match(_deal(departure_at=self._dep(3)), u, self.empty_history)
+        self.assertFalse(ok)
+        self.assertEqual(reason, "alarm_window_invalid")
+
     def test_alarm_window_before_other_filters(self):
         """alarm_window_null 이 origin/dest/cut/dedup 보다 먼저 잡혀야."""
         u = _user(alarm_window=None, origins=["GMP"], disc_short_pct=99)
