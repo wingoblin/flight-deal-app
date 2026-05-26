@@ -98,4 +98,4 @@ REALTIME_REQUEST_DELAY_SEC = 1.0
 # single long-haul) and origin/destination filters come from their
 # Supabase push_tokens row. No global cut applies on top.
 # Only the dedup window stays global (idempotency across all users).
-PUSH_DEDUP_DAYS = 7                   # same (token, from, dest, trip) → 1 push per 7d
+PUSH_DEDUP_DAYS = 3                   # same (token, from, dest, trip) → 1 push per 3d

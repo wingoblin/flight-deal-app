@@ -4,7 +4,7 @@ Per-user push notification trigger.
 Design:
 - Pull all active subscribers from Supabase.
 - For each (user, deal) pair, evaluate the user's own thresholds and filters.
-- Per-user 7-day dedup keyed on (token, route).
+- Per-user 3-day dedup keyed on (token, route).
 - Fire pushes individually so each user gets only deals matching their settings.
 
 Why per-user instead of a single global cut:
@@ -92,7 +92,7 @@ def _load_deals(repo_root: Path) -> list[dict]:
 
 
 def _format_summary(stats: dict, push_plan: list[tuple]) -> str:
-    """Workflow-log friendly summary. push_plan: list of (token, deal, reason)."""
+    """Workflow-log friendly summary. push_plan: list of (token, deal, reason, lang)."""
     lines = [
         "# Trigger evaluation (per-user)",
         f"- active users: {stats['users']}",
@@ -104,7 +104,7 @@ def _format_summary(stats: dict, push_plan: list[tuple]) -> str:
         lines.append(f"  - {reason}: {count}")
     if push_plan:
         lines.append("\n## Will push:")
-        for token, deal, _ in push_plan[:30]:  # cap log noise
+        for token, deal, _, _ in push_plan[:30]:  # cap log noise
             tok_short = token.split("[")[-1].rstrip("]")[:18]
             lines.append(
                 f"- {tok_short}  {deal['from']}→{deal['destination']}  "
@@ -156,7 +156,9 @@ def main() -> int:
             ok, reason = _matches_user(deal, user, recent_for_user)
             stats["reasons"][reason] = stats["reasons"].get(reason, 0) + 1
             if ok:
-                push_plan.append((user["token"], deal, reason))
+                # Pass user's lang through to send_pushes so _format_notification
+                # picks the right wording without a second user lookup.
+                push_plan.append((user["token"], deal, reason, user.get("lang") or "ko"))
 
     print(_format_summary(stats, push_plan))
 

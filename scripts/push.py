@@ -17,6 +17,7 @@ import json
 import os
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send"
@@ -54,6 +55,21 @@ def _supabase_post(path: str, rows: list[dict]) -> None:
     url = f"{_env('SUPABASE_URL').rstrip('/')}/rest/v1/{path}"
     body = json.dumps(rows).encode("utf-8")
     req = urllib.request.Request(url, data=body, method="POST", headers={
+        "apikey": _env("SUPABASE_SERVICE_KEY"),
+        "Authorization": f"Bearer {_env('SUPABASE_SERVICE_KEY')}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+    })
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        resp.read()
+
+
+def _supabase_patch(path_with_filter: str, payload: dict) -> None:
+    """PATCH a filtered set of rows. path_with_filter already includes the
+    PostgREST filter (e.g. 'push_tokens?token=in.(...)')."""
+    url = f"{_env('SUPABASE_URL').rstrip('/')}/rest/v1/{path_with_filter}"
+    body = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=body, method="PATCH", headers={
         "apikey": _env("SUPABASE_SERVICE_KEY"),
         "Authorization": f"Bearer {_env('SUPABASE_SERVICE_KEY')}",
         "Content-Type": "application/json",
@@ -131,18 +147,16 @@ def _format_notification(deal: dict, lang: str = "ko") -> tuple[str, str]:
 
 
 def send_pushes(push_plan: list[tuple]) -> list[dict]:
-    """Fan out pushes. push_plan: list of (token, deal, reason).
+    """Fan out pushes. push_plan: list of (token, deal, reason, lang).
     Returns list of {token, deal} actually sent (for record_sent)."""
     if not push_plan:
         return []
 
-    # Per-user language is in user dict, but we don't have it here without
-    # another lookup. Cheap fix: stash lang in deal at call site, or default ko.
     messages: list[dict] = []
     sent_records: list[dict] = []
 
-    for token, deal, _ in push_plan:
-        title, body = _format_notification(deal, lang=deal.get("_lang", "ko"))
+    for token, deal, _, lang in push_plan:
+        title, body = _format_notification(deal, lang=lang)
         messages.append({
             "to": token,
             "title": title,
@@ -157,17 +171,46 @@ def send_pushes(push_plan: list[tuple]) -> list[dict]:
         })
         sent_records.append({"token": token, "deal": deal})
 
-    # Chunk and send.
+    # Chunk and send. Collect tokens flagged DeviceNotRegistered for one-shot
+    # deactivation after the loop (Expo's data[] preserves request order).
+    expired: list[str] = []
     for i in range(0, len(messages), EXPO_BATCH_SIZE):
         batch = messages[i:i + EXPO_BATCH_SIZE]
         try:
-            _post_expo_batch(batch)
+            resp = _post_expo_batch(batch)
         except Exception as e:
             # One batch fail shouldn't kill all the others.
             print(f"WARN: Expo batch failed: {e}")
             continue
+        for j, item in enumerate(resp.get("data") or []):
+            if (item.get("status") == "error"
+                    and (item.get("details") or {}).get("error") == "DeviceNotRegistered"):
+                expired.append(batch[j]["to"])
+
+    if expired:
+        # A token can appear multiple times in one run (multiple deals); dedupe
+        # before the UPDATE so the in.() list stays small.
+        try:
+            deactivate_tokens(sorted(set(expired)))
+        except Exception as e:
+            print(f"WARN: deactivate_tokens failed: {e}")
 
     return sent_records
+
+
+def deactivate_tokens(tokens: list[str]) -> None:
+    """Soft-disable expired Expo tokens by flipping alarm_master=false.
+    Soft instead of DELETE so the row survives if the user re-opens the app
+    (the client will refresh the token and re-enable on the next subscribe).
+    Expo's DeviceNotRegistered is the only error we treat as permanent here;
+    other errors (rate limit, message too big, sender mismatch) stay transient."""
+    if not tokens:
+        return
+    # PostgREST `in.()` value list: URL-encode each token so '[' ']' from
+    # ExponentPushToken[...] don't trip the filter parser.
+    encoded = ",".join(urllib.parse.quote(t, safe="") for t in tokens)
+    _supabase_patch(f"push_tokens?token=in.({encoded})", {"alarm_master": False})
+    print(f"Deactivated {len(tokens)} expired tokens")
 
 
 def record_sent(sent_records: list[dict], now: dt.datetime) -> None:
