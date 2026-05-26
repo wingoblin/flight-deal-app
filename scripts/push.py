@@ -79,6 +79,57 @@ def _supabase_patch(path_with_filter: str, payload: dict) -> None:
         resp.read()
 
 
+def _parse_total(content_range: str) -> int:
+    """PostgREST returns 'Content-Range: 0-N/total' (or '*/total'). Extract total."""
+    if not content_range or "/" not in content_range:
+        return -1
+    try:
+        return int(content_range.rsplit("/", 1)[1])
+    except ValueError:
+        return -1
+
+
+def _supabase_count(path_with_filter: str) -> int:
+    """Count rows matching `path_with_filter` without pulling the data.
+    Uses Range: 0-0 + Prefer: count=exact so PostgREST reports total via
+    Content-Range. Returns -1 if the server didn't include a count."""
+    url = f"{_env('SUPABASE_URL').rstrip('/')}/rest/v1/{path_with_filter}"
+    req = urllib.request.Request(url, headers={
+        "apikey": _env("SUPABASE_SERVICE_KEY"),
+        "Authorization": f"Bearer {_env('SUPABASE_SERVICE_KEY')}",
+        "Accept": "application/json",
+        "Prefer": "count=exact",
+        "Range-Unit": "items",
+        "Range": "0-0",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            cr = resp.headers.get("Content-Range", "")
+            resp.read()
+    except urllib.error.HTTPError as e:
+        # Empty result set or out-of-range still includes Content-Range (416).
+        if e.code in (206, 416):
+            cr = e.headers.get("Content-Range", "")
+        else:
+            raise
+    return _parse_total(cr)
+
+
+def _supabase_delete(path_with_filter: str) -> int:
+    """DELETE rows matching the filter. Returns the deleted count (via
+    Content-Range with Prefer: count=exact), or -1 if not reported."""
+    url = f"{_env('SUPABASE_URL').rstrip('/')}/rest/v1/{path_with_filter}"
+    req = urllib.request.Request(url, method="DELETE", headers={
+        "apikey": _env("SUPABASE_SERVICE_KEY"),
+        "Authorization": f"Bearer {_env('SUPABASE_SERVICE_KEY')}",
+        "Prefer": "count=exact",
+    })
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        cr = resp.headers.get("Content-Range", "")
+        resp.read()
+    return _parse_total(cr)
+
+
 # ---------- Active users ----------
 
 def load_active_users() -> list[dict]:
@@ -88,7 +139,8 @@ def load_active_users() -> list[dict]:
     rows = _supabase_get(
         "push_tokens",
         {
-            "select": "token,origins,destinations,alarm_master,disc_short_pct,disc_long_pct,lang",
+            "select": "token,origins,destinations,alarm_master,alarm_window,"
+                      "disc_short_pct,disc_long_pct,lang",
             "alarm_master": "eq.true",
             "token": "not.like.*DEV-*",   # skip dev fake tokens
         },
@@ -227,3 +279,15 @@ def record_sent(sent_records: list[dict], now: dt.datetime) -> None:
     } for s in sent_records]
     _supabase_post("push_history", rows)
     print(f"Recorded {len(rows)} sends to push_history.")
+
+
+def cleanup_push_history(days: int, dry_run: bool = False) -> int:
+    """Delete push_history rows with sent_at older than `days`. Returns the
+    row count (deleted, or — in dry_run — would-be-deleted). dry_run path
+    issues no writes."""
+    cutoff = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=days)).isoformat()
+    # PostgREST filter values must be URL-encoded (timestamp has ':' and '+').
+    filt = f"push_history?sent_at=lt.{urllib.parse.quote(cutoff, safe='')}"
+    if dry_run:
+        return _supabase_count(filt)
+    return _supabase_delete(filt)

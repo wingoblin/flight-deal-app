@@ -99,3 +99,8 @@ REALTIME_REQUEST_DELAY_SEC = 1.0
 # Supabase push_tokens row. No global cut applies on top.
 # Only the dedup window stays global (idempotency across all users).
 PUSH_DEDUP_DAYS = 3                   # same (token, from, dest, trip) → 1 push per 3d
+
+# Keep push_history rows this long for audit/debug. Comfortably longer than
+# PUSH_DEDUP_DAYS so raising the dedup window later doesn't require touching
+# this. trigger.py prunes anything older at the end of each cycle.
+PUSH_HISTORY_RETENTION_DAYS = 30
