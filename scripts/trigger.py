@@ -57,20 +57,22 @@ def _matches_user(
 ) -> tuple[bool, str]:
     """Return (should_push, reason). reason kept for logging/debug.
 
-    Filters in order: master off → alarm_window (incl. departure date) →
-    origins → destinations → discount → dedup. Earliest fail wins.
+    Filters in order: master off → departure validity → past/future check →
+    alarm_window range (when set) → origins → destinations → discount → dedup.
+    Earliest fail wins.
 
-    alarm_window is the user's "days-until-departure" preference: '7' / '30'
-    / None. None = both toggles off → block. Compared against the deal's
-    departure_at date in UTC (±1d boundary acceptable, per spec).
+    Departure date checks (existence + not-past) ALWAYS apply — we never push
+    a deal we can't anchor in time. alarm_window only controls the upper
+    bound: '7' / '30' enforce a max days-until-departure; None means no upper
+    bound (UI sends NULL when both 7d/30d toggles are off — user wants all
+    valid future deals regardless of how far out). Date compare uses UTC;
+    ±1d boundary acceptable per spec.
     """
     if not user.get("alarm_master"):
         return False, "alarm_off"
 
-    window = user.get("alarm_window")
-    if window is None:
-        return False, "alarm_window_null"
-
+    # Departure date: required regardless of alarm_window. Cache can carry
+    # stale entries (past departures, missing fields) — never push those.
     dep_raw = deal.get("departure_at")
     if not dep_raw:
         return False, "no_departure_date"
@@ -87,13 +89,16 @@ def _matches_user(
     if days_until < 0:
         return False, "past_departure"
 
-    try:
-        limit = int(window)
-    except (TypeError, ValueError):
-        # Unknown alarm_window value — block defensively rather than guess.
-        return False, "alarm_window_invalid"
-    if days_until > limit:
-        return False, f"outside_{limit}d_window"
+    # alarm_window: upper-bound check only. NULL = no upper bound.
+    window = user.get("alarm_window")
+    if window is not None:
+        try:
+            limit = int(window)
+        except (TypeError, ValueError):
+            # Unknown alarm_window value — block defensively rather than guess.
+            return False, "alarm_window_invalid"
+        if days_until > limit:
+            return False, f"outside_{limit}d_window"
 
     origins = user.get("origins") or []
     if origins and deal["from"] not in origins:

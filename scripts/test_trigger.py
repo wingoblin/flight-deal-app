@@ -165,7 +165,10 @@ class MatchingTests(unittest.TestCase):
 
 
 class AlarmWindowTests(unittest.TestCase):
-    """사양 (작업 4): user.alarm_window ∈ {'7','30',None}, 출발일까지 남은 일수 필터."""
+    """사양 (확정): alarm_window ∈ {'7','30',None}.
+    - 출발일 검증 (존재 + 미래) 은 무조건 적용
+    - '7'/'30' 은 days_until_departure 의 상한
+    - NULL 은 상한 없음 (UI 의 7d/30d 토글 둘 다 OFF) — 미래 유효 딜은 다 통과"""
 
     def setUp(self):
         self.empty_history = set()
@@ -173,13 +176,6 @@ class AlarmWindowTests(unittest.TestCase):
     def _dep(self, days_from_today: int) -> str:
         d = TODAY + dt.timedelta(days=days_from_today)
         return d.isoformat() + "T10:00:00+09:00"
-
-    def test_alarm_window_null_blocks(self):
-        """alarm_window=NULL → 두 토글 모두 OFF → 차단."""
-        u = _user(alarm_window=None)
-        ok, reason = _match(_deal(departure_at=self._dep(3)), u, self.empty_history)
-        self.assertFalse(ok)
-        self.assertEqual(reason, "alarm_window_null")
 
     def test_no_departure_date_blocks(self):
         """deal 에 departure_at 없으면 안전하게 차단."""
@@ -237,12 +233,40 @@ class AlarmWindowTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertEqual(reason, "alarm_window_invalid")
 
-    def test_alarm_window_before_other_filters(self):
-        """alarm_window_null 이 origin/dest/cut/dedup 보다 먼저 잡혀야."""
-        u = _user(alarm_window=None, origins=["GMP"], disc_short_pct=99)
+    def test_alarm_window_null_passes_future_departure(self):
+        """NULL = 상한 없음. 정상 미래 출발일 통과."""
+        u = _user(alarm_window=None)
+        ok, _ = _match(_deal(departure_at=self._dep(15)), u, self.empty_history)
+        self.assertTrue(ok)
+
+    def test_alarm_window_null_far_future_passes(self):
+        """NULL 이면 D+200 같은 먼 미래도 통과 (상한 없음)."""
+        u = _user(alarm_window=None)
+        ok, _ = _match(_deal(departure_at=self._dep(200)), u, self.empty_history)
+        self.assertTrue(ok)
+
+    def test_alarm_window_null_still_blocks_past_departure(self):
+        """NULL 이어도 과거 출발은 차단 — stale cache 거짓 양성 방지."""
+        u = _user(alarm_window=None)
+        ok, reason = _match(_deal(departure_at=self._dep(-1)), u, self.empty_history)
+        self.assertFalse(ok)
+        self.assertEqual(reason, "past_departure")
+
+    def test_alarm_window_null_still_blocks_missing_date(self):
+        """NULL 이어도 출발일 누락은 차단 — 정책 일관성 + 사용자 행동 가능성."""
+        d = _deal()
+        del d["departure_at"]
+        u = _user(alarm_window=None)
+        ok, reason = _match(d, u, self.empty_history)
+        self.assertFalse(ok)
+        self.assertEqual(reason, "no_departure_date")
+
+    def test_alarm_window_null_still_subject_to_other_filters(self):
+        """NULL 은 윈도 상한만 우회. origin/destination/cut/dedup 필터는 적용."""
+        u = _user(alarm_window=None, origins=["GMP"])
         ok, reason = _match(_deal(**{"from": "ICN"}), u, self.empty_history)
         self.assertFalse(ok)
-        self.assertEqual(reason, "alarm_window_null")
+        self.assertEqual(reason, "origin_filtered")
 
 
 if __name__ == "__main__":
