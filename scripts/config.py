@@ -22,33 +22,39 @@ DESTINATIONS = [
 ]
 TRIPS = [("oneway", True), ("roundtrip", False)]
 
-# A deal is flagged when the current minimum sits at least this far below the
-# median baseline (whole-route distribution, no date/trip-duration grouping).
-DEAL_THRESHOLD_PCT = 25.0
+# Single deal threshold applied uniformly to all routes (Step 2-A-3 decision).
+# DEAL_THRESHOLD_PCT_BY_DEST stays as an empty dict so future per-route tuning
+# can add entries without code changes; deal_threshold() falls back to default.
+# 2단계에서 노선별 override 추가 가능 — 1단계는 단일값.
+DEAL_THRESHOLD_PCT_DEFAULT = 15.0
 
-# Per-destination overrides for the deal threshold. Long-haul routes (Europe,
-# Americas) swing less in percentage terms, so a smaller discount already counts
-# as a deal. Destinations not listed fall back to DEAL_THRESHOLD_PCT.
-DEAL_THRESHOLD_PCT_BY_DEST = {
-    d: 15.0 for d in (
-        # Europe
-        "CDG", "LHR", "FCO", "BCN", "FRA", "AMS", "IST",
-        "ZRH", "VIE", "MUC", "PRG", "MAD", "HEL",
-        # Americas
-        "JFK", "LAX", "HNL", "YVR", "SEA", "ATL", "DFW", "IAD", "LAS", "YYZ",
-    )
-}
+DEAL_THRESHOLD_PCT_BY_DEST = {}
 
 
 def deal_threshold(dest):
-    return DEAL_THRESHOLD_PCT_BY_DEST.get(dest, DEAL_THRESHOLD_PCT)
+    return DEAL_THRESHOLD_PCT_BY_DEST.get(dest, DEAL_THRESHOLD_PCT_DEFAULT)
 
-# Judgment baseline is fixed to bootstrap mode (the current cache's
-# cross-sectional median). Snapshots keep accumulating either way, so when
-# enough history exists this can be flipped on to compare/switch to the median
-# of past daily minimums after MIN_HISTORY_DAYS.
-USE_HISTORICAL_BASELINE = False
-MIN_HISTORY_DAYS = 14
+
+# Baseline = mean of the 5 lowest historical daily minimums for the route
+# (Step 2-A-2). Below this we don't have enough days to trust the floor —
+# block the alert via the history guard. cycle-by-cycle cross-sectional
+# median (old "bootstrap" mode) was removed: cabin contamination made it
+# unreliable.
+MIN_HISTORY_DAYS = 5
+
+# Cabin-mix protector (Step 2-A-0). The Travelpayouts API doesn't expose
+# cabin class and trip_class=0 is partially ignored by the cache, so a
+# fraction of business/first fares (3-10x economy) can sneak in. Drop the
+# top X% by price as a distribution-shape-agnostic guard — works even when
+# contaminating fares are the majority (median-based filters fail in that
+# case because the median itself is inflated). Heuristic: tune in Step 2 if
+# observed in production.
+OUTLIER_DROP_TOP_PCT = 0.30
+
+# Sanity guard (Step 2-A-4). Normal economy deals don't exceed this discount;
+# anything above is almost always residual baseline contamination despite
+# other guards. is_deal=False + WARN log when fired.
+SANITY_MAX_DISCOUNT_PCT = 50.0
 
 # Error guard: a roundtrip can't realistically cost less than a single one-way
 # leg, so flag (and exclude from alerts) any roundtrip priced below its route's

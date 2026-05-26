@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from trigger import _matches_user, _route_key, _is_long_haul
+from trigger import _matches_user, _route_key
 
 
 # Fixed "today" so tests are independent of wall clock.
@@ -59,16 +59,10 @@ def _match(deal, user, history):
     return _matches_user(deal, user, history, today=TODAY)
 
 
-class RouteAndHaulTests(unittest.TestCase):
+class RouteKeyTests(unittest.TestCase):
 
     def test_route_key_format(self):
         self.assertEqual(_route_key(_deal()), "ICN|BKK|roundtrip")
-
-    def test_long_haul_detection(self):
-        # CDG = Paris, in long-haul list
-        self.assertTrue(_is_long_haul("CDG"))
-        # BKK = Bangkok, not in long-haul list
-        self.assertFalse(_is_long_haul("BKK"))
 
 
 class MatchingTests(unittest.TestCase):
@@ -109,20 +103,18 @@ class MatchingTests(unittest.TestCase):
         ok, _ = _match(_deal(destination="BKK"), u, self.empty_history)
         self.assertTrue(ok)
 
-    def test_short_haul_uses_short_cut(self):
-        """단거리 deal 은 disc_short_pct 와 비교."""
+    def test_single_user_cut_applied(self):
+        """Step 2 사양: 모든 노선에 disc_short_pct 단일 적용. 장단거리 분기 없음.
+        disc_long_pct 컬럼은 DB 잔존하지만 trigger 가 안 봄."""
         u = _user(disc_short_pct=50, disc_long_pct=10)
-        # discount 40% < short cut 50% → 거부
-        ok, reason = _match(_deal(destination="BKK", discount_pct=40), u, self.empty_history)
+        # discount 40% < short cut 50% → 거부 (장거리 destination 이어도 동일)
+        ok, reason = _match(_deal(destination="CDG", discount_pct=40), u, self.empty_history)
         self.assertFalse(ok)
         self.assertEqual(reason, "below_user_cut")
-
-    def test_long_haul_uses_long_cut(self):
-        """장거리 deal 은 disc_long_pct 와 비교."""
-        u = _user(disc_short_pct=50, disc_long_pct=10)
-        # 같은 40% 인데 장거리(CDG)면 long cut 10% 와 비교 → 통과
-        ok, _ = _match(_deal(destination="CDG", discount_pct=40), u, self.empty_history)
-        self.assertTrue(ok)
+        # 단거리도 동일
+        ok2, reason2 = _match(_deal(destination="BKK", discount_pct=40), u, self.empty_history)
+        self.assertFalse(ok2)
+        self.assertEqual(reason2, "below_user_cut")
 
     def test_at_exact_cut_passes(self):
         """경계값 포함 (>=)."""

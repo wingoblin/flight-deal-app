@@ -12,7 +12,7 @@ import realtime
 import tpclient
 from config import (
     BLOCKED_GATES,
-    DEAL_THRESHOLD_PCT,
+    DEAL_THRESHOLD_PCT_DEFAULT,
     deal_threshold,
     DESTINATIONS,
     MAX_CACHE_AGE_DAYS,
@@ -20,12 +20,13 @@ from config import (
     MIN_HISTORY_DAYS,
     MIN_HOURS_BEFORE_DEPARTURE,
     ORIGINS,
+    OUTLIER_DROP_TOP_PCT,
     OUTLIER_MIN_N,
     REALTIME_CROSSCHECK,
     REALTIME_REQUEST_DELAY_SEC,
     ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO,
+    SANITY_MAX_DISCOUNT_PCT,
     TRIPS,
-    USE_HISTORICAL_BASELINE,
 )
 
 DEALS_JSON = Path(__file__).resolve().parent.parent / "deals.json"
@@ -155,19 +156,80 @@ def filter_items(items, latest_items, now):
     return kept
 
 
-def judge(stats, history, threshold):
-    """Compute discount of current min vs baseline and flag deals against the
-    route's threshold. Baseline is fixed to bootstrap (current cross-sectional
-    median); the historical mode is only used when USE_HISTORICAL_BASELINE is
-    enabled and enough days exist."""
-    if USE_HISTORICAL_BASELINE and len(history) >= MIN_HISTORY_DAYS:
-        baseline = statistics.median(history)
-        basis = f"historical ({len(history)}d)"
-    else:
-        baseline = stats["median"]
-        basis = f"bootstrap (history {len(history)}d)"
+def filter_price_outliers(items, drop_top_pct=OUTLIER_DROP_TOP_PCT):
+    """Cabin-mix protector (Step 2-A-0). Returns (kept_items, dropped_prices).
+
+    Heuristic: sort items by price ascending, drop the top drop_top_pct
+    fraction. Works even when contaminating fares are the majority — a
+    median-based filter can't, because the median is itself contaminated in
+    that case. Items with non-numeric price are passed through untouched.
+
+    No-op when items has 0 or 1 valid prices (nothing to compare against).
+    Guard2 in judge() catches over-aggressive trimming via the post-filter
+    items_count >= 5 requirement.
+    """
+    valid = [it for it in items if isinstance(it.get("price"), (int, float))]
+    if len(valid) <= 1:
+        return list(items), []
+    valid.sort(key=lambda x: x["price"])
+    keep_count = max(1, int(len(valid) * (1 - drop_top_pct)))
+    kept_valid = valid[:keep_count]
+    dropped_prices = [x["price"] for x in valid[keep_count:]]
+    # Preserve non-numeric-price items defensively (filter_items shouldn't
+    # leave any, but if it does they're untouched here).
+    nonnumeric = [it for it in items if not isinstance(it.get("price"), (int, float))]
+    return kept_valid + nonnumeric, dropped_prices
+
+
+def judge(stats, history, threshold, today_items_count):
+    """Compute (baseline, discount, is_deal, diag).
+
+    Baseline = mean of the 5 lowest historical daily minimums. Old bootstrap
+    mode (today's cross-sectional median) was removed in Step 2 — cabin
+    contamination made it unreliable.
+
+    Guards (each forces is_deal=False; diag.guard_triggered names the one):
+      - "history": fewer than MIN_HISTORY_DAYS days of recorded daily mins
+        → warmup, can't trust the floor yet
+      - "today_n": fewer than 5 fares survived filter_items + outlier filter
+        → cache too thin to call this representative
+      - "sanity": computed discount > SANITY_MAX_DISCOUNT_PCT → almost
+        always residual contamination despite other guards; WARN log
+
+    today_items_count is the count AFTER filter_price_outliers — caller
+    must pass stats["n"] (which summarize() computes on the already-filtered
+    list).
+    """
+    diag = {
+        "baseline_value": None,
+        "baseline_method": "rolling_n5_lowest",
+        "history_days_used": len(history),
+        "today_items_count_after_outlier_filter": today_items_count,
+        "guard_triggered": None,
+        "cabin_class": "economy",   # Step 2-A-5: always economy (trip_class=0
+                                    # + price outlier guard; API doesn't expose
+                                    # cabin, so we label the survivors).
+    }
+
+    if len(history) < MIN_HISTORY_DAYS:
+        diag["guard_triggered"] = "history"
+        return None, 0.0, False, diag
+
+    if today_items_count < 5:
+        diag["guard_triggered"] = "today_n"
+        return None, 0.0, False, diag
+
+    baseline = statistics.mean(sorted(history)[:5])
+    diag["baseline_value"] = baseline
     discount = (baseline - stats["min"]) / baseline * 100
-    return baseline, discount, discount >= threshold, basis
+
+    if discount > SANITY_MAX_DISCOUNT_PCT:
+        print(f"WARN: sanity guard fired — baseline={baseline:,.0f} "
+              f"min={stats['min']:,} discount={discount:.1f}%")
+        diag["guard_triggered"] = "sanity"
+        return baseline, discount, False, diag
+
+    return baseline, discount, discount >= threshold, diag
 
 
 def main():
@@ -204,6 +266,18 @@ def main():
                 items = filter_items(items, latest, now)
                 if DUMP_RAW_API and (origin, dest) in DUMP_ROUTES and trip_label == "roundtrip":
                     _diag_dump_raw(origin, dest, trip_label, items, "post-filter")
+
+                # Cabin-mix protector: drop the top OUTLIER_DROP_TOP_PCT by
+                # price before judging. The pre-filter items would still
+                # include any business/first fares the cache returns despite
+                # trip_class=0 (Travelpayouts cache partially ignores it).
+                items, dropped_outlier_prices = filter_price_outliers(items)
+                if dropped_outlier_prices:
+                    sample = [f"{p:,}" for p in dropped_outlier_prices[:5]]
+                    extra = f" (+{len(dropped_outlier_prices)-5} more)" if len(dropped_outlier_prices) > 5 else ""
+                    print(f"WARN: {origin}->{dest} {trip_label} outlier filter "
+                          f"removed {len(dropped_outlier_prices)} fares: {sample}{extra}")
+
                 stats = summarize(items)
                 if not stats:
                     results.append({"origin": origin, "dest": dest, "trip": trip_label, "status": "no-data"})
@@ -229,12 +303,15 @@ def main():
 
                 history = dealdb.historical_mins(conn, origin, dest, trip_label, today)
                 threshold = deal_threshold(dest)
-                baseline, discount, is_deal, basis = judge(stats, history, threshold)
+                baseline, discount, is_deal, diag = judge(stats, history, threshold, stats["n"])
+                # Caller-side diag enrichment: outlier counts known here.
+                diag["outliers_removed_count"] = len(dropped_outlier_prices)
+                diag["outliers_removed_prices"] = list(dropped_outlier_prices)
                 results.append({
                     "origin": origin, "dest": dest, "trip": trip_label, "status": "ok",
                     "min": stats["min"], "median": stats["median"], "n": stats["n"],
                     "baseline": baseline, "discount": discount, "threshold": threshold,
-                    "is_deal": is_deal, "basis": basis, "cheap": cheap,
+                    "is_deal": is_deal, "diag": diag, "cheap": cheap,
                 })
 
     conn.close()
@@ -334,7 +411,7 @@ def write_deals_json(results):
         "origin": ORIGINS[0],
         "origins": ORIGINS,
         "currency": "KRW",
-        "threshold_pct": DEAL_THRESHOLD_PCT,
+        "threshold_pct": DEAL_THRESHOLD_PCT_DEFAULT,
         "refresh_interval_hours": 1,
         "disclaimer": (
             "캐시 기반 가격으로 실시간이 아닙니다. 좌석이 빠르게 팔릴 수 있어 "
@@ -356,6 +433,7 @@ def write_deals_json(results):
                 "gate": r["cheap"].get("gate"),
                 "cache_date": cache_date_from_link(r["cheap"].get("link")),
                 "link": strip_link_params(r["cheap"].get("link")),
+                "cabin_class": (r.get("diag") or {}).get("cabin_class") or "economy",
             }
             for r in deals
         ],
@@ -394,7 +472,7 @@ def drop_impossible_roundtrips(results):
 
 
 def report(results, today):
-    print(f"# Snapshot {today}  (threshold: -{DEAL_THRESHOLD_PCT:.0f}%)\n")
+    print(f"# Snapshot {today}  (threshold: -{DEAL_THRESHOLD_PCT_DEFAULT:.0f}%)\n")
     header = f"{'Route':<10}{'Trip':<11}{'Min':>10}{'Baseline':>11}{'Disc':>8}  {'Deal':<4} Basis"
     print(header)
     print("-" * len(header))
@@ -404,10 +482,21 @@ def report(results, today):
         if r["status"] != "ok":
             print(f"{route:<10}{r['trip']:<11}{'-':>10}{'-':>11}{'-':>8}  {'-':<4} {r['status']}")
             continue
+        diag = r.get("diag") or {}
+        guard = diag.get("guard_triggered")
+        if r.get("sanity_note"):
+            basis = r["sanity_note"]
+        elif guard:
+            basis = (f"GUARD:{guard} (hist={diag.get('history_days_used')}d "
+                     f"n_post_outlier={diag.get('today_items_count_after_outlier_filter')})")
+        else:
+            basis = (f"n5-min hist={diag.get('history_days_used')}d "
+                     f"n={diag.get('today_items_count_after_outlier_filter')} "
+                     f"thr-{r['threshold']:.0f}%")
         mark = "DROP" if r.get("sanity_note") else ("YES" if r["is_deal"] else "no")
-        basis = r.get("sanity_note") or f"{r['basis']}  thr-{r['threshold']:.0f}%"
+        baseline_str = f"{round(r['baseline']):,}" if r['baseline'] is not None else "-"
         print(
-            f"{route:<10}{r['trip']:<11}{r['min']:>10,}{round(r['baseline']):>11,}"
+            f"{route:<10}{r['trip']:<11}{r['min']:>10,}{baseline_str:>11}"
             f"{r['discount']:>7.1f}%  {mark:<4} {basis}"
         )
 

@@ -30,7 +30,6 @@ from typing import Iterable
 from config import (
     PUSH_DEDUP_DAYS,
     PUSH_HISTORY_RETENTION_DAYS,
-    DEAL_THRESHOLD_PCT_BY_DEST,
 )
 
 
@@ -40,13 +39,6 @@ def _route_key(deal: dict) -> str:
     """Identity for dedup. Round-trip and one-way to the same city are
     different products, so trip is part of the key."""
     return f"{deal['from']}|{deal['destination']}|{deal['trip']}"
-
-
-def _is_long_haul(destination: str) -> bool:
-    """Long-haul iff destination is in the 15%-threshold list (Europe/Americas).
-    Matches the same definition snapshot.py uses for the display cut, so the
-    two stages stay consistent."""
-    return destination in DEAL_THRESHOLD_PCT_BY_DEST
 
 
 def _matches_user(
@@ -109,10 +101,10 @@ def _matches_user(
     if destinations and deal["destination"] not in destinations:
         return False, "destination_filtered"
 
-    # Per-user discount cut. Long-haul uses disc_long_pct; everything else
-    # uses disc_short_pct. Sensible defaults match the app's defaults.
-    is_long = _is_long_haul(deal["destination"])
-    user_cut = (user.get("disc_long_pct") if is_long else user.get("disc_short_pct")) or 0
+    # Per-user discount cut. Step 2 (decision: single threshold, no long/short
+    # split) — every route uses disc_short_pct. disc_long_pct column is left
+    # in DB unused; if the long/short distinction returns, restore the branch.
+    user_cut = user.get("disc_short_pct") or 0
     if float(deal.get("discount_pct", 0)) < float(user_cut):
         return False, "below_user_cut"
 
@@ -229,8 +221,8 @@ def main() -> int:
 # ---------- Exposed for tests ----------
 
 # Pure functions are the testable interface; importable as
-#   from trigger import _matches_user, _route_key, _is_long_haul
-__all__ = ["_matches_user", "_route_key", "_is_long_haul", "main"]
+#   from trigger import _matches_user, _route_key
+__all__ = ["_matches_user", "_route_key", "main"]
 
 
 if __name__ == "__main__":
