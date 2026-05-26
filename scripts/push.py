@@ -38,7 +38,14 @@ def _env(name: str) -> str:
 def _supabase_get(path: str, params: dict | None = None) -> list:
     url = f"{_env('SUPABASE_URL').rstrip('/')}/rest/v1/{path}"
     if params:
-        qs = "&".join(f"{k}={v}" for k, v in params.items())
+        # URL-encode values so '+' (timezone offset), ':' etc. survive
+        # transport. safe='*,()' preserves PostgREST query syntax: '*' for
+        # LIKE patterns (not.like.*DEV-*), ',' for select/in lists, '()' for
+        # in.(a,b,c).
+        qs = "&".join(
+            f"{k}={urllib.parse.quote(str(v), safe='*,()')}"
+            for k, v in params.items()
+        )
         url = f"{url}?{qs}"
     req = urllib.request.Request(url, headers={
         "apikey": _env("SUPABASE_SERVICE_KEY"),
