@@ -13,6 +13,7 @@ import tpclient
 from config import (
     BASELINE_WINDOW_DAYS,
     BLOCKED_GATES,
+    DEAL_CAP_PCT,
     DESTINATIONS,
     MAX_CACHE_AGE_DAYS,
     MAX_ERROR_RATE,
@@ -26,8 +27,6 @@ from config import (
     REALTIME_REQUEST_DELAY_SEC,
     ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO,
     SANITY_MAX_DISCOUNT_PCT,
-    TIER_ORANGE_PCT,
-    TIER_RED_PCT,
     TRIPS,
 )
 
@@ -184,18 +183,10 @@ def filter_price_outliers(items, drop_top_pct=OUTLIER_DROP_TOP_PCT):
 
 
 def _deal_tier(min_price, baseline):
-    """Color tier by price vs the floor, or None if not a deal.
-      green  : below the floor
-      orange : floor .. floor +TIER_ORANGE_PCT
-      red    : floor +TIER_ORANGE_PCT .. floor +TIER_RED_PCT
-    """
-    if min_price < baseline:
-        return "green"
-    if min_price <= baseline * (1 + TIER_ORANGE_PCT / 100):
-        return "orange"
-    if min_price <= baseline * (1 + TIER_RED_PCT / 100):
-        return "red"
-    return None
+    """"green" highlight when the min is below the floor; None for a regular
+    deal (floor .. floor +DEAL_CAP_PCT). None here means "no color label", NOT
+    "not a deal" — the deal decision is is_deal in judge()."""
+    return "green" if min_price < baseline else None
 
 
 def judge(stats, history, today_items_count):
@@ -205,11 +196,11 @@ def judge(stats, history, today_items_count):
     (caller windows the history via dealdb.historical_mins).
 
     Deal decision (Step 3): is_deal iff current min <= baseline ×
-    (1 + TIER_RED_PCT/100). Each deal gets a color tier (diag["tier"]):
-    green (below floor) / orange (floor..+TIER_ORANGE_PCT) /
-    red (+TIER_ORANGE_PCT..+TIER_RED_PCT). `discount`
-    ((baseline-min)/baseline×100) is kept for display/logging and can be
-    negative (orange/red sit above the floor).
+    (1 + DEAL_CAP_PCT/100). A deal below the floor gets the "green" highlight
+    tier (diag["tier"]); a deal from the floor up to +DEAL_CAP_PCT has tier None
+    (regular deal, no color label). `discount` ((baseline-min)/baseline×100) is
+    kept for display/logging and can be negative (regular deals sit above the
+    floor).
 
     Guards (each forces is_deal=False; diag.guard_triggered names the one):
       - "history": fewer than MIN_HISTORY_DAYS daily mins in window → warmup
@@ -226,7 +217,7 @@ def judge(stats, history, today_items_count):
         "history_days_used": len(history),
         "today_items_count_after_outlier_filter": today_items_count,
         "guard_triggered": None,
-        "tier": None,               # green / orange / red (set below when a deal)
+        "tier": None,               # "green" highlight or None (set below)
         "cabin_class": "economy",   # Step 2-A-5: always economy (trip_class=0
                                     # + price outlier guard; API doesn't expose
                                     # cabin, so we label the survivors).
@@ -250,9 +241,9 @@ def judge(stats, history, today_items_count):
         diag["guard_triggered"] = "sanity"
         return baseline, discount, False, diag
 
-    tier = _deal_tier(stats["min"], baseline)
-    diag["tier"] = tier
-    return baseline, discount, tier is not None, diag
+    diag["tier"] = _deal_tier(stats["min"], baseline)
+    is_deal = stats["min"] <= baseline * (1 + DEAL_CAP_PCT / 100)
+    return baseline, discount, is_deal, diag
 
 
 def main():
@@ -462,9 +453,10 @@ def write_deals_json(results):
         "origin": ORIGINS[0],
         "origins": ORIGINS,
         "currency": "KRW",
-        # Tier cutoffs (% above the floor) that map to each deal's color label.
-        # green = below floor; orange = 0..orange; red = orange..red.
-        "tier_thresholds_pct": {"orange": TIER_ORANGE_PCT, "red": TIER_RED_PCT},
+        # Deals run from below the floor up to floor +deal_cap_pct. A deal with
+        # tier "green" is below the floor (highlight it); tier null is a regular
+        # deal in the 0..+deal_cap_pct band (no color label).
+        "deal_cap_pct": DEAL_CAP_PCT,
         "refresh_interval_hours": 1,
         "disclaimer": (
             "캐시 기반 가격으로 실시간이 아닙니다. 좌석이 빠르게 팔릴 수 있어 "
@@ -525,8 +517,7 @@ def drop_impossible_roundtrips(results):
 
 
 def report(results, today):
-    print(f"# Snapshot {today}  (tiers: green<floor, orange<=+{TIER_ORANGE_PCT:.0f}%, "
-          f"red<=+{TIER_RED_PCT:.0f}%)\n")
+    print(f"# Snapshot {today}  (deals: green<floor, regular<=+{DEAL_CAP_PCT:.0f}%)\n")
     header = f"{'Route':<10}{'Trip':<11}{'Min':>10}{'Baseline':>11}{'Disc':>8}  {'Tier':<7} Basis"
     print(header)
     print("-" * len(header))
@@ -546,7 +537,7 @@ def report(results, today):
         else:
             basis = (f"n5-min hist={diag.get('history_days_used')}d "
                      f"n={diag.get('today_items_count_after_outlier_filter')} "
-                     f"floor+{TIER_RED_PCT:.0f}%")
+                     f"floor+{DEAL_CAP_PCT:.0f}%")
         if r.get("sanity_note"):
             mark = "DROP"
         elif r["is_deal"]:
@@ -569,7 +560,7 @@ def report(results, today):
         c = r["cheap"]
         ret = f" ~ {c['return_at'][:10]}" if c.get("return_at") else ""
         print(
-            f"- [{r['tier']}] {r['origin']}->{r['dest']} [{r['trip']}] {r['min']:,} KRW "
+            f"- [{r['tier'] or 'deal'}] {r['origin']}->{r['dest']} [{r['trip']}] {r['min']:,} KRW "
             f"(baseline {round(r['baseline']):,}, vs floor {r['discount']:+.1f}%) "
             f"출발 {(c.get('departure_at') or '')[:10]}{ret} "
             f"{c.get('airline', '')}/{c.get('gate', '')}"

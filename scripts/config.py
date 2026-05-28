@@ -22,16 +22,14 @@ DESTINATIONS = [
 ]
 TRIPS = [("oneway", True), ("roundtrip", False)]
 
-# --- Deal judgment (Step 3: "near floor" tiers) ---
-# A deal = current min is at or below the route's recent price floor +TIER_RED_PCT.
-# The floor (baseline) is the mean of the 5 lowest daily-minimums within a
-# rolling window. Each deal gets a tier (drives the frontend's color label):
-#   green  : min below the floor  (cheaper than the recent low)
-#   orange : floor .. floor +TIER_ORANGE_PCT
-#   red    : floor +TIER_ORANGE_PCT .. floor +TIER_RED_PCT
-# Above floor +TIER_RED_PCT it's not a deal.
-TIER_ORANGE_PCT = 5.0
-TIER_RED_PCT = 20.0
+# --- Deal judgment (Step 3: "near floor") ---
+# A deal = current min is at or below the route's recent price floor
+# +DEAL_CAP_PCT. The floor (baseline) is the mean of the 5 lowest daily-minimums
+# within a rolling window. Deals below the floor get the "green" highlight tier
+# (the standout deal, cheaper than the recent low); deals from the floor up to
+# +DEAL_CAP_PCT are regular deals with no tier (tier=None) — shown in the app
+# without a color label. Above floor +DEAL_CAP_PCT it's not a deal.
+DEAL_CAP_PCT = 20.0
 
 # Baseline is computed only from daily-mins within this rolling window (days
 # back from today). Keeps the floor on the current season — older data stays

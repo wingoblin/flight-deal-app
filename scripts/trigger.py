@@ -136,11 +136,11 @@ def _matches_user(
     """Return (should_push, reason). reason kept for logging/debug.
 
     Filters in order: master off → departure validity → past/future check →
-    alarm_window range (when set) → origins → destinations → tier (red = no
-    push). Earliest fail wins. (Step 3: the per-user discount cut was removed —
+    alarm_window range (when set) → origins → destinations → tier (only "green"
+    pushes). Earliest fail wins. (Step 3: the per-user discount cut was removed —
     the deal decision is made once, in snapshot.py's near-floor judge. Dedup
     moved out: it's now per-bundle, applied in main() via bundle_signature.
-    red tier is dropped from push here but still ships in deals.json.)
+    Non-green deals are dropped from push here but still ship in deals.json.)
 
     Departure date checks (existence + not-past) ALWAYS apply — we never push
     a deal we can't anchor in time. alarm_window only controls the upper
@@ -191,12 +191,12 @@ def _matches_user(
         return False, "destination_filtered"
 
     # Step 3: the deal decision lives entirely in snapshot.py (near-floor
-    # tiers). trigger no longer re-filters on a per-user discount percentage,
-    # and dedup is now per-bundle (main() via bundle_signature). red tier
-    # (floor +5..20%) shows in the app list but isn't worth a push, so only
-    # green/orange notify; deals.json still carries red for the app.
-    if deal.get("tier") == "red":
-        return False, "tier_red_no_push"
+    # judge). trigger no longer re-filters on a per-user discount percentage,
+    # and dedup is now per-bundle (main() via bundle_signature). Only the
+    # "green" tier (below the floor) is worth a push; regular deals (tier None,
+    # floor..+20%) still ship in deals.json for the app but don't notify.
+    if deal.get("tier") != "green":
+        return False, "non_green_no_push"
 
     return True, "ok"
 

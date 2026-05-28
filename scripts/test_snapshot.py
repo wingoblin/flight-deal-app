@@ -113,31 +113,26 @@ class JudgeTests(unittest.TestCase):
         self.assertEqual(diag["tier"], "green")
         self.assertIsNone(diag["guard_triggered"])
 
-    def test_orange_tier_floor_to_5pct(self):
-        """floor .. floor+5% → deal, tier orange (boundaries inclusive)."""
-        history = [600_000] * 5            # baseline 600,000; +5% = 630,000
-        # exactly at the floor → orange (green is strictly below)
+    def test_regular_deal_at_floor(self):
+        """at the floor → deal, tier None (green is strictly below the floor)."""
+        history = [600_000] * 5            # baseline 600,000
         _, discount, is_deal, diag = judge(self._stats(600_000), history, 20)
         self.assertTrue(is_deal)
         self.assertAlmostEqual(discount, 0.0, places=4)
-        self.assertEqual(diag["tier"], "orange")
-        # +5% exact → still orange
-        _, _, _, diag5 = judge(self._stats(630_000), history, 20)
-        self.assertEqual(diag5["tier"], "orange")
+        self.assertIsNone(diag["tier"])
 
-    def test_red_tier_5_to_20pct(self):
-        """floor+5% .. floor+20% → deal, tier red (upper edge inclusive)."""
-        history = [600_000] * 5            # +5% = 630,000, +20% = 720,000
-        # just over +5% → red
-        _, _, is_deal, diag = judge(self._stats(630_001), history, 20)
+    def test_regular_deal_up_to_cap(self):
+        """floor .. floor+20% → deal, tier None (no color); +20% edge inclusive."""
+        history = [600_000] * 5            # +20% = 720,000
+        _, _, is_deal, diag = judge(self._stats(660_000), history, 20)
         self.assertTrue(is_deal)
-        self.assertEqual(diag["tier"], "red")
-        # +20% exact → still a deal, red
+        self.assertIsNone(diag["tier"])
+        # +20% exact → still a deal, still no color
         _, _, is_deal_edge, diag20 = judge(self._stats(720_000), history, 20)
         self.assertTrue(is_deal_edge)
-        self.assertEqual(diag20["tier"], "red")
+        self.assertIsNone(diag20["tier"])
 
-    def test_no_deal_above_red(self):
+    def test_no_deal_above_cap(self):
         """min above floor+20% → not a deal, tier None, no guard."""
         history = [600_000] * 5            # +20% = 720,000
         baseline, discount, is_deal, diag = judge(

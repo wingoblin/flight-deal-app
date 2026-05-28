@@ -132,14 +132,14 @@ class MatchingTests(unittest.TestCase):
         ok_neg, _ = _match(_deal(discount_pct=-3.0), u)
         self.assertTrue(ok_neg)
 
-    def test_red_tier_excluded_from_push(self):
-        """red 티어(floor +5~15%)는 앱엔 보이지만 푸시 제외. green/orange 는 통과."""
+    def test_only_green_pushes(self):
+        """green(floor 이하)만 푸시. 그 외 일반 딜(tier None, floor~+20%)은
+        앱엔 보이지만 푸시 제외."""
         u = _user()
-        ok_red, reason = _match(_deal(tier="red"), u)
-        self.assertFalse(ok_red)
-        self.assertEqual(reason, "tier_red_no_push")
+        ok_regular, reason = _match(_deal(tier=None), u)
+        self.assertFalse(ok_regular)
+        self.assertEqual(reason, "non_green_no_push")
         self.assertTrue(_match(_deal(tier="green"), u)[0])
-        self.assertTrue(_match(_deal(tier="orange"), u)[0])
 
     def test_all_filters_in_order(self):
         """필터 우선순위: alarm → window → origin → destination."""
