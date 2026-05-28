@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-28T19:36:10+00:00",
+  "generated_at": "2026-05-28T19:52:38+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -14,6 +14,24 @@
   "refresh_interval_hours": 1,
   "disclaimer": "캐시 기반 가격으로 실시간이 아닙니다. 좌석이 빠르게 팔릴 수 있어 클릭 시 이미 매진되었거나 가격이 변동됐을 수 있습니다.",
   "deals": [
+    {
+      "from": "ICN",
+      "destination": "HKG",
+      "trip": "oneway",
+      "price": 141000,
+      "cache_price": 131361,
+      "realtime_price": null,
+      "baseline": 145296,
+      "discount_pct": 3.0,
+      "departure_at": "2026-06-11T22:30:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "UO",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-05-28",
+      "link": "/search/ICN1106HKG1?t=UO17812170001781227200000230ICNHKG_1bb79f8f188a1620965a1de929fd7131_6232&search_date=28052026&origin_airports=0",
+      "cabin_class": "economy"
+    },
     {
       "from": "GMP",
       "destination": "JFK",
@@ -88,24 +106,6 @@
     },
     {
       "from": "GMP",
-      "destination": "HNL",
-      "trip": "roundtrip",
-      "price": 1261000,
-      "cache_price": 1178348,
-      "realtime_price": null,
-      "baseline": 1204697,
-      "discount_pct": -4.7,
-      "departure_at": "2026-08-24T08:10:00+09:00",
-      "return_at": "2026-09-07T13:40:00-10:00",
-      "transfers": 1,
-      "airline": "OZ",
-      "gate": "City.Travel",
-      "cache_date": "2026-05-27",
-      "link": "/search/GMP2408HNL07091?t=AS17875590001787565900001255GMPKIXHNL17887884001788905700000815HNLHNDGMP_f4425dcd241420385f06f9d7bc7f8adb_56465&search_date=27052026&origin_airports=0&destination_airports=1",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "GMP",
       "destination": "PQC",
       "trip": "oneway",
       "price": 280000,
@@ -120,6 +120,24 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-05-26",
       "link": "/search/GMP0806PQC1?t=VJ17809194001781003400001520GMPPUSPQC_0f367c21eb30b7c34496696f1c7043e6_12475&search_date=26052026&origin_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "GMP",
+      "destination": "HNL",
+      "trip": "roundtrip",
+      "price": 1275000,
+      "cache_price": 1178348,
+      "realtime_price": 1191544,
+      "baseline": 1204697,
+      "discount_pct": -5.8,
+      "departure_at": "2026-08-24T08:10:00+09:00",
+      "return_at": "2026-09-07T13:40:00-10:00",
+      "transfers": 1,
+      "airline": "OZ",
+      "gate": "City.Travel",
+      "cache_date": "2026-05-27",
+      "link": "/search/GMP2408HNL07091?t=AS17875590001787565900001255GMPKIXHNL17887884001788905700000815HNLHNDGMP_f4425dcd241420385f06f9d7bc7f8adb_56465&search_date=27052026&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
