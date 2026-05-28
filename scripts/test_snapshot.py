@@ -83,10 +83,8 @@ class JudgeTests(unittest.TestCase):
 
     def test_history_guard_fires_below_min_history_days(self):
         """<5 days of history → block, baseline None, reason 'history'."""
-        # 4 days (< MIN_HISTORY_DAYS=5)
         baseline, discount, is_deal, diag = judge(
-            self._stats(100_000), [200_000] * 4, threshold=15.0,
-            today_items_count=20,
+            self._stats(100_000), [200_000] * 4, today_items_count=20,
         )
         self.assertIsNone(baseline)
         self.assertFalse(is_deal)
@@ -96,46 +94,55 @@ class JudgeTests(unittest.TestCase):
     def test_today_n_guard_fires_below_5(self):
         """today_items_count < 5 → block, reason 'today_n'."""
         baseline, discount, is_deal, diag = judge(
-            self._stats(100_000), [200_000] * 10, threshold=15.0,
-            today_items_count=4,
+            self._stats(100_000), [200_000] * 10, today_items_count=4,
         )
         self.assertIsNone(baseline)
         self.assertFalse(is_deal)
         self.assertEqual(diag["guard_triggered"], "today_n")
 
-    def test_normal_pass(self):
-        """5+ days history, n>=5, discount within sanity: judge as normal."""
+    def test_deal_when_below_floor(self):
+        """min cheaper than the floor → deal (no lower bound)."""
         history = [500_000, 550_000, 600_000, 650_000, 700_000, 800_000]
-        # baseline = mean of lowest 5 = (500+550+600+650+700)/5 = 600,000
-        # today_min 510,000 → discount = (600k-510k)/600k = 15.0%
+        # baseline = mean(lowest 5) = 600,000
         baseline, discount, is_deal, diag = judge(
-            self._stats(510_000), history, threshold=15.0,
-            today_items_count=20,
+            self._stats(540_000), history, today_items_count=20,
         )
         self.assertEqual(baseline, 600_000)
-        self.assertAlmostEqual(discount, 15.0, places=4)
+        self.assertGreater(discount, 0)   # below floor → positive discount
         self.assertTrue(is_deal)
         self.assertIsNone(diag["guard_triggered"])
 
-    def test_threshold_strict_inequality(self):
-        """discount must be >= threshold to flag."""
+    def test_deal_at_floor_exact(self):
+        """min == floor → deal (discount 0)."""
         history = [600_000] * 5
-        # baseline = 600k, min = 510k, discount = 15%
-        # threshold 15 → equal → is_deal True
-        _, _, is_deal_eq, _ = judge(self._stats(510_000), history, 15.0, 20)
-        self.assertTrue(is_deal_eq)
-        # threshold 15.1 → below → is_deal False
-        _, _, is_deal_below, _ = judge(self._stats(510_000), history, 15.1, 20)
-        self.assertFalse(is_deal_below)
+        _, discount, is_deal, _ = judge(self._stats(600_000), history, 20)
+        self.assertAlmostEqual(discount, 0.0, places=4)
+        self.assertTrue(is_deal)
 
-    def test_sanity_guard_blocks_over_50_pct(self):
-        """discount > 50% → block (contamination smell), keep baseline/discount
-        in diag for forensics."""
-        history = [1_000_000] * 5
-        # min 100k → discount 90%
+    def test_deal_at_upper_bound_boundary(self):
+        """min == floor × 1.05 → deal (<=, inclusive). One KRW more → no deal."""
+        history = [600_000] * 5   # baseline 600,000; +5% = 630,000
+        _, _, is_deal_at, _ = judge(self._stats(630_000), history, 20)
+        self.assertTrue(is_deal_at)
+        _, _, is_deal_over, _ = judge(self._stats(630_001), history, 20)
+        self.assertFalse(is_deal_over)
+
+    def test_no_deal_above_upper_bound(self):
+        """min well above floor+5% → no deal, discount negative, no guard."""
+        history = [600_000] * 5   # +5% = 630,000
         baseline, discount, is_deal, diag = judge(
-            self._stats(100_000), history, threshold=15.0,
-            today_items_count=20,
+            self._stats(700_000), history, today_items_count=20,
+        )
+        self.assertEqual(baseline, 600_000)
+        self.assertLess(discount, 0)   # above floor → negative discount
+        self.assertFalse(is_deal)
+        self.assertIsNone(diag["guard_triggered"])
+
+    def test_sanity_guard_blocks_far_below_floor(self):
+        """discount > 50% (min far below floor) → block as contamination."""
+        history = [1_000_000] * 5
+        baseline, discount, is_deal, diag = judge(
+            self._stats(100_000), history, today_items_count=20,
         )
         self.assertEqual(baseline, 1_000_000)
         self.assertAlmostEqual(discount, 90.0, places=4)
@@ -143,19 +150,60 @@ class JudgeTests(unittest.TestCase):
         self.assertEqual(diag["guard_triggered"], "sanity")
 
     def test_diag_baseline_method_and_cabin(self):
-        """diag carries baseline_method='rolling_n5_lowest' and
-        cabin_class='economy' (Step 2-A-5: always economy in phase 1)."""
         history = [500_000] * 5
-        _, _, _, diag = judge(self._stats(450_000), history, 15.0, 20)
+        _, _, _, diag = judge(self._stats(450_000), history, 20)
         self.assertEqual(diag["baseline_method"], "rolling_n5_lowest")
         self.assertEqual(diag["cabin_class"], "economy")
 
     def test_baseline_uses_only_5_lowest_even_with_more_history(self):
-        """Even with 10 days of history, baseline is the mean of the 5 lowest."""
         history = [100, 200, 300, 400, 500, 9999, 9999, 9999, 9999, 9999]
-        # lowest 5 = [100,200,300,400,500], mean = 300
-        baseline, _, _, _ = judge(self._stats(1), history, 15.0, 20)
+        baseline, _, _, _ = judge(self._stats(1), history, 20)
         self.assertEqual(baseline, 300)
+
+
+class HistoricalMinsWindowTests(unittest.TestCase):
+    """dealdb.historical_mins rolling-window filter (in-memory sqlite)."""
+
+    def _conn_with(self, rows):
+        import dealdb
+        conn = dealdb.connect(":memory:")
+        for date_str, mn in rows:
+            dealdb.upsert_snapshot(conn, {
+                "snapshot_date": date_str, "origin": "ICN", "destination": "BKK",
+                "trip": "roundtrip", "n": 10, "min_price": mn,
+                "p25": mn, "median": mn, "mean": mn,
+                "cheapest_depart_at": None, "cheapest_return_at": None,
+                "cheapest_airline": None, "cheapest_gate": None, "cheapest_link": None,
+            })
+        return conn, dealdb
+
+    def test_window_excludes_old_rows(self):
+        # today = 2026-05-30; 30-day window keeps >= 2026-04-30
+        conn, dealdb = self._conn_with([
+            ("2026-03-01", 100),   # 90d old — excluded
+            ("2026-04-15", 200),   # 45d old — excluded
+            ("2026-05-10", 300),   # within window
+            ("2026-05-20", 400),   # within window
+        ])
+        mins = dealdb.historical_mins(conn, "ICN", "BKK", "roundtrip",
+                                      "2026-05-30", window_days=30)
+        self.assertEqual(sorted(mins), [300, 400])
+
+    def test_no_window_returns_all_history(self):
+        conn, dealdb = self._conn_with([
+            ("2026-03-01", 100), ("2026-05-20", 400),
+        ])
+        mins = dealdb.historical_mins(conn, "ICN", "BKK", "roundtrip", "2026-05-30")
+        self.assertEqual(sorted(mins), [100, 400])
+
+    def test_window_under_30_days_uses_what_exists(self):
+        # Only 3 days of data, all within window → all returned
+        conn, dealdb = self._conn_with([
+            ("2026-05-25", 100), ("2026-05-26", 200), ("2026-05-27", 300),
+        ])
+        mins = dealdb.historical_mins(conn, "ICN", "BKK", "roundtrip",
+                                      "2026-05-28", window_days=30)
+        self.assertEqual(sorted(mins), [100, 200, 300])
 
 
 if __name__ == "__main__":

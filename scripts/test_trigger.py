@@ -46,8 +46,6 @@ def _user(**over):
         "destinations": [],       # 빈 배열 = 전체 허용
         "alarm_master": True,
         "alarm_window": "30",     # 기본값: 30일 윈도우. None 은 차단 케이스용.
-        "disc_short_pct": 25,
-        "disc_long_pct": 15,
         "lang": "ko",
     }
     base.update(over)
@@ -103,24 +101,15 @@ class MatchingTests(unittest.TestCase):
         ok, _ = _match(_deal(destination="BKK"), u, self.empty_history)
         self.assertTrue(ok)
 
-    def test_single_user_cut_applied(self):
-        """Step 2 사양: 모든 노선에 disc_short_pct 단일 적용. 장단거리 분기 없음.
-        disc_long_pct 컬럼은 DB 잔존하지만 trigger 가 안 봄."""
-        u = _user(disc_short_pct=50, disc_long_pct=10)
-        # discount 40% < short cut 50% → 거부 (장거리 destination 이어도 동일)
-        ok, reason = _match(_deal(destination="CDG", discount_pct=40), u, self.empty_history)
-        self.assertFalse(ok)
-        self.assertEqual(reason, "below_user_cut")
-        # 단거리도 동일
-        ok2, reason2 = _match(_deal(destination="BKK", discount_pct=40), u, self.empty_history)
-        self.assertFalse(ok2)
-        self.assertEqual(reason2, "below_user_cut")
-
-    def test_at_exact_cut_passes(self):
-        """경계값 포함 (>=)."""
-        u = _user(disc_short_pct=25)
-        ok, _ = _match(_deal(discount_pct=25), u, self.empty_history)
+    def test_low_discount_deal_still_passes(self):
+        """Step 3: trigger 의 per-user discount cut 제거됨. snapshot 이 flag 한
+        deal 은 discount_pct 가 낮아도(또는 음수여도) trigger 를 통과해야 함
+        (route/window/dedup 만 적용)."""
+        u = _user()
+        ok, _ = _match(_deal(discount_pct=2.0), u, self.empty_history)
         self.assertTrue(ok)
+        ok_neg, _ = _match(_deal(discount_pct=-3.0), u, self.empty_history)
+        self.assertTrue(ok_neg)
 
     def test_dedup_blocks_recent(self):
         history = {f"{_user()['token']}|{_route_key(_deal())}"}
@@ -148,8 +137,8 @@ class MatchingTests(unittest.TestCase):
         self.assertTrue(ok)
 
     def test_all_filters_in_order(self):
-        """필터 우선순위: alarm → origin → destination → cut → dedup."""
-        u = _user(alarm_master=False, origins=["GMP"], disc_short_pct=99)
+        """필터 우선순위: alarm → window → origin → destination → dedup."""
+        u = _user(alarm_master=False, origins=["GMP"])
         ok, reason = _match(_deal(**{"from": "ICN"}), u, self.empty_history)
         self.assertFalse(ok)
         # alarm_off 가 가장 먼저 잡혀야 (early return)

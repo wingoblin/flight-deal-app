@@ -50,8 +50,9 @@ def _matches_user(
     """Return (should_push, reason). reason kept for logging/debug.
 
     Filters in order: master off → departure validity → past/future check →
-    alarm_window range (when set) → origins → destinations → discount → dedup.
-    Earliest fail wins.
+    alarm_window range (when set) → origins → destinations → dedup.
+    Earliest fail wins. (Step 3: the per-user discount cut was removed — the
+    deal decision is made once, in snapshot.py's near-floor judge.)
 
     Departure date checks (existence + not-past) ALWAYS apply — we never push
     a deal we can't anchor in time. alarm_window only controls the upper
@@ -101,12 +102,10 @@ def _matches_user(
     if destinations and deal["destination"] not in destinations:
         return False, "destination_filtered"
 
-    # Per-user discount cut. Step 2 (decision: single threshold, no long/short
-    # split) — every route uses disc_short_pct. disc_long_pct column is left
-    # in DB unused; if the long/short distinction returns, restore the branch.
-    user_cut = user.get("disc_short_pct") or 0
-    if float(deal.get("discount_pct", 0)) < float(user_cut):
-        return False, "below_user_cut"
+    # Step 3: the deal decision lives entirely in snapshot.py (near-floor
+    # model). trigger no longer re-filters on a per-user discount percentage —
+    # disc_short_pct/disc_long_pct are not consulted. A deal in deals.json is
+    # already "near its floor"; the user only narrows by route + window here.
 
     # Per-user dedup: same token + route in last N days → skip.
     if f"{user['token']}|{_route_key(deal)}" in recent_for_user:

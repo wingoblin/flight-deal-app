@@ -65,15 +65,33 @@ def upsert_snapshot(conn, row):
     conn.commit()
 
 
-def historical_mins(conn, origin, destination, trip, before_date):
-    """Daily cheapest prices recorded before `before_date`, oldest first."""
-    rows = conn.execute(
-        """
-        SELECT min_price FROM snapshots
-        WHERE origin = ? AND destination = ? AND trip = ?
-          AND snapshot_date < ?
-        ORDER BY snapshot_date
-        """,
-        (origin, destination, trip, before_date),
-    ).fetchall()
+def historical_mins(conn, origin, destination, trip, before_date, window_days=None):
+    """Daily cheapest prices recorded before `before_date`, oldest first.
+
+    When window_days is set, only rows within that many days before
+    `before_date` are returned (rolling window) — older rows stay in the DB
+    for backtest/audit but are excluded here so the baseline tracks the
+    current season. None = no window (all history before before_date)."""
+    if window_days is not None:
+        rows = conn.execute(
+            """
+            SELECT min_price FROM snapshots
+            WHERE origin = ? AND destination = ? AND trip = ?
+              AND snapshot_date < ?
+              AND snapshot_date >= date(?, ?)
+            ORDER BY snapshot_date
+            """,
+            (origin, destination, trip, before_date,
+             before_date, f"-{int(window_days)} days"),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT min_price FROM snapshots
+            WHERE origin = ? AND destination = ? AND trip = ?
+              AND snapshot_date < ?
+            ORDER BY snapshot_date
+            """,
+            (origin, destination, trip, before_date),
+        ).fetchall()
     return [r["min_price"] for r in rows]

@@ -146,8 +146,7 @@ def load_active_users() -> list[dict]:
     rows = _supabase_get(
         "push_tokens",
         {
-            "select": "token,origins,destinations,alarm_master,alarm_window,"
-                      "disc_short_pct,disc_long_pct,lang",
+            "select": "token,origins,destinations,alarm_master,alarm_window,lang",
             "alarm_master": "eq.true",
             "token": "not.like.*DEV-*",   # skip dev fake tokens
         },

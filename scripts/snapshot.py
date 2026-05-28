@@ -11,9 +11,8 @@ import dealdb
 import realtime
 import tpclient
 from config import (
+    BASELINE_WINDOW_DAYS,
     BLOCKED_GATES,
-    DEAL_THRESHOLD_PCT_DEFAULT,
-    deal_threshold,
     DESTINATIONS,
     MAX_CACHE_AGE_DAYS,
     MAX_PRICE_DIVERGENCE_PCT,
@@ -27,6 +26,7 @@ from config import (
     ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO,
     SANITY_MAX_DISCOUNT_PCT,
     TRIPS,
+    UPPER_BOUND_PCT,
 )
 
 DEALS_JSON = Path(__file__).resolve().parent.parent / "deals.json"
@@ -181,24 +181,26 @@ def filter_price_outliers(items, drop_top_pct=OUTLIER_DROP_TOP_PCT):
     return kept_valid + nonnumeric, dropped_prices
 
 
-def judge(stats, history, threshold, today_items_count):
-    """Compute (baseline, discount, is_deal, diag).
+def judge(stats, history, today_items_count):
+    """Compute (baseline, discount, is_deal, diag) under the near-floor model.
 
-    Baseline = mean of the 5 lowest historical daily minimums. Old bootstrap
-    mode (today's cross-sectional median) was removed in Step 2 — cabin
-    contamination made it unreliable.
+    Baseline = mean of the 5 lowest daily minimums within the rolling window
+    (caller windows the history via dealdb.historical_mins).
+
+    Deal decision (Step 3): is_deal iff current min <= baseline ×
+    (1 + UPPER_BOUND_PCT/100). No lower bound — cheaper than the floor always
+    qualifies; up to UPPER_BOUND_PCT above the floor still qualifies.
+    `discount` ((baseline-min)/baseline×100) is kept for display/logging and
+    can be negative when the min sits above the floor.
 
     Guards (each forces is_deal=False; diag.guard_triggered names the one):
-      - "history": fewer than MIN_HISTORY_DAYS days of recorded daily mins
-        → warmup, can't trust the floor yet
-      - "today_n": fewer than 5 fares survived filter_items + outlier filter
-        → cache too thin to call this representative
-      - "sanity": computed discount > SANITY_MAX_DISCOUNT_PCT → almost
-        always residual contamination despite other guards; WARN log
+      - "history": fewer than MIN_HISTORY_DAYS daily mins in window → warmup
+      - "today_n": fewer than 5 fares after filter_items + outlier filter
+      - "sanity": discount > SANITY_MAX_DISCOUNT_PCT (min far below floor) →
+        almost always residual contamination; WARN log
 
     today_items_count is the count AFTER filter_price_outliers — caller
-    must pass stats["n"] (which summarize() computes on the already-filtered
-    list).
+    passes stats["n"] (summarize() runs on the already-filtered list).
     """
     diag = {
         "baseline_value": None,
@@ -229,7 +231,8 @@ def judge(stats, history, threshold, today_items_count):
         diag["guard_triggered"] = "sanity"
         return baseline, discount, False, diag
 
-    return baseline, discount, discount >= threshold, diag
+    is_deal = stats["min"] <= baseline * (1 + UPPER_BOUND_PCT / 100)
+    return baseline, discount, is_deal, diag
 
 
 def main():
@@ -301,16 +304,20 @@ def main():
                     "cheapest_link": cheap.get("link"),
                 })
 
-                history = dealdb.historical_mins(conn, origin, dest, trip_label, today)
-                threshold = deal_threshold(dest)
-                baseline, discount, is_deal, diag = judge(stats, history, threshold, stats["n"])
+                # Rolling-window baseline: only daily-mins within the last
+                # BASELINE_WINDOW_DAYS feed the floor (older rows stay in DB).
+                history = dealdb.historical_mins(
+                    conn, origin, dest, trip_label, today,
+                    window_days=BASELINE_WINDOW_DAYS,
+                )
+                baseline, discount, is_deal, diag = judge(stats, history, stats["n"])
                 # Caller-side diag enrichment: outlier counts known here.
                 diag["outliers_removed_count"] = len(dropped_outlier_prices)
                 diag["outliers_removed_prices"] = list(dropped_outlier_prices)
                 results.append({
                     "origin": origin, "dest": dest, "trip": trip_label, "status": "ok",
                     "min": stats["min"], "median": stats["median"], "n": stats["n"],
-                    "baseline": baseline, "discount": discount, "threshold": threshold,
+                    "baseline": baseline, "discount": discount,
                     "is_deal": is_deal, "diag": diag, "cheap": cheap,
                 })
 
@@ -411,7 +418,11 @@ def write_deals_json(results):
         "origin": ORIGINS[0],
         "origins": ORIGINS,
         "currency": "KRW",
-        "threshold_pct": DEAL_THRESHOLD_PCT_DEFAULT,
+        # Field kept for frontend payload compatibility; under the near-floor
+        # model it now carries UPPER_BOUND_PCT (the +% tolerance above the
+        # floor), not the old "min discount to qualify". Frontend relabels in
+        # the queued Step 2-B.
+        "threshold_pct": UPPER_BOUND_PCT,
         "refresh_interval_hours": 1,
         "disclaimer": (
             "캐시 기반 가격으로 실시간이 아닙니다. 좌석이 빠르게 팔릴 수 있어 "
@@ -425,7 +436,7 @@ def write_deals_json(results):
                 "price": r["min"],
                 "baseline": round(r["baseline"]),
                 "discount_pct": round(r["discount"], 1),
-                "threshold_pct": r["threshold"],
+                "threshold_pct": UPPER_BOUND_PCT,
                 "departure_at": r["cheap"].get("departure_at"),
                 "return_at": r["cheap"].get("return_at") or None,
                 "transfers": max(r["cheap"].get("transfers") or 0, r["cheap"].get("return_transfers") or 0),
@@ -472,7 +483,7 @@ def drop_impossible_roundtrips(results):
 
 
 def report(results, today):
-    print(f"# Snapshot {today}  (threshold: -{DEAL_THRESHOLD_PCT_DEFAULT:.0f}%)\n")
+    print(f"# Snapshot {today}  (deal: min <= floor +{UPPER_BOUND_PCT:.0f}%)\n")
     header = f"{'Route':<10}{'Trip':<11}{'Min':>10}{'Baseline':>11}{'Disc':>8}  {'Deal':<4} Basis"
     print(header)
     print("-" * len(header))
@@ -492,7 +503,7 @@ def report(results, today):
         else:
             basis = (f"n5-min hist={diag.get('history_days_used')}d "
                      f"n={diag.get('today_items_count_after_outlier_filter')} "
-                     f"thr-{r['threshold']:.0f}%")
+                     f"floor+{UPPER_BOUND_PCT:.0f}%")
         mark = "DROP" if r.get("sanity_note") else ("YES" if r["is_deal"] else "no")
         baseline_str = f"{round(r['baseline']):,}" if r['baseline'] is not None else "-"
         print(

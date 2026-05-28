@@ -22,24 +22,23 @@ DESTINATIONS = [
 ]
 TRIPS = [("oneway", True), ("roundtrip", False)]
 
-# Single deal threshold applied uniformly to all routes (Step 2-A-3 decision).
-# DEAL_THRESHOLD_PCT_BY_DEST stays as an empty dict so future per-route tuning
-# can add entries without code changes; deal_threshold() falls back to default.
-# 2단계에서 노선별 override 추가 가능 — 1단계는 단일값.
-DEAL_THRESHOLD_PCT_DEFAULT = 15.0
+# --- Deal judgment (Step 3: "near floor" model) ---
+# A deal = current min is at or near the route's recent price floor. The floor
+# (baseline) is the mean of the 5 lowest daily-minimums within a rolling
+# window. We flag a deal when the current min is no more than UPPER_BOUND_PCT
+# above that floor (no lower bound — cheaper than the floor always qualifies).
+UPPER_BOUND_PCT = 5.0
 
-DEAL_THRESHOLD_PCT_BY_DEST = {}
+# Baseline is computed only from daily-mins within this rolling window (days
+# back from today). Keeps the floor on the current season — older data stays
+# in the DB for backtest/audit but is excluded from the baseline so that
+# off-season prices don't distort it. If fewer days exist (e.g. 7 so far),
+# use what's there.
+BASELINE_WINDOW_DAYS = 30
 
-
-def deal_threshold(dest):
-    return DEAL_THRESHOLD_PCT_BY_DEST.get(dest, DEAL_THRESHOLD_PCT_DEFAULT)
-
-
-# Baseline = mean of the 5 lowest historical daily minimums for the route
-# (Step 2-A-2). Below this we don't have enough days to trust the floor —
-# block the alert via the history guard. cycle-by-cycle cross-sectional
-# median (old "bootstrap" mode) was removed: cabin contamination made it
-# unreliable.
+# Baseline = mean of the 5 lowest daily minimums within BASELINE_WINDOW_DAYS.
+# Below MIN_HISTORY_DAYS days of data we can't trust the floor — history guard
+# blocks the alert.
 MIN_HISTORY_DAYS = 5
 
 # Cabin-mix protector (Step 2-A-0). The Travelpayouts API doesn't expose
@@ -51,9 +50,9 @@ MIN_HISTORY_DAYS = 5
 # observed in production.
 OUTLIER_DROP_TOP_PCT = 0.30
 
-# Sanity guard (Step 2-A-4). Normal economy deals don't exceed this discount;
-# anything above is almost always residual baseline contamination despite
-# other guards. is_deal=False + WARN log when fired.
+# Sanity guard (Step 2-A-4). Even in the near-floor model, a min more than this
+# far BELOW the floor is almost always residual contamination, not a real
+# fare. is_deal=False + WARN log when fired.
 SANITY_MAX_DISCOUNT_PCT = 50.0
 
 # Error guard: a roundtrip can't realistically cost less than a single one-way
