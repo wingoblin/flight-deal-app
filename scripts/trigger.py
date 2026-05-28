@@ -193,7 +193,7 @@ def _matches_user(
     # Step 3: the deal decision lives entirely in snapshot.py (near-floor
     # tiers). trigger no longer re-filters on a per-user discount percentage,
     # and dedup is now per-bundle (main() via bundle_signature). red tier
-    # (floor +5..15%) shows in the app list but isn't worth a push, so only
+    # (floor +5..20%) shows in the app list but isn't worth a push, so only
     # green/orange notify; deals.json still carries red for the app.
     if deal.get("tier") == "red":
         return False, "tier_red_no_push"
