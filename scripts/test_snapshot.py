@@ -11,7 +11,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from snapshot import _guard_publish_safety, filter_price_outliers, judge
+from config import DISPLAY_SAFETY_BUFFER_PCT
+from snapshot import (
+    _guard_publish_safety,
+    apply_conservative_pricing,
+    filter_price_outliers,
+    judge,
+)
 
 
 def _items(*prices):
@@ -100,8 +106,8 @@ class JudgeTests(unittest.TestCase):
         self.assertFalse(is_deal)
         self.assertEqual(diag["guard_triggered"], "today_n")
 
-    def test_green_tier_below_floor(self):
-        """min cheaper than the floor → deal, tier green (no lower bound)."""
+    def test_deal_below_floor(self):
+        """min cheaper than the floor → deal, positive discount."""
         history = [500_000, 550_000, 600_000, 650_000, 700_000, 800_000]
         # baseline = mean(lowest 5) = 600,000
         baseline, discount, is_deal, diag = judge(
@@ -110,35 +116,26 @@ class JudgeTests(unittest.TestCase):
         self.assertEqual(baseline, 600_000)
         self.assertGreater(discount, 0)   # below floor → positive discount
         self.assertTrue(is_deal)
-        self.assertEqual(diag["tier"], "green")
         self.assertIsNone(diag["guard_triggered"])
 
-    def test_orange_tier_floor_to_5pct(self):
-        """floor .. floor+5% → deal, tier orange (boundaries inclusive)."""
-        history = [600_000] * 5            # baseline 600,000; +5% = 630,000
-        # exactly at the floor → orange (green is strictly below)
-        _, discount, is_deal, diag = judge(self._stats(600_000), history, 20)
+    def test_deal_at_floor(self):
+        """at the floor → deal, ~0 discount."""
+        history = [600_000] * 5            # baseline 600,000
+        _, discount, is_deal, _ = judge(self._stats(600_000), history, 20)
         self.assertTrue(is_deal)
         self.assertAlmostEqual(discount, 0.0, places=4)
-        self.assertEqual(diag["tier"], "orange")
-        # +5% exact → still orange
-        _, _, _, diag5 = judge(self._stats(630_000), history, 20)
-        self.assertEqual(diag5["tier"], "orange")
 
-    def test_red_tier_5_to_20pct(self):
-        """floor+5% .. floor+20% → deal, tier red (upper edge inclusive)."""
-        history = [600_000] * 5            # +5% = 630,000, +20% = 720,000
-        # just over +5% → red
-        _, _, is_deal, diag = judge(self._stats(630_001), history, 20)
+    def test_deal_up_to_cap(self):
+        """floor .. floor+20% → deal; +20% edge inclusive."""
+        history = [600_000] * 5            # +20% = 720,000
+        _, _, is_deal, _ = judge(self._stats(660_000), history, 20)
         self.assertTrue(is_deal)
-        self.assertEqual(diag["tier"], "red")
-        # +20% exact → still a deal, red
-        _, _, is_deal_edge, diag20 = judge(self._stats(720_000), history, 20)
+        # +20% exact → still a deal
+        _, _, is_deal_edge, _ = judge(self._stats(720_000), history, 20)
         self.assertTrue(is_deal_edge)
-        self.assertEqual(diag20["tier"], "red")
 
-    def test_no_deal_above_red(self):
-        """min above floor+20% → not a deal, tier None, no guard."""
+    def test_no_deal_above_cap(self):
+        """min above floor+20% → not a deal, no guard."""
         history = [600_000] * 5            # +20% = 720,000
         baseline, discount, is_deal, diag = judge(
             self._stats(720_001), history, today_items_count=20,
@@ -146,7 +143,6 @@ class JudgeTests(unittest.TestCase):
         self.assertEqual(baseline, 600_000)
         self.assertLess(discount, 0)
         self.assertFalse(is_deal)
-        self.assertIsNone(diag["tier"])
         self.assertIsNone(diag["guard_triggered"])
 
     def test_sanity_guard_blocks_far_below_floor(self):
@@ -251,6 +247,59 @@ class GuardPublishSafetyTests(unittest.TestCase):
         # deals must pass regardless of crosscheck outcomes.
         results = [self._ok(True) for _ in range(20)]
         _guard_publish_safety(results)  # should not raise
+
+
+class ApplyConservativePricingTests(unittest.TestCase):
+    """Published price = max(cache, live) + buffer, rounded up to 1,000 KRW,
+    with the deal re-judged on it. Buffer is DISPLAY_SAFETY_BUFFER_PCT."""
+
+    def _deal(self, **over):
+        r = {
+            "status": "ok",
+            "is_deal": True,
+            "min": 100_000,
+            "baseline": 120_000,
+            "discount": 16.7,
+        }
+        r.update(over)
+        return r
+
+    def _buffered_round(self, anchor):
+        import math
+        return math.ceil(anchor * (1 + DISPLAY_SAFETY_BUFFER_PCT / 100) / 1000) * 1000
+
+    def test_buffer_applied_without_live(self):
+        """No live price → buffer the cached fare, round up to 1,000."""
+        r = self._deal(min=100_000, baseline=120_000)
+        apply_conservative_pricing([r])
+        self.assertEqual(r["display_price"], self._buffered_round(100_000))
+        self.assertTrue(r["is_deal"])
+        self.assertGreater(r["discount"], 0)
+
+    def test_anchors_on_higher_live(self):
+        """Live above cache → anchor on live, then buffer."""
+        r = self._deal(min=100_000, baseline=120_000, realtime_krw=110_000)
+        apply_conservative_pricing([r])
+        self.assertEqual(r["display_price"], self._buffered_round(110_000))
+
+    def test_lower_live_ignored(self):
+        """Live below cache → keep the (higher) cache as the anchor."""
+        r = self._deal(min=100_000, baseline=120_000, realtime_krw=90_000)
+        apply_conservative_pricing([r])
+        self.assertEqual(r["display_price"], self._buffered_round(100_000))
+
+    def test_over_cap_after_buffer_drops_deal(self):
+        """Buffered price above floor+DEAL_CAP_PCT → not a deal anymore."""
+        # baseline 100,000, cap +20% = 120,000. cache 117,000 +7% = 125,190 > cap.
+        r = self._deal(min=117_000, baseline=100_000)
+        apply_conservative_pricing([r])
+        self.assertFalse(r["is_deal"])
+        self.assertIn("OVER-CAP", r["price_note"])
+
+    def test_non_deals_untouched(self):
+        r = self._deal(is_deal=False)
+        apply_conservative_pricing([r])
+        self.assertNotIn("display_price", r)
 
 
 if __name__ == "__main__":

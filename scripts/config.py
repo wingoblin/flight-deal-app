@@ -22,16 +22,12 @@ DESTINATIONS = [
 ]
 TRIPS = [("oneway", True), ("roundtrip", False)]
 
-# --- Deal judgment (Step 3: "near floor" tiers) ---
-# A deal = current min is at or below the route's recent price floor +TIER_RED_PCT.
-# The floor (baseline) is the mean of the 5 lowest daily-minimums within a
-# rolling window. Each deal gets a tier (drives the frontend's color label):
-#   green  : min below the floor  (cheaper than the recent low)
-#   orange : floor .. floor +TIER_ORANGE_PCT
-#   red    : floor +TIER_ORANGE_PCT .. floor +TIER_RED_PCT
-# Above floor +TIER_RED_PCT it's not a deal.
-TIER_ORANGE_PCT = 5.0
-TIER_RED_PCT = 20.0
+# --- Deal judgment (Step 3: "near floor") ---
+# A deal = current min is at or below the route's recent price floor
+# +DEAL_CAP_PCT. The floor (baseline) is the mean of the 5 lowest daily-minimums
+# within a rolling window. Above floor +DEAL_CAP_PCT it's not a deal. All deals
+# are shown the same way (no color tiers).
+DEAL_CAP_PCT = 20.0
 
 # Baseline is computed only from daily-mins within this rolling window (days
 # back from today). Keeps the floor on the current season — older data stays
@@ -79,8 +75,10 @@ OUTLIER_MIN_N = 20
 # Cache freshness: drop any fare last found (found_at, cross-checked via
 # get_latest_prices) at least this many days ago; staler cache diverges further
 # from the real, bookable price. Fares the seller marks actual=false are dropped
-# regardless of age.
-MAX_CACHE_AGE_DAYS = 3
+# regardless of age. Kept tight (2d) because cache age is the main driver of the
+# "price went up at booking" gap; 1d would starve the feed (some routes don't
+# refresh daily) and risk the 0-deals publish guard.
+MAX_CACHE_AGE_DAYS = 2
 
 # Low-trust gates (sellers): fares from these are dropped before judging so they
 # never become a deal or set the baseline. Keep results to trustworthy gates
@@ -100,24 +98,21 @@ MIN_HOURS_BEFORE_DEPARTURE = 24
 # Real-time cross-check (fast-flights / Google Flights): drop a deal candidate
 # whose live cheapest fare exceeds the Travelpayouts price by at least
 # MAX_PRICE_DIVERGENCE_PCT percent -- a large gap means the cached fare is
-# likely stale/unbookable. Any failure (scrape error/timeout, FX lookup, missing
-# dependency) keeps the candidate so a flaky check never empties the feed.
+# stale/unbookable enough that we don't trust it at all. Smaller gaps aren't
+# dropped; instead apply_conservative_pricing anchors the published price on the
+# live fare (see DISPLAY_SAFETY_BUFFER_PCT). Any failure (scrape error/timeout,
+# FX lookup, missing dependency) keeps the candidate so a flaky check never
+# empties the feed.
 REALTIME_CROSSCHECK = True
-MAX_PRICE_DIVERGENCE_PCT = 30.0
+MAX_PRICE_DIVERGENCE_PCT = 20.0
 REALTIME_REQUEST_DELAY_SEC = 1.0
 
-# --- Push notification trigger (second-stage cut, on top of deal display cut) ---
-# deals.json holds everything past the 25%/15% DISPLAY cut. These extras decide
-# which of those also earn a push notification. Tunable from one place, no code
-# changes needed elsewhere.
-# --- Push notification trigger ---
-# Per-user filtering: each subscriber's discount cuts (single short-haul,
-# single long-haul) and origin/destination filters come from their
-# Supabase push_tokens row. No global cut applies on top.
-# Only the dedup window stays global (idempotency across all users).
-PUSH_DEDUP_DAYS = 3                   # same (token, from, dest, trip) → 1 push per 3d
-
-# Keep push_history rows this long for audit/debug. Comfortably longer than
-# PUSH_DEDUP_DAYS so raising the dedup window later doesn't require touching
-# this. trigger.py prunes anything older at the end of each cycle.
-PUSH_HISTORY_RETENTION_DAYS = 30
+# Conservative display pricing. The number we publish (and re-judge the deal on)
+# is the higher of the cached cheapest fare and the live cross-check fare, plus
+# this buffer, rounded up to the nearest 1,000 KRW. Goal: the price shown is
+# almost always >= what the user actually pays at booking, so clicking through
+# surprises downward (cheaper), never upward. The buffer also covers routes
+# where the live cross-check is unavailable (scrape down) — there the cached
+# fare alone gets the buffer. Trade-off: a higher shown price means fewer/less
+# flashy deals, accepted on purpose for trust.
+DISPLAY_SAFETY_BUFFER_PCT = 7.0
