@@ -146,8 +146,7 @@ def load_active_users() -> list[dict]:
     rows = _supabase_get(
         "push_tokens",
         {
-            "select": "token,origins,destinations,alarm_master,alarm_window,"
-                      "disc_short_pct,disc_long_pct,lang",
+            "select": "token,origins,destinations,alarm_master,alarm_window,lang",
             "alarm_master": "eq.true",
             "token": "not.like.*DEV-*",   # skip dev fake tokens
         },
@@ -226,6 +225,7 @@ def send_pushes(push_plan: list[tuple]) -> list[dict]:
                 "route_key": f"{deal['from']}|{deal['destination']}|{deal['trip']}",
                 "link": deal.get("link"),
                 "discount_pct": deal["discount_pct"],
+                "cabin_class": deal.get("cabin_class") or "economy",
             },
         })
         sent_records.append({"token": token, "deal": deal})

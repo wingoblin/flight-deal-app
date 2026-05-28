@@ -22,33 +22,38 @@ DESTINATIONS = [
 ]
 TRIPS = [("oneway", True), ("roundtrip", False)]
 
-# A deal is flagged when the current minimum sits at least this far below the
-# median baseline (whole-route distribution, no date/trip-duration grouping).
-DEAL_THRESHOLD_PCT = 25.0
+# --- Deal judgment (Step 3: "near floor" model) ---
+# A deal = current min is at or near the route's recent price floor. The floor
+# (baseline) is the mean of the 5 lowest daily-minimums within a rolling
+# window. We flag a deal when the current min is no more than UPPER_BOUND_PCT
+# above that floor (no lower bound — cheaper than the floor always qualifies).
+UPPER_BOUND_PCT = 5.0
 
-# Per-destination overrides for the deal threshold. Long-haul routes (Europe,
-# Americas) swing less in percentage terms, so a smaller discount already counts
-# as a deal. Destinations not listed fall back to DEAL_THRESHOLD_PCT.
-DEAL_THRESHOLD_PCT_BY_DEST = {
-    d: 15.0 for d in (
-        # Europe
-        "CDG", "LHR", "FCO", "BCN", "FRA", "AMS", "IST",
-        "ZRH", "VIE", "MUC", "PRG", "MAD", "HEL",
-        # Americas
-        "JFK", "LAX", "HNL", "YVR", "SEA", "ATL", "DFW", "IAD", "LAS", "YYZ",
-    )
-}
+# Baseline is computed only from daily-mins within this rolling window (days
+# back from today). Keeps the floor on the current season — older data stays
+# in the DB for backtest/audit but is excluded from the baseline so that
+# off-season prices don't distort it. If fewer days exist (e.g. 7 so far),
+# use what's there.
+BASELINE_WINDOW_DAYS = 30
 
+# Baseline = mean of the 5 lowest daily minimums within BASELINE_WINDOW_DAYS.
+# Below MIN_HISTORY_DAYS days of data we can't trust the floor — history guard
+# blocks the alert.
+MIN_HISTORY_DAYS = 5
 
-def deal_threshold(dest):
-    return DEAL_THRESHOLD_PCT_BY_DEST.get(dest, DEAL_THRESHOLD_PCT)
+# Cabin-mix protector (Step 2-A-0). The Travelpayouts API doesn't expose
+# cabin class and trip_class=0 is partially ignored by the cache, so a
+# fraction of business/first fares (3-10x economy) can sneak in. Drop the
+# top X% by price as a distribution-shape-agnostic guard — works even when
+# contaminating fares are the majority (median-based filters fail in that
+# case because the median itself is inflated). Heuristic: tune in Step 2 if
+# observed in production.
+OUTLIER_DROP_TOP_PCT = 0.30
 
-# Judgment baseline is fixed to bootstrap mode (the current cache's
-# cross-sectional median). Snapshots keep accumulating either way, so when
-# enough history exists this can be flipped on to compare/switch to the median
-# of past daily minimums after MIN_HISTORY_DAYS.
-USE_HISTORICAL_BASELINE = False
-MIN_HISTORY_DAYS = 14
+# Sanity guard (Step 2-A-4). Even in the near-floor model, a min more than this
+# far BELOW the floor is almost always residual contamination, not a real
+# fare. is_deal=False + WARN log when fired.
+SANITY_MAX_DISCOUNT_PCT = 50.0
 
 # Error guard: a roundtrip can't realistically cost less than a single one-way
 # leg, so flag (and exclude from alerts) any roundtrip priced below its route's

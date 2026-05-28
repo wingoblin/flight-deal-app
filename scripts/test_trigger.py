@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from trigger import _matches_user, _route_key, _is_long_haul
+from trigger import _matches_user, _route_key
 
 
 # Fixed "today" so tests are independent of wall clock.
@@ -46,8 +46,6 @@ def _user(**over):
         "destinations": [],       # 빈 배열 = 전체 허용
         "alarm_master": True,
         "alarm_window": "30",     # 기본값: 30일 윈도우. None 은 차단 케이스용.
-        "disc_short_pct": 25,
-        "disc_long_pct": 15,
         "lang": "ko",
     }
     base.update(over)
@@ -59,16 +57,10 @@ def _match(deal, user, history):
     return _matches_user(deal, user, history, today=TODAY)
 
 
-class RouteAndHaulTests(unittest.TestCase):
+class RouteKeyTests(unittest.TestCase):
 
     def test_route_key_format(self):
         self.assertEqual(_route_key(_deal()), "ICN|BKK|roundtrip")
-
-    def test_long_haul_detection(self):
-        # CDG = Paris, in long-haul list
-        self.assertTrue(_is_long_haul("CDG"))
-        # BKK = Bangkok, not in long-haul list
-        self.assertFalse(_is_long_haul("BKK"))
 
 
 class MatchingTests(unittest.TestCase):
@@ -109,26 +101,15 @@ class MatchingTests(unittest.TestCase):
         ok, _ = _match(_deal(destination="BKK"), u, self.empty_history)
         self.assertTrue(ok)
 
-    def test_short_haul_uses_short_cut(self):
-        """단거리 deal 은 disc_short_pct 와 비교."""
-        u = _user(disc_short_pct=50, disc_long_pct=10)
-        # discount 40% < short cut 50% → 거부
-        ok, reason = _match(_deal(destination="BKK", discount_pct=40), u, self.empty_history)
-        self.assertFalse(ok)
-        self.assertEqual(reason, "below_user_cut")
-
-    def test_long_haul_uses_long_cut(self):
-        """장거리 deal 은 disc_long_pct 와 비교."""
-        u = _user(disc_short_pct=50, disc_long_pct=10)
-        # 같은 40% 인데 장거리(CDG)면 long cut 10% 와 비교 → 통과
-        ok, _ = _match(_deal(destination="CDG", discount_pct=40), u, self.empty_history)
+    def test_low_discount_deal_still_passes(self):
+        """Step 3: trigger 의 per-user discount cut 제거됨. snapshot 이 flag 한
+        deal 은 discount_pct 가 낮아도(또는 음수여도) trigger 를 통과해야 함
+        (route/window/dedup 만 적용)."""
+        u = _user()
+        ok, _ = _match(_deal(discount_pct=2.0), u, self.empty_history)
         self.assertTrue(ok)
-
-    def test_at_exact_cut_passes(self):
-        """경계값 포함 (>=)."""
-        u = _user(disc_short_pct=25)
-        ok, _ = _match(_deal(discount_pct=25), u, self.empty_history)
-        self.assertTrue(ok)
+        ok_neg, _ = _match(_deal(discount_pct=-3.0), u, self.empty_history)
+        self.assertTrue(ok_neg)
 
     def test_dedup_blocks_recent(self):
         history = {f"{_user()['token']}|{_route_key(_deal())}"}
@@ -156,8 +137,8 @@ class MatchingTests(unittest.TestCase):
         self.assertTrue(ok)
 
     def test_all_filters_in_order(self):
-        """필터 우선순위: alarm → origin → destination → cut → dedup."""
-        u = _user(alarm_master=False, origins=["GMP"], disc_short_pct=99)
+        """필터 우선순위: alarm → window → origin → destination → dedup."""
+        u = _user(alarm_master=False, origins=["GMP"])
         ok, reason = _match(_deal(**{"from": "ICN"}), u, self.empty_history)
         self.assertFalse(ok)
         # alarm_off 가 가장 먼저 잡혀야 (early return)
