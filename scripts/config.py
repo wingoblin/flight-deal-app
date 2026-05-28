@@ -31,7 +31,7 @@ TRIPS = [("oneway", True), ("roundtrip", False)]
 #   red    : floor +TIER_ORANGE_PCT .. floor +TIER_RED_PCT
 # Above floor +TIER_RED_PCT it's not a deal.
 TIER_ORANGE_PCT = 5.0
-TIER_RED_PCT = 15.0
+TIER_RED_PCT = 20.0
 
 # Baseline is computed only from daily-mins within this rolling window (days
 # back from today). Keeps the floor on the current season — older data stays

@@ -125,23 +125,23 @@ class JudgeTests(unittest.TestCase):
         _, _, _, diag5 = judge(self._stats(630_000), history, 20)
         self.assertEqual(diag5["tier"], "orange")
 
-    def test_red_tier_5_to_15pct(self):
-        """floor+5% .. floor+15% → deal, tier red (upper edge inclusive)."""
-        history = [600_000] * 5            # +5% = 630,000, +15% = 690,000
+    def test_red_tier_5_to_20pct(self):
+        """floor+5% .. floor+20% → deal, tier red (upper edge inclusive)."""
+        history = [600_000] * 5            # +5% = 630,000, +20% = 720,000
         # just over +5% → red
         _, _, is_deal, diag = judge(self._stats(630_001), history, 20)
         self.assertTrue(is_deal)
         self.assertEqual(diag["tier"], "red")
-        # +15% exact → still a deal, red
-        _, _, is_deal_edge, diag15 = judge(self._stats(690_000), history, 20)
+        # +20% exact → still a deal, red
+        _, _, is_deal_edge, diag20 = judge(self._stats(720_000), history, 20)
         self.assertTrue(is_deal_edge)
-        self.assertEqual(diag15["tier"], "red")
+        self.assertEqual(diag20["tier"], "red")
 
     def test_no_deal_above_red(self):
-        """min above floor+15% → not a deal, tier None, no guard."""
-        history = [600_000] * 5            # +15% = 690,000
+        """min above floor+20% → not a deal, tier None, no guard."""
+        history = [600_000] * 5            # +20% = 720,000
         baseline, discount, is_deal, diag = judge(
-            self._stats(690_001), history, today_items_count=20,
+            self._stats(720_001), history, today_items_count=20,
         )
         self.assertEqual(baseline, 600_000)
         self.assertLess(discount, 0)
