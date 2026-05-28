@@ -3,8 +3,8 @@ Supabase + Expo Push I/O for the per-user trigger.
 
 Three responsibilities:
 - load_active_users()         : pull subscribers with alarm_master=true
-- load_recent_sent_per_user() : pull recent (token,route) sends for dedup
-- send_pushes() / record_sent(): fan out via Expo Push, persist to push_history
+- load_recent_sent_per_user() : pull recent (token,signature) sends for dedup
+- send_pushes() / record_sent(): one bundled push per user via Expo, persisted to push_history
 
 Secrets read from env only (per project policy):
   SUPABASE_URL, SUPABASE_SERVICE_KEY (server key — bypasses RLS)
@@ -207,47 +207,27 @@ def _post_expo_batch(messages: list[dict]) -> dict:
     raise RuntimeError(f"Expo push failed after {len(RETRY_DELAYS)} attempts: {last_err}")
 
 
-def _format_notification(deal: dict, lang: str = "ko") -> tuple[str, str]:
-    """Push title/body. Keep ko default; en is a thin fallback for non-ko users.
-    Pure so it could be unit-tested if you ever want to lock the wording."""
-    pct = round(float(deal["discount_pct"]))
-    price_man = round(deal["price"] / 10000)  # 만원 — natural for Korean users
-    if lang == "en":
-        trip_tag = "Round-trip" if deal["trip"] == "roundtrip" else "One-way"
-        title = f"✈️ {deal['from']} → {deal['destination']} {pct}% off"
-        body = f"{trip_tag} ₩{price_man}0,000 · {deal.get('airline', '')}"
-    else:
-        trip_tag = "왕복" if deal["trip"] == "roundtrip" else "편도"
-        title = f"✈️ {deal['from']} → {deal['destination']} {pct}% 할인"
-        body = f"{trip_tag} {price_man}만원 · {deal.get('airline', '')}"
-    return title, body
-
-
-def send_pushes(push_plan: list[tuple]) -> list[dict]:
-    """Fan out pushes. push_plan: list of (token, deal, reason, lang).
-    Returns list of {token, deal} actually sent (for record_sent)."""
-    if not push_plan:
+def send_pushes(bundle_plan: list[tuple]) -> list[dict]:
+    """Fan out one bundled push per user. bundle_plan: list of
+    (token, title, body, signature, top_deal). Title/body are pre-built by
+    trigger's pure formatters. Returns list of {token, signature, deal} actually
+    sent (for record_sent). data is minimal — the app just opens its feed."""
+    if not bundle_plan:
         return []
 
     messages: list[dict] = []
     sent_records: list[dict] = []
 
-    for token, deal, _, lang in push_plan:
-        title, body = _format_notification(deal, lang=lang)
+    for token, title, body, signature, top_deal in bundle_plan:
         messages.append({
             "to": token,
             "title": title,
             "body": body,
             "sound": "default",
             "priority": "high",
-            "data": {
-                "route_key": f"{deal['from']}|{deal['destination']}|{deal['trip']}",
-                "link": deal.get("link"),
-                "discount_pct": deal["discount_pct"],
-                "cabin_class": deal.get("cabin_class") or "economy",
-            },
+            "data": {"type": "bundle"},
         })
-        sent_records.append({"token": token, "deal": deal})
+        sent_records.append({"token": token, "signature": signature, "deal": top_deal})
 
     # Chunk and send. Collect tokens flagged DeviceNotRegistered for one-shot
     # deactivation after the loop (Expo's data[] preserves request order).
@@ -317,19 +297,20 @@ def deactivate_tokens(tokens: list[str]) -> None:
 
 
 def record_sent(sent_records: list[dict], now: dt.datetime) -> None:
-    """Append rows to push_history. Per-user records (token + route_key) so
-    dedup is precise per subscriber."""
+    """Append rows to push_history. One row per bundled send: route_key holds
+    the bundle signature so dedup is per (token, bundle). discount_pct/price
+    track the cheapest deal in the bundle for audit. Schema unchanged."""
     if not sent_records:
         return
     rows = [{
         "token": s["token"],
-        "route_key": f"{s['deal']['from']}|{s['deal']['destination']}|{s['deal']['trip']}",
+        "route_key": s["signature"],
         "sent_at": now.isoformat(),
         "discount_pct": s["deal"].get("discount_pct"),
         "price": s["deal"].get("price"),
     } for s in sent_records]
     _supabase_post("push_history", rows)
-    print(f"Recorded {len(rows)} sends to push_history.")
+    print(f"Recorded {len(rows)} bundle send(s) to push_history.")
 
 
 def cleanup_push_history(days: int, dry_run: bool = False) -> int:
