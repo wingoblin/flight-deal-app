@@ -55,6 +55,14 @@ OUTLIER_DROP_TOP_PCT = 0.30
 # fare. is_deal=False + WARN log when fired.
 SANITY_MAX_DISCOUNT_PCT = 50.0
 
+# Publish safety (Step 3 hardening). If more than this fraction of routes error
+# out (dead token, API outage) or zero deals result, snapshot aborts BEFORE
+# writing deals.json so the workflow's commit/mirror skip and the last good feed
+# is preserved instead of being overwritten with an empty/garbage one. Only
+# data-API fetch failures count toward the rate; realtime-crosscheck failures
+# keep the candidate and never set an error status, so they don't inflate it.
+MAX_ERROR_RATE = 0.5
+
 # Error guard: a roundtrip can't realistically cost less than a single one-way
 # leg, so flag (and exclude from alerts) any roundtrip priced below its route's
 # cheapest one-way, or below this fraction of the one-way median -- both are

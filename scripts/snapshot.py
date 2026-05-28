@@ -15,6 +15,7 @@ from config import (
     BLOCKED_GATES,
     DESTINATIONS,
     MAX_CACHE_AGE_DAYS,
+    MAX_ERROR_RATE,
     MAX_PRICE_DIVERGENCE_PCT,
     MIN_HISTORY_DAYS,
     MIN_HOURS_BEFORE_DEPARTURE,
@@ -247,6 +248,8 @@ def main():
             for trip_label, one_way in TRIPS:
                 try:
                     items = tpclient.fetch_prices(origin, dest, one_way, token)
+                except tpclient.TPAuthError:
+                    raise   # dead token → abort whole run before publishing
                 except Exception as e:
                     msg = scrub_secret(repr(e), token)
                     results.append({"origin": origin, "dest": dest, "trip": trip_label, "status": f"error: {msg}"})
@@ -259,6 +262,8 @@ def main():
                 # (degrade gracefully rather than drop the whole route).
                 try:
                     latest = tpclient.fetch_latest(origin, dest, one_way, token)
+                except tpclient.TPAuthError:
+                    raise   # dead token → abort whole run before publishing
                 except Exception:
                     latest = []
                 finally:
@@ -324,8 +329,9 @@ def main():
     conn.close()
     drop_impossible_roundtrips(results)
     crosscheck_realtime(results)
+    report(results, today)            # diagnostics always reach the log
+    _guard_publish_safety(results)    # abort here (pre-write) if the run looks broken
     write_deals_json(results)
-    report(results, today)
 
 
 def crosscheck_realtime(results):
@@ -382,6 +388,25 @@ def crosscheck_realtime(results):
 
 def select_deals(results):
     return [r for r in results if r.get("status") == "ok" and r["is_deal"]]
+
+
+def _guard_publish_safety(results):
+    """Abort (non-zero exit) before publishing when the run looks broken — dead
+    token, mass API outage, or zero deals — so the last good feed isn't
+    overwritten with an empty/garbage one. The workflow's commit+mirror steps are
+    skipped when the snapshot step fails. Only data-API fetch failures count
+    toward the error rate; realtime-crosscheck failures keep the candidate and
+    never set an error status, so they don't trip this."""
+    total = len(results)
+    errors = sum(1 for r in results if str(r.get("status", "")).startswith("error"))
+    if total and errors / total > MAX_ERROR_RATE:
+        print(f"::error::{errors}/{total} routes failed (> {MAX_ERROR_RATE:.0%}); "
+              f"aborting before publish to keep the previous feed")
+        raise SystemExit(3)
+    if not select_deals(results):
+        print("::error::0 deals after judging; aborting before publish to keep the "
+              "previous feed (check token/cache/guards)")
+        raise SystemExit(4)
 
 
 def cache_date_from_link(link):
@@ -529,4 +554,9 @@ def report(results, today):
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except tpclient.TPAuthError as e:
+        print(f"::error::TRAVELPAYOUTS auth failed (HTTP {e.code}) — token rejected; "
+              f"aborting before publish, previous feed kept")
+        raise SystemExit(2)

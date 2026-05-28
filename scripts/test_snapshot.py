@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from snapshot import filter_price_outliers, judge
+from snapshot import _guard_publish_safety, filter_price_outliers, judge
 
 
 def _items(*prices):
@@ -204,6 +204,42 @@ class HistoricalMinsWindowTests(unittest.TestCase):
         mins = dealdb.historical_mins(conn, "ICN", "BKK", "roundtrip",
                                       "2026-05-28", window_days=30)
         self.assertEqual(sorted(mins), [100, 200, 300])
+
+
+class GuardPublishSafetyTests(unittest.TestCase):
+    """Abort before publishing on broken runs so a good feed isn't overwritten."""
+
+    def _ok(self, is_deal):
+        return {"status": "ok", "is_deal": is_deal}
+
+    def _err(self):
+        return {"status": "error: <HTTPError 500>"}
+
+    def test_high_error_rate_aborts(self):
+        # 6 errors / 10 = 60% > 50% → abort even though some deals exist
+        results = [self._err() for _ in range(6)] + [self._ok(True) for _ in range(4)]
+        with self.assertRaises(SystemExit) as cm:
+            _guard_publish_safety(results)
+        self.assertEqual(cm.exception.code, 3)
+
+    def test_zero_deals_aborts(self):
+        # error rate fine (0%) but no deals → abort (don't publish empty feed)
+        results = [self._ok(False) for _ in range(10)]
+        with self.assertRaises(SystemExit) as cm:
+            _guard_publish_safety(results)
+        self.assertEqual(cm.exception.code, 4)
+
+    def test_healthy_run_passes(self):
+        # low error rate + deals present → no abort
+        results = [self._err()] + [self._ok(True) for _ in range(9)]
+        _guard_publish_safety(results)  # should not raise
+
+    def test_crosscheck_keeps_dont_count_as_errors(self):
+        # realtime-crosscheck failures keep candidates with status "ok"; only
+        # data-API failures carry an "error" status. A run that is all-ok with
+        # deals must pass regardless of crosscheck outcomes.
+        results = [self._ok(True) for _ in range(20)]
+        _guard_publish_safety(results)  # should not raise
 
 
 if __name__ == "__main__":

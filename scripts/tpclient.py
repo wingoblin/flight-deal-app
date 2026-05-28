@@ -9,6 +9,14 @@ API_URL = "https://api.travelpayouts.com/aviasales/v3/prices_for_dates"
 LATEST_URL = "https://api.travelpayouts.com/aviasales/v3/get_latest_prices"
 
 
+class TPAuthError(Exception):
+    """TP rejected the token (HTTP 401/403). Distinct from transient errors so the
+    caller aborts the whole run instead of degrading to an empty feed."""
+    def __init__(self, code):
+        self.code = code
+        super().__init__(f"Travelpayouts auth failed (HTTP {code})")
+
+
 def get_token():
     token = os.environ.get("TRAVELPAYOUTS_TOKEN")
     if not token:
@@ -26,6 +34,10 @@ def _get_data(url, token, retries, backoff):
                 body = json.loads(resp.read())
             return body.get("data") or []
         except urllib.error.HTTPError as e:
+            # Auth failure: token is dead, not transient. Surface distinctly so the
+            # caller aborts before publishing an empty feed.
+            if e.code in (401, 403):
+                raise TPAuthError(e.code) from None
             # Retry rate limits and transient server errors; fail fast otherwise.
             if e.code in (429, 500, 502, 503, 504) and attempt < retries - 1:
                 time.sleep(delay)
