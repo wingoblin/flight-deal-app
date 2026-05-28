@@ -184,25 +184,16 @@ def filter_price_outliers(items, drop_top_pct=OUTLIER_DROP_TOP_PCT):
     return kept_valid + nonnumeric, dropped_prices
 
 
-def _deal_tier(min_price, baseline):
-    """"green" highlight when the min is below the floor; None for a regular
-    deal (floor .. floor +DEAL_CAP_PCT). None here means "no color label", NOT
-    "not a deal" — the deal decision is is_deal in judge()."""
-    return "green" if min_price < baseline else None
-
-
 def judge(stats, history, today_items_count):
-    """Compute (baseline, discount, is_deal, diag) under the near-floor tiers.
+    """Compute (baseline, discount, is_deal, diag) under the near-floor model.
 
     Baseline = mean of the 5 lowest daily minimums within the rolling window
     (caller windows the history via dealdb.historical_mins).
 
     Deal decision (Step 3): is_deal iff current min <= baseline ×
-    (1 + DEAL_CAP_PCT/100). A deal below the floor gets the "green" highlight
-    tier (diag["tier"]); a deal from the floor up to +DEAL_CAP_PCT has tier None
-    (regular deal, no color label). `discount` ((baseline-min)/baseline×100) is
-    kept for display/logging and can be negative (regular deals sit above the
-    floor).
+    (1 + DEAL_CAP_PCT/100). `discount` ((baseline-min)/baseline×100) is kept for
+    display/logging and can be negative (deals from the floor up to +DEAL_CAP_PCT
+    sit above the floor).
 
     Guards (each forces is_deal=False; diag.guard_triggered names the one):
       - "history": fewer than MIN_HISTORY_DAYS daily mins in window → warmup
@@ -219,7 +210,6 @@ def judge(stats, history, today_items_count):
         "history_days_used": len(history),
         "today_items_count_after_outlier_filter": today_items_count,
         "guard_triggered": None,
-        "tier": None,               # "green" highlight or None (set below)
         "cabin_class": "economy",   # Step 2-A-5: always economy (trip_class=0
                                     # + price outlier guard; API doesn't expose
                                     # cabin, so we label the survivors).
@@ -243,7 +233,6 @@ def judge(stats, history, today_items_count):
         diag["guard_triggered"] = "sanity"
         return baseline, discount, False, diag
 
-    diag["tier"] = _deal_tier(stats["min"], baseline)
     is_deal = stats["min"] <= baseline * (1 + DEAL_CAP_PCT / 100)
     return baseline, discount, is_deal, diag
 
@@ -334,7 +323,7 @@ def main():
                 results.append({
                     "origin": origin, "dest": dest, "trip": trip_label, "status": "ok",
                     "min": stats["min"], "median": stats["median"], "n": stats["n"],
-                    "baseline": baseline, "discount": discount, "tier": diag.get("tier"),
+                    "baseline": baseline, "discount": discount,
                     "is_deal": is_deal, "diag": diag, "cheap": cheap,
                 })
 
@@ -352,9 +341,9 @@ def apply_conservative_pricing(results):
     re-judge the deal on it. The anchor is the higher of the cached cheapest fare
     and the live cross-check fare (realtime_krw, set by crosscheck_realtime when
     it ran); we add DISPLAY_SAFETY_BUFFER_PCT and round up to the nearest 1,000
-    KRW. The deal's tier/discount/is_deal are recomputed against this price so we
-    never advertise a tier or discount the booking page won't honor — a deal can
-    only get stricter here, never looser. Runs for every ok candidate, so routes
+    KRW. The deal's discount/is_deal are recomputed against this price so we
+    never advertise a discount the booking page won't honor — a deal can only
+    get stricter here, never looser. Runs for every ok candidate, so routes
     with no live price (scrape down) still get the buffer on the cached fare."""
     for r in results:
         if r.get("status") != "ok" or not r.get("is_deal"):
@@ -367,7 +356,6 @@ def apply_conservative_pricing(results):
         display = math.ceil(anchor * (1 + DISPLAY_SAFETY_BUFFER_PCT / 100) / 1000) * 1000
         r["display_price"] = display
         r["discount"] = (baseline - display) / baseline * 100
-        r["tier"] = "green" if display < baseline else None
         if display > baseline * (1 + DEAL_CAP_PCT / 100):
             r["is_deal"] = False
             r["price_note"] = (
@@ -488,9 +476,7 @@ def write_deals_json(results):
         "origin": ORIGINS[0],
         "origins": ORIGINS,
         "currency": "KRW",
-        # Deals run from below the floor up to floor +deal_cap_pct. A deal with
-        # tier "green" is below the floor (highlight it); tier null is a regular
-        # deal in the 0..+deal_cap_pct band (no color label).
+        # A deal runs from below the floor up to floor +deal_cap_pct.
         "deal_cap_pct": DEAL_CAP_PCT,
         # "price" is the conservative published price: max(cache, live) + this
         # buffer, rounded up. cache_price/realtime_price expose the inputs.
@@ -510,7 +496,6 @@ def write_deals_json(results):
                 "realtime_price": r.get("realtime_krw"),
                 "baseline": round(r["baseline"]),
                 "discount_pct": round(r["discount"], 1),
-                "tier": r["tier"],
                 "departure_at": r["cheap"].get("departure_at"),
                 "return_at": r["cheap"].get("return_at") or None,
                 "transfers": max(r["cheap"].get("transfers") or 0, r["cheap"].get("return_transfers") or 0),
@@ -557,8 +542,8 @@ def drop_impossible_roundtrips(results):
 
 
 def report(results, today):
-    print(f"# Snapshot {today}  (deals: green<floor, regular<=+{DEAL_CAP_PCT:.0f}%)\n")
-    header = f"{'Route':<10}{'Trip':<11}{'Min':>10}{'Baseline':>11}{'Disc':>8}  {'Tier':<7} Basis"
+    print(f"# Snapshot {today}  (deal = min <= floor +{DEAL_CAP_PCT:.0f}%)\n")
+    header = f"{'Route':<10}{'Trip':<11}{'Min':>10}{'Baseline':>11}{'Disc':>8}  {'Deal':<7} Basis"
     print(header)
     print("-" * len(header))
 
@@ -581,7 +566,7 @@ def report(results, today):
         if r.get("sanity_note"):
             mark = "DROP"
         elif r["is_deal"]:
-            mark = (diag.get("tier") or "yes")
+            mark = "yes"
         else:
             mark = "no"
         baseline_str = f"{round(r['baseline']):,}" if r['baseline'] is not None else "-"
@@ -602,7 +587,7 @@ def report(results, today):
         live = r.get("realtime_krw")
         src = f"cache {r['min']:,}" + (f" / live {live:,}" if live else "")
         print(
-            f"- [{r['tier'] or 'deal'}] {r['origin']}->{r['dest']} [{r['trip']}] "
+            f"- {r['origin']}->{r['dest']} [{r['trip']}] "
             f"{r['display_price']:,} KRW ({src}) "
             f"(baseline {round(r['baseline']):,}, vs floor {r['discount']:+.1f}%) "
             f"출발 {(c.get('departure_at') or '')[:10]}{ret} "

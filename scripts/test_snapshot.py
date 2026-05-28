@@ -106,8 +106,8 @@ class JudgeTests(unittest.TestCase):
         self.assertFalse(is_deal)
         self.assertEqual(diag["guard_triggered"], "today_n")
 
-    def test_green_tier_below_floor(self):
-        """min cheaper than the floor → deal, tier green (no lower bound)."""
+    def test_deal_below_floor(self):
+        """min cheaper than the floor → deal, positive discount."""
         history = [500_000, 550_000, 600_000, 650_000, 700_000, 800_000]
         # baseline = mean(lowest 5) = 600,000
         baseline, discount, is_deal, diag = judge(
@@ -116,30 +116,26 @@ class JudgeTests(unittest.TestCase):
         self.assertEqual(baseline, 600_000)
         self.assertGreater(discount, 0)   # below floor → positive discount
         self.assertTrue(is_deal)
-        self.assertEqual(diag["tier"], "green")
         self.assertIsNone(diag["guard_triggered"])
 
-    def test_regular_deal_at_floor(self):
-        """at the floor → deal, tier None (green is strictly below the floor)."""
+    def test_deal_at_floor(self):
+        """at the floor → deal, ~0 discount."""
         history = [600_000] * 5            # baseline 600,000
-        _, discount, is_deal, diag = judge(self._stats(600_000), history, 20)
+        _, discount, is_deal, _ = judge(self._stats(600_000), history, 20)
         self.assertTrue(is_deal)
         self.assertAlmostEqual(discount, 0.0, places=4)
-        self.assertIsNone(diag["tier"])
 
-    def test_regular_deal_up_to_cap(self):
-        """floor .. floor+20% → deal, tier None (no color); +20% edge inclusive."""
+    def test_deal_up_to_cap(self):
+        """floor .. floor+20% → deal; +20% edge inclusive."""
         history = [600_000] * 5            # +20% = 720,000
-        _, _, is_deal, diag = judge(self._stats(660_000), history, 20)
+        _, _, is_deal, _ = judge(self._stats(660_000), history, 20)
         self.assertTrue(is_deal)
-        self.assertIsNone(diag["tier"])
-        # +20% exact → still a deal, still no color
-        _, _, is_deal_edge, diag20 = judge(self._stats(720_000), history, 20)
+        # +20% exact → still a deal
+        _, _, is_deal_edge, _ = judge(self._stats(720_000), history, 20)
         self.assertTrue(is_deal_edge)
-        self.assertIsNone(diag20["tier"])
 
     def test_no_deal_above_cap(self):
-        """min above floor+20% → not a deal, tier None, no guard."""
+        """min above floor+20% → not a deal, no guard."""
         history = [600_000] * 5            # +20% = 720,000
         baseline, discount, is_deal, diag = judge(
             self._stats(720_001), history, today_items_count=20,
@@ -147,7 +143,6 @@ class JudgeTests(unittest.TestCase):
         self.assertEqual(baseline, 600_000)
         self.assertLess(discount, 0)
         self.assertFalse(is_deal)
-        self.assertIsNone(diag["tier"])
         self.assertIsNone(diag["guard_triggered"])
 
     def test_sanity_guard_blocks_far_below_floor(self):
@@ -265,7 +260,6 @@ class ApplyConservativePricingTests(unittest.TestCase):
             "min": 100_000,
             "baseline": 120_000,
             "discount": 16.7,
-            "tier": "green",
         }
         r.update(over)
         return r
@@ -280,7 +274,6 @@ class ApplyConservativePricingTests(unittest.TestCase):
         apply_conservative_pricing([r])
         self.assertEqual(r["display_price"], self._buffered_round(100_000))
         self.assertTrue(r["is_deal"])
-        self.assertEqual(r["tier"], "green")        # still below the floor
         self.assertGreater(r["discount"], 0)
 
     def test_anchors_on_higher_live(self):
@@ -295,17 +288,10 @@ class ApplyConservativePricingTests(unittest.TestCase):
         apply_conservative_pricing([r])
         self.assertEqual(r["display_price"], self._buffered_round(100_000))
 
-    def test_tier_drops_to_none_when_buffer_crosses_floor(self):
-        """Cache below floor but buffered price lands above it → no longer green."""
-        r = self._deal(min=119_000, baseline=120_000)   # +7% → 127,xxx > 120,000
-        apply_conservative_pricing([r])
-        self.assertTrue(r["is_deal"])
-        self.assertIsNone(r["tier"])
-
     def test_over_cap_after_buffer_drops_deal(self):
         """Buffered price above floor+DEAL_CAP_PCT → not a deal anymore."""
         # baseline 100,000, cap +20% = 120,000. cache 117,000 +7% = 125,190 > cap.
-        r = self._deal(min=117_000, baseline=100_000, tier=None)
+        r = self._deal(min=117_000, baseline=100_000)
         apply_conservative_pricing([r])
         self.assertFalse(r["is_deal"])
         self.assertIn("OVER-CAP", r["price_note"])
