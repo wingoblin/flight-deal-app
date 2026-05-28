@@ -100,8 +100,8 @@ class JudgeTests(unittest.TestCase):
         self.assertFalse(is_deal)
         self.assertEqual(diag["guard_triggered"], "today_n")
 
-    def test_deal_when_below_floor(self):
-        """min cheaper than the floor → deal (no lower bound)."""
+    def test_green_tier_below_floor(self):
+        """min cheaper than the floor → deal, tier green (no lower bound)."""
         history = [500_000, 550_000, 600_000, 650_000, 700_000, 800_000]
         # baseline = mean(lowest 5) = 600,000
         baseline, discount, is_deal, diag = judge(
@@ -110,32 +110,43 @@ class JudgeTests(unittest.TestCase):
         self.assertEqual(baseline, 600_000)
         self.assertGreater(discount, 0)   # below floor → positive discount
         self.assertTrue(is_deal)
+        self.assertEqual(diag["tier"], "green")
         self.assertIsNone(diag["guard_triggered"])
 
-    def test_deal_at_floor_exact(self):
-        """min == floor → deal (discount 0)."""
-        history = [600_000] * 5
-        _, discount, is_deal, _ = judge(self._stats(600_000), history, 20)
-        self.assertAlmostEqual(discount, 0.0, places=4)
+    def test_orange_tier_floor_to_5pct(self):
+        """floor .. floor+5% → deal, tier orange (boundaries inclusive)."""
+        history = [600_000] * 5            # baseline 600,000; +5% = 630,000
+        # exactly at the floor → orange (green is strictly below)
+        _, discount, is_deal, diag = judge(self._stats(600_000), history, 20)
         self.assertTrue(is_deal)
+        self.assertAlmostEqual(discount, 0.0, places=4)
+        self.assertEqual(diag["tier"], "orange")
+        # +5% exact → still orange
+        _, _, _, diag5 = judge(self._stats(630_000), history, 20)
+        self.assertEqual(diag5["tier"], "orange")
 
-    def test_deal_at_upper_bound_boundary(self):
-        """min == floor × 1.05 → deal (<=, inclusive). One KRW more → no deal."""
-        history = [600_000] * 5   # baseline 600,000; +5% = 630,000
-        _, _, is_deal_at, _ = judge(self._stats(630_000), history, 20)
-        self.assertTrue(is_deal_at)
-        _, _, is_deal_over, _ = judge(self._stats(630_001), history, 20)
-        self.assertFalse(is_deal_over)
+    def test_red_tier_5_to_15pct(self):
+        """floor+5% .. floor+15% → deal, tier red (upper edge inclusive)."""
+        history = [600_000] * 5            # +5% = 630,000, +15% = 690,000
+        # just over +5% → red
+        _, _, is_deal, diag = judge(self._stats(630_001), history, 20)
+        self.assertTrue(is_deal)
+        self.assertEqual(diag["tier"], "red")
+        # +15% exact → still a deal, red
+        _, _, is_deal_edge, diag15 = judge(self._stats(690_000), history, 20)
+        self.assertTrue(is_deal_edge)
+        self.assertEqual(diag15["tier"], "red")
 
-    def test_no_deal_above_upper_bound(self):
-        """min well above floor+5% → no deal, discount negative, no guard."""
-        history = [600_000] * 5   # +5% = 630,000
+    def test_no_deal_above_red(self):
+        """min above floor+15% → not a deal, tier None, no guard."""
+        history = [600_000] * 5            # +15% = 690,000
         baseline, discount, is_deal, diag = judge(
-            self._stats(700_000), history, today_items_count=20,
+            self._stats(690_001), history, today_items_count=20,
         )
         self.assertEqual(baseline, 600_000)
-        self.assertLess(discount, 0)   # above floor → negative discount
+        self.assertLess(discount, 0)
         self.assertFalse(is_deal)
+        self.assertIsNone(diag["tier"])
         self.assertIsNone(diag["guard_triggered"])
 
     def test_sanity_guard_blocks_far_below_floor(self):

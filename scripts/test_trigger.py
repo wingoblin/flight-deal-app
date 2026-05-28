@@ -40,6 +40,7 @@ def _deal(**over):
         "price": 200_000,
         "baseline": 500_000,
         "discount_pct": 60.0,
+        "tier": "green",
         "airline": "KE",
         # 5일 뒤 출발 — 기본 alarm_window='30' 안에 들어옴.
         "departure_at": (TODAY + dt.timedelta(days=5)).isoformat() + "T10:00:00+09:00",
@@ -130,6 +131,15 @@ class MatchingTests(unittest.TestCase):
         self.assertTrue(ok)
         ok_neg, _ = _match(_deal(discount_pct=-3.0), u)
         self.assertTrue(ok_neg)
+
+    def test_red_tier_excluded_from_push(self):
+        """red 티어(floor +5~15%)는 앱엔 보이지만 푸시 제외. green/orange 는 통과."""
+        u = _user()
+        ok_red, reason = _match(_deal(tier="red"), u)
+        self.assertFalse(ok_red)
+        self.assertEqual(reason, "tier_red_no_push")
+        self.assertTrue(_match(_deal(tier="green"), u)[0])
+        self.assertTrue(_match(_deal(tier="orange"), u)[0])
 
     def test_all_filters_in_order(self):
         """필터 우선순위: alarm → window → origin → destination."""
