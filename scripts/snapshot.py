@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+import math
 import os
 import re
 import statistics
@@ -15,6 +16,7 @@ from config import (
     BLOCKED_GATES,
     DEAL_CAP_PCT,
     DESTINATIONS,
+    DISPLAY_SAFETY_BUFFER_PCT,
     MAX_CACHE_AGE_DAYS,
     MAX_ERROR_RATE,
     MAX_PRICE_DIVERGENCE_PCT,
@@ -339,17 +341,50 @@ def main():
     conn.close()
     drop_impossible_roundtrips(results)
     crosscheck_realtime(results)
+    apply_conservative_pricing(results)   # set the published price + re-judge
     report(results, today)            # diagnostics always reach the log
     _guard_publish_safety(results)    # abort here (pre-write) if the run looks broken
     write_deals_json(results)
 
 
+def apply_conservative_pricing(results):
+    """Set each deal's published price to one the user will pay-or-less, then
+    re-judge the deal on it. The anchor is the higher of the cached cheapest fare
+    and the live cross-check fare (realtime_krw, set by crosscheck_realtime when
+    it ran); we add DISPLAY_SAFETY_BUFFER_PCT and round up to the nearest 1,000
+    KRW. The deal's tier/discount/is_deal are recomputed against this price so we
+    never advertise a tier or discount the booking page won't honor — a deal can
+    only get stricter here, never looser. Runs for every ok candidate, so routes
+    with no live price (scrape down) still get the buffer on the cached fare."""
+    for r in results:
+        if r.get("status") != "ok" or not r.get("is_deal"):
+            continue
+        baseline = r["baseline"]
+        anchor = r["min"]
+        live = r.get("realtime_krw")
+        if live:
+            anchor = max(anchor, live)
+        display = math.ceil(anchor * (1 + DISPLAY_SAFETY_BUFFER_PCT / 100) / 1000) * 1000
+        r["display_price"] = display
+        r["discount"] = (baseline - display) / baseline * 100
+        r["tier"] = "green" if display < baseline else None
+        if display > baseline * (1 + DEAL_CAP_PCT / 100):
+            r["is_deal"] = False
+            r["price_note"] = (
+                f"OVER-CAP after buffer: {display:,} > floor+{DEAL_CAP_PCT:.0f}% "
+                f"({round(baseline * (1 + DEAL_CAP_PCT / 100)):,})"
+            )
+
+
 def crosscheck_realtime(results):
-    """Drop deal candidates whose live Google Flights price (via fast-flights) is
-    at least MAX_PRICE_DIVERGENCE_PCT above the cached Travelpayouts price -- a
-    large gap means the cached fare is likely stale/unbookable. Every failure
-    path (FX lookup, scrape error/timeout, missing dependency, no price) keeps
-    the candidate, so a flaky check never empties the feed. Drops are logged."""
+    """Look up each candidate's live Google Flights price (via fast-flights) and
+    record it as realtime_krw for apply_conservative_pricing to anchor on. Drop
+    the candidate only when the live price is at least MAX_PRICE_DIVERGENCE_PCT
+    above the cached fare -- that large a gap means the cached fare is stale
+    enough we don't trust it at all. Smaller gaps are kept and absorbed into the
+    published price downstream. Every failure path (FX lookup, scrape
+    error/timeout, missing dependency, no price) keeps the candidate, so a flaky
+    check never empties the feed. Drops are logged."""
     if not REALTIME_CROSSCHECK:
         print("\n# realtime cross-check: disabled (REALTIME_CROSSCHECK=False)")
         return
@@ -457,6 +492,9 @@ def write_deals_json(results):
         # tier "green" is below the floor (highlight it); tier null is a regular
         # deal in the 0..+deal_cap_pct band (no color label).
         "deal_cap_pct": DEAL_CAP_PCT,
+        # "price" is the conservative published price: max(cache, live) + this
+        # buffer, rounded up. cache_price/realtime_price expose the inputs.
+        "display_safety_buffer_pct": DISPLAY_SAFETY_BUFFER_PCT,
         "refresh_interval_hours": 1,
         "disclaimer": (
             "캐시 기반 가격으로 실시간이 아닙니다. 좌석이 빠르게 팔릴 수 있어 "
@@ -467,7 +505,9 @@ def write_deals_json(results):
                 "from": r["origin"],
                 "destination": r["dest"],
                 "trip": r["trip"],
-                "price": r["min"],
+                "price": r["display_price"],
+                "cache_price": r["min"],
+                "realtime_price": r.get("realtime_krw"),
                 "baseline": round(r["baseline"]),
                 "discount_pct": round(r["discount"], 1),
                 "tier": r["tier"],
@@ -559,8 +599,11 @@ def report(results, today):
     for r in deals:
         c = r["cheap"]
         ret = f" ~ {c['return_at'][:10]}" if c.get("return_at") else ""
+        live = r.get("realtime_krw")
+        src = f"cache {r['min']:,}" + (f" / live {live:,}" if live else "")
         print(
-            f"- [{r['tier'] or 'deal'}] {r['origin']}->{r['dest']} [{r['trip']}] {r['min']:,} KRW "
+            f"- [{r['tier'] or 'deal'}] {r['origin']}->{r['dest']} [{r['trip']}] "
+            f"{r['display_price']:,} KRW ({src}) "
             f"(baseline {round(r['baseline']):,}, vs floor {r['discount']:+.1f}%) "
             f"출발 {(c.get('departure_at') or '')[:10]}{ret} "
             f"{c.get('airline', '')}/{c.get('gate', '')}"

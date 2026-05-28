@@ -77,8 +77,10 @@ OUTLIER_MIN_N = 20
 # Cache freshness: drop any fare last found (found_at, cross-checked via
 # get_latest_prices) at least this many days ago; staler cache diverges further
 # from the real, bookable price. Fares the seller marks actual=false are dropped
-# regardless of age.
-MAX_CACHE_AGE_DAYS = 3
+# regardless of age. Kept tight (2d) because cache age is the main driver of the
+# "price went up at booking" gap; 1d would starve the feed (some routes don't
+# refresh daily) and risk the 0-deals publish guard.
+MAX_CACHE_AGE_DAYS = 2
 
 # Low-trust gates (sellers): fares from these are dropped before judging so they
 # never become a deal or set the baseline. Keep results to trustworthy gates
@@ -98,8 +100,21 @@ MIN_HOURS_BEFORE_DEPARTURE = 24
 # Real-time cross-check (fast-flights / Google Flights): drop a deal candidate
 # whose live cheapest fare exceeds the Travelpayouts price by at least
 # MAX_PRICE_DIVERGENCE_PCT percent -- a large gap means the cached fare is
-# likely stale/unbookable. Any failure (scrape error/timeout, FX lookup, missing
-# dependency) keeps the candidate so a flaky check never empties the feed.
+# stale/unbookable enough that we don't trust it at all. Smaller gaps aren't
+# dropped; instead apply_conservative_pricing anchors the published price on the
+# live fare (see DISPLAY_SAFETY_BUFFER_PCT). Any failure (scrape error/timeout,
+# FX lookup, missing dependency) keeps the candidate so a flaky check never
+# empties the feed.
 REALTIME_CROSSCHECK = True
-MAX_PRICE_DIVERGENCE_PCT = 30.0
+MAX_PRICE_DIVERGENCE_PCT = 20.0
 REALTIME_REQUEST_DELAY_SEC = 1.0
+
+# Conservative display pricing. The number we publish (and re-judge the deal on)
+# is the higher of the cached cheapest fare and the live cross-check fare, plus
+# this buffer, rounded up to the nearest 1,000 KRW. Goal: the price shown is
+# almost always >= what the user actually pays at booking, so clicking through
+# surprises downward (cheaper), never upward. The buffer also covers routes
+# where the live cross-check is unavailable (scrape down) — there the cached
+# fare alone gets the buffer. Trade-off: a higher shown price means fewer/less
+# flashy deals, accepted on purpose for trust.
+DISPLAY_SAFETY_BUFFER_PCT = 7.0

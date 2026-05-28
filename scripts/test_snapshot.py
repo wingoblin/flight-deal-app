@@ -11,7 +11,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from snapshot import _guard_publish_safety, filter_price_outliers, judge
+from config import DISPLAY_SAFETY_BUFFER_PCT
+from snapshot import (
+    _guard_publish_safety,
+    apply_conservative_pricing,
+    filter_price_outliers,
+    judge,
+)
 
 
 def _items(*prices):
@@ -246,6 +252,68 @@ class GuardPublishSafetyTests(unittest.TestCase):
         # deals must pass regardless of crosscheck outcomes.
         results = [self._ok(True) for _ in range(20)]
         _guard_publish_safety(results)  # should not raise
+
+
+class ApplyConservativePricingTests(unittest.TestCase):
+    """Published price = max(cache, live) + buffer, rounded up to 1,000 KRW,
+    with the deal re-judged on it. Buffer is DISPLAY_SAFETY_BUFFER_PCT."""
+
+    def _deal(self, **over):
+        r = {
+            "status": "ok",
+            "is_deal": True,
+            "min": 100_000,
+            "baseline": 120_000,
+            "discount": 16.7,
+            "tier": "green",
+        }
+        r.update(over)
+        return r
+
+    def _buffered_round(self, anchor):
+        import math
+        return math.ceil(anchor * (1 + DISPLAY_SAFETY_BUFFER_PCT / 100) / 1000) * 1000
+
+    def test_buffer_applied_without_live(self):
+        """No live price → buffer the cached fare, round up to 1,000."""
+        r = self._deal(min=100_000, baseline=120_000)
+        apply_conservative_pricing([r])
+        self.assertEqual(r["display_price"], self._buffered_round(100_000))
+        self.assertTrue(r["is_deal"])
+        self.assertEqual(r["tier"], "green")        # still below the floor
+        self.assertGreater(r["discount"], 0)
+
+    def test_anchors_on_higher_live(self):
+        """Live above cache → anchor on live, then buffer."""
+        r = self._deal(min=100_000, baseline=120_000, realtime_krw=110_000)
+        apply_conservative_pricing([r])
+        self.assertEqual(r["display_price"], self._buffered_round(110_000))
+
+    def test_lower_live_ignored(self):
+        """Live below cache → keep the (higher) cache as the anchor."""
+        r = self._deal(min=100_000, baseline=120_000, realtime_krw=90_000)
+        apply_conservative_pricing([r])
+        self.assertEqual(r["display_price"], self._buffered_round(100_000))
+
+    def test_tier_drops_to_none_when_buffer_crosses_floor(self):
+        """Cache below floor but buffered price lands above it → no longer green."""
+        r = self._deal(min=119_000, baseline=120_000)   # +7% → 127,xxx > 120,000
+        apply_conservative_pricing([r])
+        self.assertTrue(r["is_deal"])
+        self.assertIsNone(r["tier"])
+
+    def test_over_cap_after_buffer_drops_deal(self):
+        """Buffered price above floor+DEAL_CAP_PCT → not a deal anymore."""
+        # baseline 100,000, cap +20% = 120,000. cache 117,000 +7% = 125,190 > cap.
+        r = self._deal(min=117_000, baseline=100_000, tier=None)
+        apply_conservative_pricing([r])
+        self.assertFalse(r["is_deal"])
+        self.assertIn("OVER-CAP", r["price_note"])
+
+    def test_non_deals_untouched(self):
+        r = self._deal(is_deal=False)
+        apply_conservative_pricing([r])
+        self.assertNotIn("display_price", r)
 
 
 if __name__ == "__main__":
