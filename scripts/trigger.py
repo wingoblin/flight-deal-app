@@ -165,6 +165,7 @@ def main() -> int:
     now = dt.datetime.now(dt.timezone.utc)
     today = now.date()
     dry_run = os.getenv("TRIGGER_DRY_RUN") == "1"
+    push_failed = False
 
     try:
         users = load_active_users()
@@ -199,8 +200,25 @@ def main() -> int:
         if push_plan and dry_run:
             print("\n(DRY RUN — not sending)")
         elif push_plan:
-            sent = send_pushes(push_plan)
-            record_sent(sent, now)
+            # Isolate the delivery phase: a Supabase/Expo failure here must not
+            # crash the workflow with a raw traceback. Surface it as a GitHub
+            # ::error:: annotation instead. With deal data already published
+            # (this step runs last), a red job is now an alert, not data loss.
+            try:
+                sent = send_pushes(push_plan)
+            except Exception as e:
+                print(f"::error::Expo send failed: {e!r}", file=sys.stderr)
+                sent, push_failed = [], True
+            if sent:
+                try:
+                    record_sent(sent, now)
+                except Exception as e:
+                    # Pushes already went out but dedup rows weren't persisted →
+                    # the same routes could be re-sent next run. Flag loudly.
+                    push_failed = True
+                    print(f"::error::record_sent failed AFTER sending {len(sent)} "
+                          f"push(es) — dedup NOT persisted, duplicate risk next run: {e!r}",
+                          file=sys.stderr)
     else:
         print("# Trigger evaluation\n- no active users; skipping push.")
 
@@ -214,7 +232,10 @@ def main() -> int:
     except Exception as e:
         print(f"WARN: cleanup_push_history failed: {e}", file=sys.stderr)
 
-    return 0
+    # Non-zero so a delivery/record failure shows up as a red run (alert). Safe
+    # now that publishing happens before this step — a red job no longer means
+    # lost deal data, just that notifications need attention.
+    return 1 if push_failed else 0
 
 
 # ---------- Exposed for tests ----------

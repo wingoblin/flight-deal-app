@@ -61,14 +61,33 @@ def _supabase_post(path: str, rows: list[dict]) -> None:
         return
     url = f"{_env('SUPABASE_URL').rstrip('/')}/rest/v1/{path}"
     body = json.dumps(rows).encode("utf-8")
-    req = urllib.request.Request(url, data=body, method="POST", headers={
-        "apikey": _env("SUPABASE_SERVICE_KEY"),
-        "Authorization": f"Bearer {_env('SUPABASE_SERVICE_KEY')}",
+    key = _env("SUPABASE_SERVICE_KEY")
+    headers = {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
         "Content-Type": "application/json",
         "Prefer": "return=minimal",
-    })
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        resp.read()
+    }
+    # Retry transient failures (network / 5xx). Auth & permission errors (401/403)
+    # and other 4xx won't fix on retry, so re-raise immediately for the caller's
+    # guard to surface — this matters for record_sent, where a silent loss would
+    # leave a dedup gap and risk duplicate pushes next run.
+    last_err: Exception | None = None
+    for attempt, delay in enumerate(RETRY_DELAYS):
+        try:
+            req = urllib.request.Request(url, data=body, method="POST", headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                resp.read()
+            return
+        except urllib.error.HTTPError as e:
+            if e.code < 500:
+                raise
+            last_err = e
+        except (urllib.error.URLError, TimeoutError) as e:
+            last_err = e
+        if attempt < len(RETRY_DELAYS) - 1:
+            time.sleep(delay)
+    raise RuntimeError(f"Supabase POST {path} failed after {len(RETRY_DELAYS)} attempts: {last_err}")
 
 
 def _supabase_patch(path_with_filter: str, payload: dict) -> None:

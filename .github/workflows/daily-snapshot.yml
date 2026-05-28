@@ -50,20 +50,6 @@ jobs:
           mkdir -p logs
           python scripts/snapshot.py | tee "logs/$(date -u +%F).md"
 
-      - name: Evaluate triggers and send push notifications
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          TRIGGER_DRY_RUN: ${{ env.DRY_RUN == 'true' && '1' || '' }}
-        run: |
-          set -o pipefail
-          if [ "$TRIGGER_DRY_RUN" = "1" ]; then
-            echo "=== DRY RUN: using committed deals.json, no writes ==="
-            python scripts/trigger.py
-          else
-            python scripts/trigger.py | tee -a "logs/$(date -u +%F).md"
-          fi
-
       - name: Back up DB as artifact
         if: always() && env.DRY_RUN != 'true' && env.DIAGNOSE_API != 'true'
         uses: actions/upload-artifact@v4
@@ -107,3 +93,20 @@ jobs:
           git add deals.json
           git commit -m "Update deals.json from flight-deal-app ($(date -u +%FT%TZ))"
           git push origin HEAD:main
+
+      - name: Evaluate triggers and send push notifications
+        # Runs LAST on purpose: deal data is already committed + mirrored above,
+        # so a push delivery or push_history-write failure can no longer block
+        # publishing the feed. trigger.py reads deals.json from the working copy.
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          TRIGGER_DRY_RUN: ${{ env.DRY_RUN == 'true' && '1' || '' }}
+        run: |
+          set -o pipefail
+          if [ "$TRIGGER_DRY_RUN" = "1" ]; then
+            echo "=== DRY RUN: using committed deals.json, no writes ==="
+            python scripts/trigger.py
+          else
+            python scripts/trigger.py | tee -a "logs/$(date -u +%F).md"
+          fi
