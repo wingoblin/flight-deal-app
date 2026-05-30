@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-30T11:12:14+00:00",
+  "generated_at": "2026-05-30T12:26:34+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -102,6 +102,24 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-05-30",
       "link": "/search/GMP2206PQC29061?t=VJ17821584001782213000001030GMPPUSPQC17827746001782813300000525PQCPUSGMP_ee2f9056efa0335240efc8b0fb4d1ea5_25899&search_date=30052026&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "GMP",
+      "destination": "KLO",
+      "trip": "oneway",
+      "price": 433000,
+      "cache_price": 404160,
+      "realtime_price": null,
+      "baseline": 394041,
+      "discount_pct": -9.9,
+      "departure_at": "2026-09-05T20:35:00+09:00",
+      "return_at": null,
+      "transfers": 2,
+      "airline": "IT",
+      "gate": "Aviakassa",
+      "cache_date": "2026-05-30",
+      "link": "/search/GMP0509KLO1?t=IT17886405001788818100003020GMPKHHMNLKLO_837c590f1d7e3eb9df8d5aa9d11d5fc7_19075&search_date=30052026&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -372,6 +390,24 @@
       "gate": "Mytrip.com",
       "cache_date": "2026-05-28",
       "link": "/search/ICN1209KUL1?t=SC17892135001789268700000980ICNTNAKUL_1b99e074cf82268be4021dcc244c93c5_9455&search_date=28052026&origin_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "JFK",
+      "trip": "oneway",
+      "price": 1074000,
+      "cache_price": 975981,
+      "realtime_price": 1003437,
+      "baseline": 895523,
+      "discount_pct": -19.9,
+      "departure_at": "2026-12-23T20:10:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "AC",
+      "gate": "Flightnetwork",
+      "cache_date": "2026-05-28",
+      "link": "/search/ICN2312JFK1?t=AC17980566001798065540000989ICNYYZJFK_2a949a612a602fcb858788c22efeece4_46212&search_date=28052026&origin_airports=0&destination_airports=0",
       "cabin_class": "economy"
     }
   ]
