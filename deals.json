@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-30T09:35:11+00:00",
+  "generated_at": "2026-05-30T11:12:14+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -48,24 +48,6 @@
       "gate": "Gotogate",
       "cache_date": "2026-05-28",
       "link": "/search/GMP2306JFK11071?t=NH17822184001782255300001395GMPHNDJFK17837352001783854300001205JFKHNDGMP_27b7d1e66f223a2bbb663ea96ab05190_92024&search_date=28052026&origin_airports=0%2C1&destination_airports=0%2C1",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "SYD",
-      "trip": "roundtrip",
-      "price": 892000,
-      "cache_price": 832775,
-      "realtime_price": 775931,
-      "baseline": 833089,
-      "discount_pct": -7.1,
-      "departure_at": "2026-08-12T11:30:00+09:00",
-      "return_at": "2026-08-18T13:00:00+10:00",
-      "transfers": 1,
-      "airline": "TR",
-      "gate": "Mytrip.com",
-      "cache_date": "2026-05-29",
-      "link": "/search/ICN1208SYD18081?t=TR17865342001786648800001850ICNSINSYD17870580001787134500001335SYDSINICN_d992304d1fee7cc5535cac854bdfe928_39139&search_date=29052026&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
@@ -195,6 +177,24 @@
       "cabin_class": "economy"
     },
     {
+      "from": "CJU",
+      "destination": "TYO",
+      "trip": "oneway",
+      "price": 205000,
+      "cache_price": 184468,
+      "realtime_price": 191346,
+      "baseline": 180935,
+      "discount_pct": -13.3,
+      "departure_at": "2026-07-06T18:35:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "7C",
+      "gate": "Trip.com",
+      "cache_date": "2026-05-29",
+      "link": "/search/CJU0607TYO1?t=7C17833629001783416600000895CJUPUSNRT_e71633c46af4939590859d0877a4bb33_8690&search_date=29052026",
+      "cabin_class": "economy"
+    },
+    {
       "from": "ICN",
       "destination": "JFK",
       "trip": "roundtrip",
@@ -217,17 +217,17 @@
       "destination": "OSA",
       "trip": "oneway",
       "price": 96000,
-      "cache_price": 87074,
+      "cache_price": 84222,
       "realtime_price": 88893,
       "baseline": 83622,
       "discount_pct": -14.8,
-      "departure_at": "2026-06-16T13:10:00+09:00",
+      "departure_at": "2026-08-07T13:10:00+09:00",
       "return_at": null,
       "transfers": 0,
       "airline": "MM",
-      "gate": "Kupi.com",
-      "cache_date": "2026-05-28",
-      "link": "/search/GMP1606OSA1?t=MM17816154001781621700000105GMPKIX_63ce95630aa0db74fd1351b9eeda4cc8_4120&search_date=28052026&origin_airports=0",
+      "gate": "MEGO.travel",
+      "cache_date": "2026-05-30",
+      "link": "/search/GMP0708OSA1?t=MM17861082001786114500000105GMPKIX_dfdaeed7088efad04df8c70d07e45820_3975&search_date=30052026&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -336,6 +336,24 @@
       "gate": "Trip.com",
       "cache_date": "2026-05-30",
       "link": "/search/PUS0606CEB1?t=LJ17807832001780794900000255PUSCEB_7ceb67faae4565fb2b1a3c046c9e2e1d_9510&search_date=30052026",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "GMP",
+      "destination": "CXR",
+      "trip": "roundtrip",
+      "price": 614000,
+      "cache_price": 573268,
+      "realtime_price": null,
+      "baseline": 516069,
+      "discount_pct": -19.0,
+      "departure_at": "2026-06-29T07:20:00+09:00",
+      "return_at": "2026-07-06T23:55:00+07:00",
+      "transfers": 1,
+      "airline": "BX",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-05-29",
+      "link": "/search/GMP2906CXR06071?t=LJ17827176001782740100000495GMPPUSCXR17833821001783416900000460CXRPUSGMP_cecbb0892ba0da61b1b44fa808d1fcd5_26942&search_date=29052026&origin_airports=0%2C1&destination_airports=0%2C1",
       "cabin_class": "economy"
     },
     {
