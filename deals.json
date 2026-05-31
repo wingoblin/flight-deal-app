@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-31T16:04:59+00:00",
+  "generated_at": "2026-05-31T17:25:34+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -38,7 +38,7 @@
       "trip": "oneway",
       "price": 186000,
       "cache_price": 172994,
-      "realtime_price": 164239,
+      "realtime_price": 152185,
       "baseline": 176504,
       "discount_pct": -5.4,
       "departure_at": "2026-09-02T06:35:00+09:00",
@@ -69,24 +69,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "CJU",
-      "destination": "FUK",
-      "trip": "oneway",
-      "price": 115000,
-      "cache_price": 99710,
-      "realtime_price": 106981,
-      "baseline": 108765,
-      "discount_pct": -5.7,
-      "departure_at": "2026-06-29T12:40:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "TW",
-      "gate": "Trip.com",
-      "cache_date": "2026-05-31",
-      "link": "/search/CJU2906FUK1?t=TW17827368001782740700000065CJUFUK_06202aaf518227eadd47f61612201124_4706&search_date=31052026",
-      "cabin_class": "economy"
-    },
-    {
       "from": "GMP",
       "destination": "PQC",
       "trip": "oneway",
@@ -110,7 +92,7 @@
       "trip": "roundtrip",
       "price": 341000,
       "cache_price": 318539,
-      "realtime_price": 299849,
+      "realtime_price": 278754,
       "baseline": 316511,
       "discount_pct": -7.7,
       "departure_at": "2026-08-17T02:15:00+09:00",
@@ -210,24 +192,6 @@
       "gate": "Trip.com",
       "cache_date": "2026-05-31",
       "link": "/search/PUS0207CXR06071?t=BX17829897001782999300000280PUSCXR17833800001783405200000300CXRPUS_31140246de179a726df65288ede9926f_17225&search_date=31052026&origin_airports=1&destination_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "CXR",
-      "trip": "oneway",
-      "price": 191000,
-      "cache_price": 164990,
-      "realtime_price": 177800,
-      "baseline": 171354,
-      "discount_pct": -11.5,
-      "departure_at": "2026-06-11T17:10:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "BX",
-      "gate": "Kiwi.com",
-      "cache_date": "2026-05-31",
-      "link": "/search/ICN1106CXR1?t=BX17811978001781210400000330ICNCXR_831ce234ab1335b4f76e7692e44c907d_7787&search_date=31052026&origin_airports=0&destination_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -372,6 +336,24 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-05-30",
       "link": "/search/GMP0107CXR06071?t=LJ17828904001782912900000495GMPPUSCXR17833821001783416900000460CXRPUSGMP_a869273b4e9d961e36e2267c66c4670a_27001&search_date=30052026&origin_airports=0%2C1&destination_airports=0%2C1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "CXR",
+      "trip": "oneway",
+      "price": 204000,
+      "cache_price": 175754,
+      "realtime_price": 189854,
+      "baseline": 171354,
+      "discount_pct": -19.1,
+      "departure_at": "2026-06-12T19:00:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "TW",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-05-31",
+      "link": "/search/ICN1206CXR1?t=TW17812908001781303400000330ICNCXR_d607d185454001ae8661d0671d070144_8295&search_date=31052026&origin_airports=0&destination_airports=0",
       "cabin_class": "economy"
     },
     {
