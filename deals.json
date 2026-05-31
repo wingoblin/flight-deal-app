@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-31T05:18:22+00:00",
+  "generated_at": "2026-05-31T08:41:14+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -124,24 +124,6 @@
     },
     {
       "from": "GMP",
-      "destination": "KLO",
-      "trip": "oneway",
-      "price": 433000,
-      "cache_price": 404148,
-      "realtime_price": null,
-      "baseline": 393526,
-      "discount_pct": -10.0,
-      "departure_at": "2026-09-05T20:35:00+09:00",
-      "return_at": null,
-      "transfers": 2,
-      "airline": "IT",
-      "gate": "Aviakassa",
-      "cache_date": "2026-05-30",
-      "link": "/search/GMP0509KLO1?t=IT17886405001788818100003020GMPKHHMNLKLO_837c590f1d7e3eb9df8d5aa9d11d5fc7_19075&search_date=30052026&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "GMP",
       "destination": "HNL",
       "trip": "roundtrip",
       "price": 1316000,
@@ -177,12 +159,30 @@
       "cabin_class": "economy"
     },
     {
+      "from": "PUS",
+      "destination": "CXR",
+      "trip": "roundtrip",
+      "price": 391000,
+      "cache_price": 364951,
+      "realtime_price": 340532,
+      "baseline": 350916,
+      "discount_pct": -11.4,
+      "departure_at": "2026-07-02T10:55:00+09:00",
+      "return_at": "2026-07-06T23:20:00+07:00",
+      "transfers": 0,
+      "airline": "VJ",
+      "gate": "Trip.com",
+      "cache_date": "2026-05-31",
+      "link": "/search/PUS0207CXR06071?t=BX17829897001782999300000280PUSCXR17833800001783405200000300CXRPUS_31140246de179a726df65288ede9926f_17225&search_date=31052026&origin_airports=1&destination_airports=0",
+      "cabin_class": "economy"
+    },
+    {
       "from": "ICN",
       "destination": "CDG",
       "trip": "roundtrip",
       "price": 1095000,
       "cache_price": 1023198,
-      "realtime_price": null,
+      "realtime_price": 932696,
       "baseline": 982268,
       "discount_pct": -11.5,
       "departure_at": "2027-04-06T11:40:00+09:00",
@@ -286,6 +286,24 @@
     },
     {
       "from": "ICN",
+      "destination": "HKT",
+      "trip": "roundtrip",
+      "price": 484000,
+      "cache_price": 452243,
+      "realtime_price": 423405,
+      "baseline": 410879,
+      "discount_pct": -17.8,
+      "departure_at": "2026-06-03T11:30:00+09:00",
+      "return_at": "2026-06-13T14:15:00+07:00",
+      "transfers": 1,
+      "airline": "TR",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-05-31",
+      "link": "/search/ICN0306HKT13061?t=TR17804862001780561200001370ICNSINHKT17813601001781430300001050HKTSINICN_4848fe2bc376cf44029721b43dbf1b6c_21345&search_date=31052026&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
       "destination": "HNL",
       "trip": "roundtrip",
       "price": 1152000,
@@ -354,6 +372,24 @@
       "gate": "Trip.com",
       "cache_date": "2026-05-30",
       "link": "/search/ICN0906KUL1?t=SC17810484001781147100001705ICNTNAKUL_d1d46b3999b21cd27d5bfee1b2e356fa_9717&search_date=30052026&origin_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "LHR",
+      "trip": "roundtrip",
+      "price": 1257000,
+      "cache_price": 1173903,
+      "realtime_price": 1151178,
+      "baseline": 1048905,
+      "discount_pct": -19.8,
+      "departure_at": "2026-12-20T12:55:00+09:00",
+      "return_at": "2026-12-24T11:30:00Z",
+      "transfers": 1,
+      "airline": "LH",
+      "gate": "Wingie",
+      "cache_date": "2026-05-31",
+      "link": "/search/ICN2012LHR24121?t=LH17977713001797799800001015ICNFRALHR17981118001798196400000870LHRFRAICN_928bcdf70ab19b4ff12e8397ee923956_55406&search_date=31052026&origin_airports=0%2C1&destination_airports=0%2C1",
       "cabin_class": "economy"
     }
   ]
