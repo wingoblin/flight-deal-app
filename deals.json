@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-31T12:28:27+00:00",
+  "generated_at": "2026-05-31T14:32:58+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -20,7 +20,7 @@
       "trip": "roundtrip",
       "price": 341000,
       "cache_price": 318615,
-      "realtime_price": null,
+      "realtime_price": 317930,
       "baseline": 502318,
       "discount_pct": 32.1,
       "departure_at": "2026-06-08T07:45:00+09:00",
@@ -213,24 +213,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "GMP",
-      "destination": "HNL",
-      "trip": "roundtrip",
-      "price": 1344000,
-      "cache_price": 1229832,
-      "realtime_price": 1255146,
-      "baseline": 1192515,
-      "discount_pct": -12.7,
-      "departure_at": "2026-08-24T08:10:00+09:00",
-      "return_at": "2026-09-07T13:40:00-10:00",
-      "transfers": 1,
-      "airline": "OZ",
-      "gate": "Trip.com",
-      "cache_date": "2026-05-31",
-      "link": "/search/GMP2408HNL07091?t=AS17875590001787565900001255GMPKIXHNL17887884001788906000000820HNLHNDGMP_97c52f4bb2747747a37a36cfd3e776ed_58044&search_date=31052026&origin_airports=0&destination_airports=1",
-      "cabin_class": "economy"
-    },
-    {
       "from": "PUS",
       "destination": "TYO",
       "trip": "oneway",
@@ -286,24 +268,6 @@
     },
     {
       "from": "ICN",
-      "destination": "TPE",
-      "trip": "oneway",
-      "price": 126000,
-      "cache_price": 108546,
-      "realtime_price": 117529,
-      "baseline": 108970,
-      "discount_pct": -15.6,
-      "departure_at": "2026-09-09T23:00:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "TR",
-      "gate": "Kiwi.com",
-      "cache_date": "2026-05-29",
-      "link": "/search/ICN0909TPE1?t=TR17889948001789000500000155ICNTPE_3b662cd68140da82ee888b7e676be170_5105&search_date=29052026&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
       "destination": "PQC",
       "trip": "oneway",
       "price": 183000,
@@ -336,24 +300,6 @@
       "gate": "MEGO.travel",
       "cache_date": "2026-05-30",
       "link": "/search/GMP0708OSA1?t=MM17861082001786114500000105GMPKIX_dfdaeed7088efad04df8c70d07e45820_3975&search_date=30052026&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "CEB",
-      "trip": "roundtrip",
-      "price": 433000,
-      "cache_price": 381280,
-      "realtime_price": 403816,
-      "baseline": 369733,
-      "discount_pct": -17.1,
-      "departure_at": "2026-07-01T20:55:00+09:00",
-      "return_at": "2026-07-10T02:20:00+08:00",
-      "transfers": 0,
-      "airline": "7C",
-      "gate": "Mytrip.com",
-      "cache_date": "2026-05-29",
-      "link": "/search/ICN0107CEB10071?t=H117829393001782953100000290ICNCEB17836500001783670400000280CEBICN_5ac41eb892772c2dcf64bc151d283dd1_17932&search_date=29052026&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
