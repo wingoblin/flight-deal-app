@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-06T09:42:08+00:00",
+  "generated_at": "2026-06-06T11:21:07+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -30,24 +30,6 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-06-05",
       "link": "/search/PUS2906CXR1?t=BX17827608001782771600000300PUSCXR_68bad947db5428b7552dc762e430be1a_7311&search_date=05062026&destination_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "SGN",
-      "trip": "oneway",
-      "price": 176000,
-      "cache_price": 164079,
-      "realtime_price": 157620,
-      "baseline": 169260,
-      "discount_pct": -4.0,
-      "departure_at": "2027-03-25T10:50:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "VJ",
-      "gate": "Kupi.com",
-      "cache_date": "2026-06-04",
-      "link": "/search/ICN2503SGN1?t=VJ18059718001805984400000330ICNSGN_085170fcad2c0f83b61ac7b232393e2f_7856&search_date=04062026&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -282,6 +264,24 @@
       "gate": "Mytrip.com",
       "cache_date": "2026-06-06",
       "link": "/search/ICN1111HKT17111?t=TR17943969001794424800000585ICNSINHKT17949468001794996900000715HKTSINICN_935f32085d05bcc0cfd4c50c0fb5e0a2_21480&search_date=06062026&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "HKG",
+      "trip": "roundtrip",
+      "price": 358000,
+      "cache_price": 331835,
+      "realtime_price": 333783,
+      "baseline": 300102,
+      "discount_pct": -19.3,
+      "departure_at": "2026-07-01T06:40:00+09:00",
+      "return_at": "2026-07-04T21:00:00+08:00",
+      "transfers": 0,
+      "airline": "UO",
+      "gate": "City.Travel",
+      "cache_date": "2026-06-06",
+      "link": "/search/ICN0107HKG04071?t=UO17828880001782898200000230ICNHKG17831988001783215600000220HKGICN_39ca35854371d24fff0a661aca89f789_15678&search_date=06062026&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     }
   ]
