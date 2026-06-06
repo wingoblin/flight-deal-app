@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-06T14:58:31+00:00",
+  "generated_at": "2026-06-06T16:23:14+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -34,24 +34,6 @@
     },
     {
       "from": "ICN",
-      "destination": "SGN",
-      "trip": "oneway",
-      "price": 176000,
-      "cache_price": 164079,
-      "realtime_price": 157620,
-      "baseline": 169260,
-      "discount_pct": -4.0,
-      "departure_at": "2027-03-25T10:50:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "VJ",
-      "gate": "Kupi.com",
-      "cache_date": "2026-06-04",
-      "link": "/search/ICN2503SGN1?t=VJ18059718001805984400000330ICNSGN_085170fcad2c0f83b61ac7b232393e2f_7856&search_date=04062026&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
       "destination": "MNL",
       "trip": "roundtrip",
       "price": 304000,
@@ -66,6 +48,24 @@
       "gate": "Wingie",
       "cache_date": "2026-06-05",
       "link": "/search/ICN2708MNL31081?t=5J17877969001787809200000265ICNMNL17882049001788223500000250MNLICN_08c846254b7121c28339ea221f773959_13390&search_date=05062026&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "NGO",
+      "trip": "oneway",
+      "price": 139000,
+      "cache_price": 129132,
+      "realtime_price": 120533,
+      "baseline": 132549,
+      "discount_pct": -4.9,
+      "departure_at": "2026-06-11T15:05:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "7C",
+      "gate": "Trip.com",
+      "cache_date": "2026-06-06",
+      "link": "/search/ICN1106NGO1?t=7C17811903001781197200000115ICNNGO_61f6eb62c3a5d355ba46a7abfa43b64a_6101&search_date=06062026&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -228,6 +228,24 @@
       "gate": "Trip.com",
       "cache_date": "2026-06-06",
       "link": "/search/ICN1106KUL1?t=SC17811669001781233500001170ICNTNAKUL_17f182ff06687251155f44324e13a914_9761&search_date=06062026&origin_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "GMP",
+      "destination": "NGO",
+      "trip": "oneway",
+      "price": 142000,
+      "cache_price": 132412,
+      "realtime_price": 128259,
+      "baseline": 119175,
+      "discount_pct": -19.2,
+      "departure_at": "2026-06-11T11:20:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "MM",
+      "gate": "Trip.com",
+      "cache_date": "2026-06-06",
+      "link": "/search/GMP1106NGO1?t=MM17811768001781183400000110GMPNGO_d63b9d5dcebcf2168a81a8b8e214965e_6256&search_date=06062026&origin_airports=0",
       "cabin_class": "economy"
     },
     {
