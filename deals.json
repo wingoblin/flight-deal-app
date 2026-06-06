@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-06T22:18:37+00:00",
+  "generated_at": "2026-06-06T23:49:45+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -249,24 +249,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "GMP",
-      "destination": "NGO",
-      "trip": "oneway",
-      "price": 142000,
-      "cache_price": 132404,
-      "realtime_price": 128259,
-      "baseline": 119175,
-      "discount_pct": -19.2,
-      "departure_at": "2026-06-11T11:20:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "MM",
-      "gate": "Trip.com",
-      "cache_date": "2026-06-06",
-      "link": "/search/GMP1106NGO1?t=MM17811768001781183400000110GMPNGO_d63b9d5dcebcf2168a81a8b8e214965e_6256&search_date=06062026&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
       "from": "ICN",
       "destination": "HKT",
       "trip": "roundtrip",
@@ -300,6 +282,24 @@
       "gate": "City.Travel",
       "cache_date": "2026-06-06",
       "link": "/search/ICN0107HKG04071?t=UO17828880001782898200000230ICNHKG17831988001783215600000220HKGICN_39ca35854371d24fff0a661aca89f789_15678&search_date=06062026&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "JFK",
+      "trip": "oneway",
+      "price": 1034000,
+      "cache_price": 965471,
+      "realtime_price": 959626,
+      "baseline": 866216,
+      "discount_pct": -19.4,
+      "departure_at": "2026-06-08T20:30:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "PR",
+      "gate": "Flightnetwork",
+      "cache_date": "2026-06-05",
+      "link": "/search/ICN0806JFK1?t=PR17809506001781047200002390ICNMNLJFK_5fbfabd05eca68cbb0985612986846c5_45615&search_date=05062026&origin_airports=0&destination_airports=0",
       "cabin_class": "economy"
     }
   ]
