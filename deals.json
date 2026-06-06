@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-06T19:41:05+00:00",
+  "generated_at": "2026-06-06T20:56:27+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -272,7 +272,7 @@
       "trip": "roundtrip",
       "price": 487000,
       "cache_price": 454609,
-      "realtime_price": 432682,
+      "realtime_price": 414138,
       "baseline": 408322,
       "discount_pct": -19.3,
       "departure_at": "2026-11-11T11:35:00+09:00",
