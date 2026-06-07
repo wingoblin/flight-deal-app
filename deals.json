@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-07T20:28:33+00:00",
+  "generated_at": "2026-06-07T21:59:18+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -14,24 +14,6 @@
   "refresh_interval_hours": 1,
   "disclaimer": "캐시 기반 가격으로 실시간이 아닙니다. 좌석이 빠르게 팔릴 수 있어 클릭 시 이미 매진되었거나 가격이 변동됐을 수 있습니다.",
   "deals": [
-    {
-      "from": "ICN",
-      "destination": "CEB",
-      "trip": "oneway",
-      "price": 172000,
-      "cache_price": 160743,
-      "realtime_price": 146825,
-      "baseline": 191853,
-      "discount_pct": 10.3,
-      "departure_at": "2026-07-20T21:35:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "5J",
-      "gate": "Trip.com",
-      "cache_date": "2026-06-07",
-      "link": "/search/ICN2007CEB1?t=5J17845833001784596800000285ICNCEB_2fdc450ab9219e4c481bb47f83940cd6_7595&search_date=07062026&origin_airports=0",
-      "cabin_class": "economy"
-    },
     {
       "from": "PUS",
       "destination": "OKA",
@@ -138,6 +120,24 @@
       "gate": "Kupi.com",
       "cache_date": "2026-06-06",
       "link": "/search/ICN1210JFK22101?t=OZ17917938001791799200000870ICNJFK17926326001792735500000935JFKICN_09d42fe85c7dcc48e57b9aabd98cf3da_76190&search_date=06062026&origin_airports=0%2C1&destination_airports=0%2C1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "CEB",
+      "trip": "roundtrip",
+      "price": 335000,
+      "cache_price": 278395,
+      "realtime_price": 312197,
+      "baseline": 312935,
+      "discount_pct": -7.1,
+      "departure_at": "2026-07-20T21:35:00+09:00",
+      "return_at": "2026-07-23T14:50:00+08:00",
+      "transfers": 0,
+      "airline": "5J",
+      "gate": "Trip.com",
+      "cache_date": "2026-06-07",
+      "link": "/search/ICN2007CEB23071?t=5J17845833001784596800000285ICNCEB17848182001784838900000285CEBICN_027f563ccbacf7c75ae6677a98dea70d_13170&search_date=07062026&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
