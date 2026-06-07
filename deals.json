@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-07T14:43:45+00:00",
+  "generated_at": "2026-06-07T16:09:08+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -14,6 +14,24 @@
   "refresh_interval_hours": 1,
   "disclaimer": "캐시 기반 가격으로 실시간이 아닙니다. 좌석이 빠르게 팔릴 수 있어 클릭 시 이미 매진되었거나 가격이 변동됐을 수 있습니다.",
   "deals": [
+    {
+      "from": "ICN",
+      "destination": "CEB",
+      "trip": "oneway",
+      "price": 172000,
+      "cache_price": 160743,
+      "realtime_price": 146825,
+      "baseline": 191853,
+      "discount_pct": 10.3,
+      "departure_at": "2026-07-20T21:35:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "5J",
+      "gate": "Trip.com",
+      "cache_date": "2026-06-07",
+      "link": "/search/ICN2007CEB1?t=5J17845833001784596800000285ICNCEB_2fdc450ab9219e4c481bb47f83940cd6_7595&search_date=07062026&origin_airports=0",
+      "cabin_class": "economy"
+    },
     {
       "from": "ICN",
       "destination": "MNL",
@@ -48,24 +66,6 @@
       "gate": "Trip.com",
       "cache_date": "2026-06-06",
       "link": "/search/PUS1406OKA1?t=ZE17814240001781431200000120PUSOKA_ffacaa0da091adab8cb9c725c58dbaa9_5803&search_date=06062026",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "KLO",
-      "trip": "oneway",
-      "price": 185000,
-      "cache_price": 172108,
-      "realtime_price": null,
-      "baseline": 178857,
-      "discount_pct": -3.4,
-      "departure_at": "2026-06-11T08:30:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "TW",
-      "gate": "Trip.com",
-      "cache_date": "2026-06-07",
-      "link": "/search/ICN1106KLO1?t=TW17811666001781179200000270ICNKLO_2ac5e73e975ba95778139e2b979ae539_8132&search_date=07062026&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -105,21 +105,21 @@
       "cabin_class": "economy"
     },
     {
-      "from": "PUS",
-      "destination": "CXR",
+      "from": "ICN",
+      "destination": "KLO",
       "trip": "oneway",
-      "price": 168000,
-      "cache_price": 156332,
-      "realtime_price": 153007,
-      "baseline": 158969,
+      "price": 189000,
+      "cache_price": 172108,
+      "realtime_price": 176190,
+      "baseline": 178857,
       "discount_pct": -5.7,
-      "departure_at": "2026-07-06T19:20:00+09:00",
+      "departure_at": "2026-06-11T08:30:00+09:00",
       "return_at": null,
       "transfers": 0,
-      "airline": "BX",
-      "gate": "Kiwi.com",
-      "cache_date": "2026-06-05",
-      "link": "/search/PUS0607CXR1?t=BX17833656001783376400000300PUSCXR_ae3b2461b6e248468dd6147cde1707f1_7386&search_date=05062026&destination_airports=0",
+      "airline": "TW",
+      "gate": "Trip.com",
+      "cache_date": "2026-06-07",
+      "link": "/search/ICN1106KLO1?t=TW17811666001781179200000270ICNKLO_2ac5e73e975ba95778139e2b979ae539_8132&search_date=07062026&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -192,6 +192,24 @@
       "gate": "City.Travel",
       "cache_date": "2026-06-06",
       "link": "/search/ICN2007CEB25071?t=5J17845833001784596800000285ICNCEB17849460001784966400000280CEBICN_d79f7d711663d4e0e514cf7074171775_15064&search_date=06062026&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "PUS",
+      "destination": "CXR",
+      "trip": "oneway",
+      "price": 175000,
+      "cache_price": 162838,
+      "realtime_price": 151462,
+      "baseline": 158969,
+      "discount_pct": -10.1,
+      "departure_at": "2026-06-16T19:20:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "BX",
+      "gate": "Trip.com",
+      "cache_date": "2026-06-07",
+      "link": "/search/PUS1606CXR1?t=BX17816376001781648400000300PUSCXR_79669e1049dd4d397d69f62ab3a0b4d0_7694&search_date=07062026&destination_airports=0",
       "cabin_class": "economy"
     },
     {
