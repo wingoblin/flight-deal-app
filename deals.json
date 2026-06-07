@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-07T16:09:08+00:00",
+  "generated_at": "2026-06-07T17:34:59+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -30,24 +30,6 @@
       "gate": "Trip.com",
       "cache_date": "2026-06-07",
       "link": "/search/ICN2007CEB1?t=5J17845833001784596800000285ICNCEB_2fdc450ab9219e4c481bb47f83940cd6_7595&search_date=07062026&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "MNL",
-      "trip": "oneway",
-      "price": 164000,
-      "cache_price": 152616,
-      "realtime_price": 125188,
-      "baseline": 164108,
-      "discount_pct": 0.1,
-      "departure_at": "2026-08-26T02:15:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "5J",
-      "gate": "Trip.com",
-      "cache_date": "2026-06-07",
-      "link": "/search/ICN2608MNL1?t=5J17877105001787722800000265ICNMNL_9bedefc9d317dd6155cc9de6d7a0ea92_7211&search_date=07062026&origin_airports=0",
       "cabin_class": "economy"
     },
     {
