@@ -126,12 +126,17 @@ REALTIME_CROSSCHECK = True
 MAX_PRICE_DIVERGENCE_PCT = 20.0
 REALTIME_REQUEST_DELAY_SEC = 1.0
 
-# Conservative display pricing. The number we publish (and re-judge the deal on)
-# is the higher of the cached cheapest fare and the live cross-check fare, plus
-# this buffer, rounded up to the nearest 1,000 KRW. Goal: the price shown is
-# almost always >= what the user actually pays at booking, so clicking through
-# surprises downward (cheaper), never upward. The buffer also covers routes
-# where the live cross-check is unavailable (scrape down) — there the cached
-# fare alone gets the buffer. Trade-off: a higher shown price means fewer/less
-# flashy deals, accepted on purpose for trust.
+# Conservative display pricing. The published price is the higher of the cached
+# cheapest fare and the live cross-check fare, plus a safety buffer, rounded up
+# to the nearest 1,000 KRW. Goal: the shown price is almost always >= what the
+# user actually pays at booking, so clicking through surprises downward, never
+# up. The buffer is adaptive:
+#   - LIVE_SAFETY_BUFFER_PCT when the realtime cross-check returned a live price
+#     (the displayed price is already anchored on that real, near-bookable fare,
+#     so only a small cushion is needed → more competitive).
+#   - DISPLAY_SAFETY_BUFFER_PCT when there's no live price (cache only, which can
+#     be stale/too-low) → a larger cushion is the only protection.
+# Trade-off: a higher shown price means fewer/less flashy deals, accepted for
+# trust; the adaptive split keeps prices competitive where we can verify them.
 DISPLAY_SAFETY_BUFFER_PCT = 7.0
+LIVE_SAFETY_BUFFER_PCT = 3.0

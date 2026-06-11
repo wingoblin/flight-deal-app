@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import datetime as dt
 
-from config import DISPLAY_SAFETY_BUFFER_PCT
+from config import DISPLAY_SAFETY_BUFFER_PCT, LIVE_SAFETY_BUFFER_PCT
 from snapshot import (
     _guard_publish_safety,
     apply_conservative_pricing,
@@ -290,8 +290,8 @@ class IsStaleTests(unittest.TestCase):
 
 
 class ApplyConservativePricingTests(unittest.TestCase):
-    """Published price = max(cache, live) + buffer, rounded up to 1,000 KRW,
-    with the deal re-judged on it. Buffer is DISPLAY_SAFETY_BUFFER_PCT."""
+    """Published price = max(cache, live) + adaptive buffer (LIVE when a live
+    cross-check fare exists, else DISPLAY), rounded up to 1,000 KRW."""
 
     def _deal(self, **over):
         r = {
@@ -304,29 +304,31 @@ class ApplyConservativePricingTests(unittest.TestCase):
         r.update(over)
         return r
 
-    def _buffered_round(self, anchor):
+    def _buffered_round(self, anchor, live=False):
         import math
-        return math.ceil(anchor * (1 + DISPLAY_SAFETY_BUFFER_PCT / 100) / 1000) * 1000
+        pct = LIVE_SAFETY_BUFFER_PCT if live else DISPLAY_SAFETY_BUFFER_PCT
+        return math.ceil(anchor * (1 + pct / 100) / 1000) * 1000
 
     def test_buffer_applied_without_live(self):
-        """No live price → buffer the cached fare, round up to 1,000."""
+        """No live price → larger (DISPLAY) buffer on the cached fare."""
         r = self._deal(min=100_000, baseline=120_000)
         apply_conservative_pricing([r])
         self.assertEqual(r["display_price"], self._buffered_round(100_000))
         self.assertTrue(r["is_deal"])
         self.assertGreater(r["discount"], 0)
 
-    def test_anchors_on_higher_live(self):
-        """Live above cache → anchor on live, then buffer."""
+    def test_anchors_on_higher_live_small_buffer(self):
+        """Live above cache → anchor on live, then the smaller LIVE buffer."""
         r = self._deal(min=100_000, baseline=120_000, realtime_krw=110_000)
         apply_conservative_pricing([r])
-        self.assertEqual(r["display_price"], self._buffered_round(110_000))
+        self.assertEqual(r["display_price"], self._buffered_round(110_000, live=True))
 
-    def test_lower_live_ignored(self):
-        """Live below cache → keep the (higher) cache as the anchor."""
+    def test_lower_live_ignored_but_small_buffer(self):
+        """Live below cache → keep the (higher) cache as anchor, but since a live
+        fare was verified, use the smaller LIVE buffer."""
         r = self._deal(min=100_000, baseline=120_000, realtime_krw=90_000)
         apply_conservative_pricing([r])
-        self.assertEqual(r["display_price"], self._buffered_round(100_000))
+        self.assertEqual(r["display_price"], self._buffered_round(100_000, live=True))
 
     def test_within_cap_stays_deal_despite_buffer(self):
         """Real fare within floor+cap stays a deal even if the buffer pushes the

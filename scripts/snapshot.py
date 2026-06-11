@@ -17,6 +17,7 @@ from config import (
     DEAL_CAP_PCT,
     DESTINATIONS,
     DISPLAY_SAFETY_BUFFER_PCT,
+    LIVE_SAFETY_BUFFER_PCT,
     MAX_CACHE_AGE_DAYS,
     MAX_ERROR_RATE,
     MAX_PRICE_DIVERGENCE_PCT,
@@ -384,7 +385,10 @@ def apply_conservative_pricing(results):
         live = r.get("realtime_krw")
         if live:
             anchor = max(anchor, live)
-        r["display_price"] = math.ceil(anchor * (1 + DISPLAY_SAFETY_BUFFER_PCT / 100) / 1000) * 1000
+        # Adaptive buffer: small when a live cross-check verified the fare,
+        # larger when we only have the (possibly stale) cache.
+        buffer_pct = LIVE_SAFETY_BUFFER_PCT if live else DISPLAY_SAFETY_BUFFER_PCT
+        r["display_price"] = math.ceil(anchor * (1 + buffer_pct / 100) / 1000) * 1000
         r["discount"] = (baseline - r["display_price"]) / baseline * 100
         if anchor > baseline * (1 + DEAL_CAP_PCT / 100):
             r["is_deal"] = False
@@ -508,9 +512,12 @@ def write_deals_json(results):
         "currency": "KRW",
         # A deal runs from below the floor up to floor +deal_cap_pct.
         "deal_cap_pct": DEAL_CAP_PCT,
-        # "price" is the conservative published price: max(cache, live) + this
-        # buffer, rounded up. cache_price/realtime_price expose the inputs.
+        # "price" is the conservative published price: max(cache, live) + an
+        # adaptive buffer (live_safety_buffer_pct when realtime_price is set,
+        # else display_safety_buffer_pct), rounded up. cache_price/realtime_price
+        # expose the inputs.
         "display_safety_buffer_pct": DISPLAY_SAFETY_BUFFER_PCT,
+        "live_safety_buffer_pct": LIVE_SAFETY_BUFFER_PCT,
         "refresh_interval_hours": 1,
         "disclaimer": (
             "캐시 기반 가격으로 실시간이 아닙니다. 좌석이 빠르게 팔릴 수 있어 "
