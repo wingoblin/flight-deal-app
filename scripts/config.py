@@ -1,24 +1,31 @@
-ORIGINS = ["ICN", "GMP", "PUS", "TAE", "CJU"]
+ORIGINS = ["ICN", "GMP", "PUS", "TAE", "CJU", "CJJ", "MWX"]
 DESTINATIONS = [
     # Japan — major
-    "TYO", "OSA", "FUK", "NGO", "OKA",
+    "TYO", "OSA", "FUK", "NGO", "OKA", "CTS",
     # Japan — regional (Korean direct, mostly LCC)
     "KMQ", "TAK", "KOJ", "KMJ", "MYJ", "HIJ", "FSZ",
+    "SDJ", "KIJ", "KKJ", "KMI", "OIT",
+    # China
+    "PVG", "PEK", "TAO", "DLC", "SHE", "WEH", "HRB", "YNJ", "CAN", "XMN",
     # Southeast Asia / resort
     "BKK", "DAD", "HAN", "SGN", "CEB", "MNL", "SIN", "KUL", "CGK", "DPS",
     "KLO", "USM", "HKT", "KBV", "SAI", "CNX", "CXR", "PQC", "VTE",
-    "BKI",
+    "BKI", "PNH", "RGN", "PEN", "LGK", "SUB", "CRK",
     # East Asia
-    "TPE", "HKG",
+    "TPE", "HKG", "KHH", "MFM",
+    # Middle East / South Asia
+    "DXB", "DOH", "DEL",
     # Europe
     "CDG", "LHR", "FCO", "BCN", "FRA", "AMS", "IST",
     "ZRH", "VIE", "MUC", "PRG", "MAD", "HEL",
+    "LIS", "ATH", "CPH", "ARN", "WAW", "VCE", "MXP",
     # Americas
     "JFK", "LAX", "HNL", "YVR", "SEA", "ATL", "DFW", "IAD", "LAS", "YYZ",
+    "SFO", "ORD",
     # Pacific resort
     "GUM", "SPN",
     # Oceania
-    "SYD",
+    "SYD", "AKL", "MEL", "BNE",
 ]
 TRIPS = [("oneway", True), ("roundtrip", False)]
 
