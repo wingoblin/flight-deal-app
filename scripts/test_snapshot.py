@@ -11,11 +11,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import datetime as dt
+
 from config import DISPLAY_SAFETY_BUFFER_PCT
 from snapshot import (
     _guard_publish_safety,
     apply_conservative_pricing,
     filter_price_outliers,
+    is_stale,
     judge,
 )
 
@@ -261,6 +264,29 @@ class GuardPublishSafetyTests(unittest.TestCase):
         # deals must pass regardless of crosscheck outcomes.
         results = [self._ok(True) for _ in range(20)]
         _guard_publish_safety(results)  # should not raise
+
+
+class IsStaleTests(unittest.TestCase):
+    """Freshness gate honors the per-call max_age_days (sparse-route fallback)."""
+
+    NOW = dt.datetime(2026, 6, 11, tzinfo=dt.timezone.utc)
+
+    def _found(self, days_ago):
+        return {"found_at": (self.NOW - dt.timedelta(days=days_ago)).isoformat()}
+
+    def test_actual_false_always_stale(self):
+        self.assertTrue(is_stale({"actual": False}, self.NOW, max_age_days=30))
+
+    def test_within_window_is_fresh(self):
+        # 5 days old, strict 2-day window → stale; 30-day window → fresh
+        self.assertTrue(is_stale(self._found(5), self.NOW, max_age_days=2))
+        self.assertFalse(is_stale(self._found(5), self.NOW, max_age_days=30))
+
+    def test_beyond_wide_window_still_stale(self):
+        self.assertTrue(is_stale(self._found(40), self.NOW, max_age_days=30))
+
+    def test_missing_found_at_not_stale(self):
+        self.assertFalse(is_stale({}, self.NOW, max_age_days=2))
 
 
 class ApplyConservativePricingTests(unittest.TestCase):

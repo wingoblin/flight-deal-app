@@ -88,6 +88,17 @@ OUTLIER_MIN_N = 20
 # refresh daily) and risk the 0-deals publish guard.
 MAX_CACHE_AGE_DAYS = 2
 
+# Sparse-route fallback: well-covered routes (ICN/GMP) have plenty of fresh
+# fares, but thin-coverage regional routes (대구/TAE, 청주/CJU) are rarely
+# searched, so their cache is almost always older than MAX_CACHE_AGE_DAYS and
+# gets fully dropped → the route never surfaces. When the strict (fresh) pass
+# leaves fewer than MIN_TODAY_FARES fares, we retry allowing cache up to this
+# many days old so the route can still appear. The displayed price is still
+# re-anchored by the realtime cross-check (which covers regional airports) and
+# the +DISPLAY_SAFETY_BUFFER_PCT buffer, so a stale-sourced fare doesn't mislead.
+# Set to MAX_CACHE_AGE_DAYS to disable the fallback.
+SPARSE_CACHE_AGE_DAYS = 30
+
 # Low-trust gates (sellers): fares from these are dropped before judging so they
 # never become a deal or set the baseline. Keep results to trustworthy gates
 # (e.g. Trip.com, City.Travel, Kiwi.com, Mytrip.com). Tune as needed.
