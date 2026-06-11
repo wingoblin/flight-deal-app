@@ -38,8 +38,16 @@ BASELINE_WINDOW_DAYS = 30
 
 # Baseline = mean of the 5 lowest daily minimums within BASELINE_WINDOW_DAYS.
 # Below MIN_HISTORY_DAYS days of data we can't trust the floor — history guard
-# blocks the alert.
-MIN_HISTORY_DAYS = 5
+# blocks the alert. Kept low (3) so sparse routes (regional airports like TAE/CJU
+# with only a handful of cached fares) can still build a usable floor.
+MIN_HISTORY_DAYS = 3
+
+# Minimum number of fares today (after the outlier filter) to judge a deal.
+# Below this the sample is too thin to trust, so the deal is blocked (today_n
+# guard). Lowered to 3 to let thin-coverage routes (e.g. 대구/TAE) surface;
+# the sanity/roundtrip-vs-oneway/cache-age/blocked-gate guards still protect
+# against the bad single fares that thin samples are prone to.
+MIN_TODAY_FARES = 3
 
 # Cabin-mix protector (Step 2-A-0). The Travelpayouts API doesn't expose
 # cabin class and trip_class=0 is partially ignored by the cache, so a
@@ -80,6 +88,17 @@ OUTLIER_MIN_N = 20
 # refresh daily) and risk the 0-deals publish guard.
 MAX_CACHE_AGE_DAYS = 2
 
+# Sparse-route fallback: well-covered routes (ICN/GMP) have plenty of fresh
+# fares, but thin-coverage regional routes (대구/TAE, 청주/CJU) are rarely
+# searched, so their cache is almost always older than MAX_CACHE_AGE_DAYS and
+# gets fully dropped → the route never surfaces. When the strict (fresh) pass
+# leaves fewer than MIN_TODAY_FARES fares, we retry allowing cache up to this
+# many days old so the route can still appear. The displayed price is still
+# re-anchored by the realtime cross-check (which covers regional airports) and
+# the +DISPLAY_SAFETY_BUFFER_PCT buffer, so a stale-sourced fare doesn't mislead.
+# Set to MAX_CACHE_AGE_DAYS to disable the fallback.
+SPARSE_CACHE_AGE_DAYS = 30
+
 # Low-trust gates (sellers): fares from these are dropped before judging so they
 # never become a deal or set the baseline. Keep results to trustworthy gates
 # (e.g. Trip.com, City.Travel, Kiwi.com, Mytrip.com). Tune as needed.
@@ -107,12 +126,17 @@ REALTIME_CROSSCHECK = True
 MAX_PRICE_DIVERGENCE_PCT = 20.0
 REALTIME_REQUEST_DELAY_SEC = 1.0
 
-# Conservative display pricing. The number we publish (and re-judge the deal on)
-# is the higher of the cached cheapest fare and the live cross-check fare, plus
-# this buffer, rounded up to the nearest 1,000 KRW. Goal: the price shown is
-# almost always >= what the user actually pays at booking, so clicking through
-# surprises downward (cheaper), never upward. The buffer also covers routes
-# where the live cross-check is unavailable (scrape down) — there the cached
-# fare alone gets the buffer. Trade-off: a higher shown price means fewer/less
-# flashy deals, accepted on purpose for trust.
+# Conservative display pricing. The published price is the higher of the cached
+# cheapest fare and the live cross-check fare, plus a safety buffer, rounded up
+# to the nearest 1,000 KRW. Goal: the shown price is almost always >= what the
+# user actually pays at booking, so clicking through surprises downward, never
+# up. The buffer is adaptive:
+#   - LIVE_SAFETY_BUFFER_PCT when the realtime cross-check returned a live price
+#     (the displayed price is already anchored on that real, near-bookable fare,
+#     so only a small cushion is needed → more competitive).
+#   - DISPLAY_SAFETY_BUFFER_PCT when there's no live price (cache only, which can
+#     be stale/too-low) → a larger cushion is the only protection.
+# Trade-off: a higher shown price means fewer/less flashy deals, accepted for
+# trust; the adaptive split keeps prices competitive where we can verify them.
 DISPLAY_SAFETY_BUFFER_PCT = 7.0
+LIVE_SAFETY_BUFFER_PCT = 3.0

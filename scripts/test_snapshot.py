@@ -11,11 +11,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from config import DISPLAY_SAFETY_BUFFER_PCT
+import datetime as dt
+
+from config import DISPLAY_SAFETY_BUFFER_PCT, LIVE_SAFETY_BUFFER_PCT
 from snapshot import (
     _guard_publish_safety,
     apply_conservative_pricing,
     filter_price_outliers,
+    is_stale,
     judge,
 )
 
@@ -88,23 +91,37 @@ class JudgeTests(unittest.TestCase):
         return {"n": n, "min": min_price, "p25": 0, "median": 0, "mean": 0}
 
     def test_history_guard_fires_below_min_history_days(self):
-        """<5 days of history → block, baseline None, reason 'history'."""
+        """<MIN_HISTORY_DAYS (3) days of history → block, reason 'history'."""
         baseline, discount, is_deal, diag = judge(
-            self._stats(100_000), [200_000] * 4, today_items_count=20,
+            self._stats(100_000), [200_000] * 2, today_items_count=20,
         )
         self.assertIsNone(baseline)
         self.assertFalse(is_deal)
         self.assertEqual(diag["guard_triggered"], "history")
-        self.assertEqual(diag["history_days_used"], 4)
+        self.assertEqual(diag["history_days_used"], 2)
 
-    def test_today_n_guard_fires_below_5(self):
-        """today_items_count < 5 → block, reason 'today_n'."""
+    def test_history_guard_passes_at_min_history_days(self):
+        """exactly MIN_HISTORY_DAYS (3) days → no history guard."""
+        _, _, _, diag = judge(
+            self._stats(100_000), [200_000] * 3, today_items_count=20,
+        )
+        self.assertNotEqual(diag["guard_triggered"], "history")
+
+    def test_today_n_guard_fires_below_min(self):
+        """today_items_count < MIN_TODAY_FARES (3) → block, reason 'today_n'."""
         baseline, discount, is_deal, diag = judge(
-            self._stats(100_000), [200_000] * 10, today_items_count=4,
+            self._stats(100_000), [200_000] * 10, today_items_count=2,
         )
         self.assertIsNone(baseline)
         self.assertFalse(is_deal)
         self.assertEqual(diag["guard_triggered"], "today_n")
+
+    def test_today_n_guard_passes_at_min(self):
+        """today_items_count == MIN_TODAY_FARES (3) → no today_n guard."""
+        _, _, _, diag = judge(
+            self._stats(100_000), [200_000] * 10, today_items_count=3,
+        )
+        self.assertNotEqual(diag["guard_triggered"], "today_n")
 
     def test_deal_below_floor(self):
         """min cheaper than the floor → deal, positive discount."""
@@ -249,9 +266,32 @@ class GuardPublishSafetyTests(unittest.TestCase):
         _guard_publish_safety(results)  # should not raise
 
 
+class IsStaleTests(unittest.TestCase):
+    """Freshness gate honors the per-call max_age_days (sparse-route fallback)."""
+
+    NOW = dt.datetime(2026, 6, 11, tzinfo=dt.timezone.utc)
+
+    def _found(self, days_ago):
+        return {"found_at": (self.NOW - dt.timedelta(days=days_ago)).isoformat()}
+
+    def test_actual_false_always_stale(self):
+        self.assertTrue(is_stale({"actual": False}, self.NOW, max_age_days=30))
+
+    def test_within_window_is_fresh(self):
+        # 5 days old, strict 2-day window → stale; 30-day window → fresh
+        self.assertTrue(is_stale(self._found(5), self.NOW, max_age_days=2))
+        self.assertFalse(is_stale(self._found(5), self.NOW, max_age_days=30))
+
+    def test_beyond_wide_window_still_stale(self):
+        self.assertTrue(is_stale(self._found(40), self.NOW, max_age_days=30))
+
+    def test_missing_found_at_not_stale(self):
+        self.assertFalse(is_stale({}, self.NOW, max_age_days=2))
+
+
 class ApplyConservativePricingTests(unittest.TestCase):
-    """Published price = max(cache, live) + buffer, rounded up to 1,000 KRW,
-    with the deal re-judged on it. Buffer is DISPLAY_SAFETY_BUFFER_PCT."""
+    """Published price = max(cache, live) + adaptive buffer (LIVE when a live
+    cross-check fare exists, else DISPLAY), rounded up to 1,000 KRW."""
 
     def _deal(self, **over):
         r = {
@@ -264,37 +304,48 @@ class ApplyConservativePricingTests(unittest.TestCase):
         r.update(over)
         return r
 
-    def _buffered_round(self, anchor):
+    def _buffered_round(self, anchor, live=False):
         import math
-        return math.ceil(anchor * (1 + DISPLAY_SAFETY_BUFFER_PCT / 100) / 1000) * 1000
+        pct = LIVE_SAFETY_BUFFER_PCT if live else DISPLAY_SAFETY_BUFFER_PCT
+        return math.ceil(anchor * (1 + pct / 100) / 1000) * 1000
 
     def test_buffer_applied_without_live(self):
-        """No live price → buffer the cached fare, round up to 1,000."""
+        """No live price → larger (DISPLAY) buffer on the cached fare."""
         r = self._deal(min=100_000, baseline=120_000)
         apply_conservative_pricing([r])
         self.assertEqual(r["display_price"], self._buffered_round(100_000))
         self.assertTrue(r["is_deal"])
         self.assertGreater(r["discount"], 0)
 
-    def test_anchors_on_higher_live(self):
-        """Live above cache → anchor on live, then buffer."""
+    def test_anchors_on_higher_live_small_buffer(self):
+        """Live above cache → anchor on live, then the smaller LIVE buffer."""
         r = self._deal(min=100_000, baseline=120_000, realtime_krw=110_000)
         apply_conservative_pricing([r])
-        self.assertEqual(r["display_price"], self._buffered_round(110_000))
+        self.assertEqual(r["display_price"], self._buffered_round(110_000, live=True))
 
-    def test_lower_live_ignored(self):
-        """Live below cache → keep the (higher) cache as the anchor."""
+    def test_lower_live_ignored_but_small_buffer(self):
+        """Live below cache → keep the (higher) cache as anchor, but since a live
+        fare was verified, use the smaller LIVE buffer."""
         r = self._deal(min=100_000, baseline=120_000, realtime_krw=90_000)
         apply_conservative_pricing([r])
-        self.assertEqual(r["display_price"], self._buffered_round(100_000))
+        self.assertEqual(r["display_price"], self._buffered_round(100_000, live=True))
 
-    def test_over_cap_after_buffer_drops_deal(self):
-        """Buffered price above floor+DEAL_CAP_PCT → not a deal anymore."""
-        # baseline 100,000, cap +20% = 120,000. cache 117,000 +7% = 125,190 > cap.
+    def test_within_cap_stays_deal_despite_buffer(self):
+        """Real fare within floor+cap stays a deal even if the buffer pushes the
+        displayed price past the cap (buffer is display-only, not a deal gate)."""
+        # baseline 100,000, cap +20% = 120,000. anchor 117,000 (within cap);
+        # display 117,000*1.07 = 125,190 -> 126,000 (over cap) but still a deal.
         r = self._deal(min=117_000, baseline=100_000)
         apply_conservative_pricing([r])
+        self.assertTrue(r["is_deal"])
+        self.assertGreater(r["display_price"], 120_000)
+
+    def test_anchor_above_cap_drops_deal(self):
+        """Real fare already above floor+cap → not a deal."""
+        r = self._deal(min=121_000, baseline=100_000)
+        apply_conservative_pricing([r])
         self.assertFalse(r["is_deal"])
-        self.assertIn("OVER-CAP", r["price_note"])
+        self.assertIn("above floor", r["price_note"])
 
     def test_non_deals_untouched(self):
         r = self._deal(is_deal=False)

@@ -17,11 +17,13 @@ from config import (
     DEAL_CAP_PCT,
     DESTINATIONS,
     DISPLAY_SAFETY_BUFFER_PCT,
+    LIVE_SAFETY_BUFFER_PCT,
     MAX_CACHE_AGE_DAYS,
     MAX_ERROR_RATE,
     MAX_PRICE_DIVERGENCE_PCT,
     MIN_HISTORY_DAYS,
     MIN_HOURS_BEFORE_DEPARTURE,
+    MIN_TODAY_FARES,
     ORIGINS,
     OUTLIER_DROP_TOP_PCT,
     OUTLIER_MIN_N,
@@ -29,6 +31,7 @@ from config import (
     REALTIME_REQUEST_DELAY_SEC,
     ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO,
     SANITY_MAX_DISCOUNT_PCT,
+    SPARSE_CACHE_AGE_DAYS,
     TRIPS,
 )
 
@@ -115,23 +118,23 @@ def freshness_index(latest_items):
     }
 
 
-def is_stale(latest, now):
+def is_stale(latest, now, max_age_days=MAX_CACHE_AGE_DAYS):
     """A matched latest-prices entry is stale if the seller marks it not current
-    (actual is False) or it was last found at least MAX_CACHE_AGE_DAYS ago."""
+    (actual is False) or it was last found at least max_age_days ago."""
     if latest.get("actual") is False:
         return True
     found_at = latest.get("found_at")
     if found_at:
         try:
             found_dt = dt.datetime.fromisoformat(found_at.replace("Z", "+00:00"))
-            if (now - found_dt).total_seconds() / 86400 >= MAX_CACHE_AGE_DAYS:
+            if (now - found_dt).total_seconds() / 86400 >= max_age_days:
                 return True
         except (ValueError, TypeError):
             pass
     return False
 
 
-def filter_items(items, latest_items, now):
+def filter_items(items, latest_items, now, max_age_days=MAX_CACHE_AGE_DAYS):
     """Drop fares we don't trust enough to alert on: those from a low-trust gate,
     those departing too soon to realistically book, and those the latest-prices
     endpoint marks stale/expired (cross-checked, since prices_for_dates carries
@@ -153,7 +156,7 @@ def filter_items(items, latest_items, now):
             except (ValueError, TypeError):
                 pass
         latest = fresh.get((it.get("gate"), it.get("price"), it.get("departure_at")))
-        if latest is not None and is_stale(latest, now):
+        if latest is not None and is_stale(latest, now, max_age_days):
             continue
         kept.append(it)
     return kept
@@ -184,6 +187,15 @@ def filter_price_outliers(items, drop_top_pct=OUTLIER_DROP_TOP_PCT):
     return kept_valid + nonnumeric, dropped_prices
 
 
+def _filter_and_summarize(raw_items, latest, now, max_age_days):
+    """Run the freshness filter (at a given cache-age window) + cabin-outlier
+    filter, then summarize. Returns (kept_items, dropped_outlier_prices, stats);
+    stats is None when nothing survives."""
+    kept = filter_items(raw_items, latest, now, max_age_days)
+    kept, dropped = filter_price_outliers(kept)
+    return kept, dropped, summarize(kept)
+
+
 def judge(stats, history, today_items_count):
     """Compute (baseline, discount, is_deal, diag) under the near-floor model.
 
@@ -197,7 +209,7 @@ def judge(stats, history, today_items_count):
 
     Guards (each forces is_deal=False; diag.guard_triggered names the one):
       - "history": fewer than MIN_HISTORY_DAYS daily mins in window → warmup
-      - "today_n": fewer than 5 fares after filter_items + outlier filter
+      - "today_n": fewer than MIN_TODAY_FARES fares after filter_items + outliers
       - "sanity": discount > SANITY_MAX_DISCOUNT_PCT (min far below floor) →
         almost always residual contamination; WARN log
 
@@ -219,7 +231,7 @@ def judge(stats, history, today_items_count):
         diag["guard_triggered"] = "history"
         return None, 0.0, False, diag
 
-    if today_items_count < 5:
+    if today_items_count < MIN_TODAY_FARES:
         diag["guard_triggered"] = "today_n"
         return None, 0.0, False, diag
 
@@ -272,22 +284,36 @@ def main():
 
                 if DUMP_RAW_API and (origin, dest) in DUMP_ROUTES and trip_label == "roundtrip":
                     _diag_dump_raw(origin, dest, trip_label, items, "pre-filter")
-                items = filter_items(items, latest, now)
+
+                # Strict (fresh) pass first. Cabin-mix protector drops the top
+                # OUTLIER_DROP_TOP_PCT by price (business/first fares the cache
+                # leaks despite trip_class=0). If the strict pass leaves a route
+                # too thin (< MIN_TODAY_FARES), retry with a wider cache-age
+                # window so thin-coverage regional routes (대구/CJU) can still
+                # surface — well-covered routes never trigger the fallback and
+                # keep fresh prices. The realtime cross-check + buffer re-anchor
+                # any stale-sourced price downstream.
+                raw_items = items
+                items, dropped_outlier_prices, stats = _filter_and_summarize(
+                    raw_items, latest, now, MAX_CACHE_AGE_DAYS)
+                sparse_fallback = False
+                if ((not stats or stats["n"] < MIN_TODAY_FARES)
+                        and SPARSE_CACHE_AGE_DAYS > MAX_CACHE_AGE_DAYS):
+                    alt_items, alt_dropped, alt_stats = _filter_and_summarize(
+                        raw_items, latest, now, SPARSE_CACHE_AGE_DAYS)
+                    if alt_stats and (not stats or alt_stats["n"] > stats["n"]):
+                        items, dropped_outlier_prices, stats = alt_items, alt_dropped, alt_stats
+                        sparse_fallback = True
+
                 if DUMP_RAW_API and (origin, dest) in DUMP_ROUTES and trip_label == "roundtrip":
                     _diag_dump_raw(origin, dest, trip_label, items, "post-filter")
 
-                # Cabin-mix protector: drop the top OUTLIER_DROP_TOP_PCT by
-                # price before judging. The pre-filter items would still
-                # include any business/first fares the cache returns despite
-                # trip_class=0 (Travelpayouts cache partially ignores it).
-                items, dropped_outlier_prices = filter_price_outliers(items)
                 if dropped_outlier_prices:
                     sample = [f"{p:,}" for p in dropped_outlier_prices[:5]]
                     extra = f" (+{len(dropped_outlier_prices)-5} more)" if len(dropped_outlier_prices) > 5 else ""
                     print(f"WARN: {origin}->{dest} {trip_label} outlier filter "
                           f"removed {len(dropped_outlier_prices)} fares: {sample}{extra}")
 
-                stats = summarize(items)
                 if not stats:
                     results.append({"origin": origin, "dest": dest, "trip": trip_label, "status": "no-data"})
                     continue
@@ -320,10 +346,11 @@ def main():
                 # Caller-side diag enrichment: outlier counts known here.
                 diag["outliers_removed_count"] = len(dropped_outlier_prices)
                 diag["outliers_removed_prices"] = list(dropped_outlier_prices)
+                diag["sparse_fallback"] = sparse_fallback
                 results.append({
                     "origin": origin, "dest": dest, "trip": trip_label, "status": "ok",
                     "min": stats["min"], "median": stats["median"], "n": stats["n"],
-                    "baseline": baseline, "discount": discount,
+                    "baseline": baseline, "discount": discount, "sparse": sparse_fallback,
                     "is_deal": is_deal, "diag": diag, "cheap": cheap,
                 })
 
@@ -337,14 +364,19 @@ def main():
 
 
 def apply_conservative_pricing(results):
-    """Set each deal's published price to one the user will pay-or-less, then
-    re-judge the deal on it. The anchor is the higher of the cached cheapest fare
-    and the live cross-check fare (realtime_krw, set by crosscheck_realtime when
-    it ran); we add DISPLAY_SAFETY_BUFFER_PCT and round up to the nearest 1,000
-    KRW. The deal's discount/is_deal are recomputed against this price so we
-    never advertise a discount the booking page won't honor — a deal can only
-    get stricter here, never looser. Runs for every ok candidate, so routes
-    with no live price (scrape down) still get the buffer on the cached fare."""
+    """Set each deal's published price to one the user will pay-or-less. The
+    anchor is the higher of the cached cheapest fare and the live cross-check
+    fare (realtime_krw, set by crosscheck_realtime when it ran); the published
+    price adds DISPLAY_SAFETY_BUFFER_PCT and rounds up to the nearest 1,000 KRW
+    so booking surprises downward, never up.
+
+    Deal qualification is judged on the *anchor* (the actual fare), NOT the
+    buffered price: the buffer only makes the shown number booking-safe and must
+    not drop an otherwise-valid deal. So a fare within floor +DEAL_CAP_PCT stays
+    a deal even if the buffer pushes the displayed price slightly past the cap.
+    A fare whose real price is already above floor +DEAL_CAP_PCT is dropped.
+    Runs for every ok candidate, so routes with no live price (scrape down) still
+    get the buffer on the cached fare."""
     for r in results:
         if r.get("status") != "ok" or not r.get("is_deal"):
             continue
@@ -353,14 +385,16 @@ def apply_conservative_pricing(results):
         live = r.get("realtime_krw")
         if live:
             anchor = max(anchor, live)
-        display = math.ceil(anchor * (1 + DISPLAY_SAFETY_BUFFER_PCT / 100) / 1000) * 1000
-        r["display_price"] = display
-        r["discount"] = (baseline - display) / baseline * 100
-        if display > baseline * (1 + DEAL_CAP_PCT / 100):
+        # Adaptive buffer: small when a live cross-check verified the fare,
+        # larger when we only have the (possibly stale) cache.
+        buffer_pct = LIVE_SAFETY_BUFFER_PCT if live else DISPLAY_SAFETY_BUFFER_PCT
+        r["display_price"] = math.ceil(anchor * (1 + buffer_pct / 100) / 1000) * 1000
+        r["discount"] = (baseline - r["display_price"]) / baseline * 100
+        if anchor > baseline * (1 + DEAL_CAP_PCT / 100):
             r["is_deal"] = False
             r["price_note"] = (
-                f"OVER-CAP after buffer: {display:,} > floor+{DEAL_CAP_PCT:.0f}% "
-                f"({round(baseline * (1 + DEAL_CAP_PCT / 100)):,})"
+                f"above floor+{DEAL_CAP_PCT:.0f}%: anchor {anchor:,} > "
+                f"{round(baseline * (1 + DEAL_CAP_PCT / 100)):,}"
             )
 
 
@@ -478,9 +512,12 @@ def write_deals_json(results):
         "currency": "KRW",
         # A deal runs from below the floor up to floor +deal_cap_pct.
         "deal_cap_pct": DEAL_CAP_PCT,
-        # "price" is the conservative published price: max(cache, live) + this
-        # buffer, rounded up. cache_price/realtime_price expose the inputs.
+        # "price" is the conservative published price: max(cache, live) + an
+        # adaptive buffer (live_safety_buffer_pct when realtime_price is set,
+        # else display_safety_buffer_pct), rounded up. cache_price/realtime_price
+        # expose the inputs.
         "display_safety_buffer_pct": DISPLAY_SAFETY_BUFFER_PCT,
+        "live_safety_buffer_pct": LIVE_SAFETY_BUFFER_PCT,
         "refresh_interval_hours": 1,
         "disclaimer": (
             "캐시 기반 가격으로 실시간이 아닙니다. 좌석이 빠르게 팔릴 수 있어 "
@@ -496,6 +533,10 @@ def write_deals_json(results):
                 "realtime_price": r.get("realtime_krw"),
                 "baseline": round(r["baseline"]),
                 "discount_pct": round(r["discount"], 1),
+                # True when this route only surfaced via the wider cache-age
+                # fallback (thin-coverage regional route) — lower-confidence,
+                # the app may show it as 참고가/reference rather than a hard deal.
+                "sparse": bool(r.get("sparse")),
                 "departure_at": r["cheap"].get("departure_at"),
                 "return_at": r["cheap"].get("return_at") or None,
                 "transfers": max(r["cheap"].get("transfers") or 0, r["cheap"].get("return_transfers") or 0),
@@ -586,8 +627,9 @@ def report(results, today):
         ret = f" ~ {c['return_at'][:10]}" if c.get("return_at") else ""
         live = r.get("realtime_krw")
         src = f"cache {r['min']:,}" + (f" / live {live:,}" if live else "")
+        tag = " [sparse]" if r.get("sparse") else ""
         print(
-            f"- {r['origin']}->{r['dest']} [{r['trip']}] "
+            f"- {r['origin']}->{r['dest']} [{r['trip']}]{tag} "
             f"{r['display_price']:,} KRW ({src}) "
             f"(baseline {round(r['baseline']):,}, vs floor {r['discount']:+.1f}%) "
             f"출발 {(c.get('departure_at') or '')[:10]}{ret} "
