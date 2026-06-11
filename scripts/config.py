@@ -38,8 +38,16 @@ BASELINE_WINDOW_DAYS = 30
 
 # Baseline = mean of the 5 lowest daily minimums within BASELINE_WINDOW_DAYS.
 # Below MIN_HISTORY_DAYS days of data we can't trust the floor — history guard
-# blocks the alert.
-MIN_HISTORY_DAYS = 5
+# blocks the alert. Kept low (3) so sparse routes (regional airports like TAE/CJU
+# with only a handful of cached fares) can still build a usable floor.
+MIN_HISTORY_DAYS = 3
+
+# Minimum number of fares today (after the outlier filter) to judge a deal.
+# Below this the sample is too thin to trust, so the deal is blocked (today_n
+# guard). Lowered to 3 to let thin-coverage routes (e.g. 대구/TAE) surface;
+# the sanity/roundtrip-vs-oneway/cache-age/blocked-gate guards still protect
+# against the bad single fares that thin samples are prone to.
+MIN_TODAY_FARES = 3
 
 # Cabin-mix protector (Step 2-A-0). The Travelpayouts API doesn't expose
 # cabin class and trip_class=0 is partially ignored by the cache, so a

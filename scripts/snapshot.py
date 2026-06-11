@@ -22,6 +22,7 @@ from config import (
     MAX_PRICE_DIVERGENCE_PCT,
     MIN_HISTORY_DAYS,
     MIN_HOURS_BEFORE_DEPARTURE,
+    MIN_TODAY_FARES,
     ORIGINS,
     OUTLIER_DROP_TOP_PCT,
     OUTLIER_MIN_N,
@@ -197,7 +198,7 @@ def judge(stats, history, today_items_count):
 
     Guards (each forces is_deal=False; diag.guard_triggered names the one):
       - "history": fewer than MIN_HISTORY_DAYS daily mins in window → warmup
-      - "today_n": fewer than 5 fares after filter_items + outlier filter
+      - "today_n": fewer than MIN_TODAY_FARES fares after filter_items + outliers
       - "sanity": discount > SANITY_MAX_DISCOUNT_PCT (min far below floor) →
         almost always residual contamination; WARN log
 
@@ -219,7 +220,7 @@ def judge(stats, history, today_items_count):
         diag["guard_triggered"] = "history"
         return None, 0.0, False, diag
 
-    if today_items_count < 5:
+    if today_items_count < MIN_TODAY_FARES:
         diag["guard_triggered"] = "today_n"
         return None, 0.0, False, diag
 

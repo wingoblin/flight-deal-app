@@ -88,23 +88,37 @@ class JudgeTests(unittest.TestCase):
         return {"n": n, "min": min_price, "p25": 0, "median": 0, "mean": 0}
 
     def test_history_guard_fires_below_min_history_days(self):
-        """<5 days of history → block, baseline None, reason 'history'."""
+        """<MIN_HISTORY_DAYS (3) days of history → block, reason 'history'."""
         baseline, discount, is_deal, diag = judge(
-            self._stats(100_000), [200_000] * 4, today_items_count=20,
+            self._stats(100_000), [200_000] * 2, today_items_count=20,
         )
         self.assertIsNone(baseline)
         self.assertFalse(is_deal)
         self.assertEqual(diag["guard_triggered"], "history")
-        self.assertEqual(diag["history_days_used"], 4)
+        self.assertEqual(diag["history_days_used"], 2)
 
-    def test_today_n_guard_fires_below_5(self):
-        """today_items_count < 5 → block, reason 'today_n'."""
+    def test_history_guard_passes_at_min_history_days(self):
+        """exactly MIN_HISTORY_DAYS (3) days → no history guard."""
+        _, _, _, diag = judge(
+            self._stats(100_000), [200_000] * 3, today_items_count=20,
+        )
+        self.assertNotEqual(diag["guard_triggered"], "history")
+
+    def test_today_n_guard_fires_below_min(self):
+        """today_items_count < MIN_TODAY_FARES (3) → block, reason 'today_n'."""
         baseline, discount, is_deal, diag = judge(
-            self._stats(100_000), [200_000] * 10, today_items_count=4,
+            self._stats(100_000), [200_000] * 10, today_items_count=2,
         )
         self.assertIsNone(baseline)
         self.assertFalse(is_deal)
         self.assertEqual(diag["guard_triggered"], "today_n")
+
+    def test_today_n_guard_passes_at_min(self):
+        """today_items_count == MIN_TODAY_FARES (3) → no today_n guard."""
+        _, _, _, diag = judge(
+            self._stats(100_000), [200_000] * 10, today_items_count=3,
+        )
+        self.assertNotEqual(diag["guard_triggered"], "today_n")
 
     def test_deal_below_floor(self):
         """min cheaper than the floor → deal, positive discount."""
