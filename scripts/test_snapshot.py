@@ -328,13 +328,22 @@ class ApplyConservativePricingTests(unittest.TestCase):
         apply_conservative_pricing([r])
         self.assertEqual(r["display_price"], self._buffered_round(100_000))
 
-    def test_over_cap_after_buffer_drops_deal(self):
-        """Buffered price above floor+DEAL_CAP_PCT → not a deal anymore."""
-        # baseline 100,000, cap +20% = 120,000. cache 117,000 +7% = 125,190 > cap.
+    def test_within_cap_stays_deal_despite_buffer(self):
+        """Real fare within floor+cap stays a deal even if the buffer pushes the
+        displayed price past the cap (buffer is display-only, not a deal gate)."""
+        # baseline 100,000, cap +20% = 120,000. anchor 117,000 (within cap);
+        # display 117,000*1.07 = 125,190 -> 126,000 (over cap) but still a deal.
         r = self._deal(min=117_000, baseline=100_000)
         apply_conservative_pricing([r])
+        self.assertTrue(r["is_deal"])
+        self.assertGreater(r["display_price"], 120_000)
+
+    def test_anchor_above_cap_drops_deal(self):
+        """Real fare already above floor+cap → not a deal."""
+        r = self._deal(min=121_000, baseline=100_000)
+        apply_conservative_pricing([r])
         self.assertFalse(r["is_deal"])
-        self.assertIn("OVER-CAP", r["price_note"])
+        self.assertIn("above floor", r["price_note"])
 
     def test_non_deals_untouched(self):
         r = self._deal(is_deal=False)

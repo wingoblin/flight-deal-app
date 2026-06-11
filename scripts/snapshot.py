@@ -363,14 +363,19 @@ def main():
 
 
 def apply_conservative_pricing(results):
-    """Set each deal's published price to one the user will pay-or-less, then
-    re-judge the deal on it. The anchor is the higher of the cached cheapest fare
-    and the live cross-check fare (realtime_krw, set by crosscheck_realtime when
-    it ran); we add DISPLAY_SAFETY_BUFFER_PCT and round up to the nearest 1,000
-    KRW. The deal's discount/is_deal are recomputed against this price so we
-    never advertise a discount the booking page won't honor — a deal can only
-    get stricter here, never looser. Runs for every ok candidate, so routes
-    with no live price (scrape down) still get the buffer on the cached fare."""
+    """Set each deal's published price to one the user will pay-or-less. The
+    anchor is the higher of the cached cheapest fare and the live cross-check
+    fare (realtime_krw, set by crosscheck_realtime when it ran); the published
+    price adds DISPLAY_SAFETY_BUFFER_PCT and rounds up to the nearest 1,000 KRW
+    so booking surprises downward, never up.
+
+    Deal qualification is judged on the *anchor* (the actual fare), NOT the
+    buffered price: the buffer only makes the shown number booking-safe and must
+    not drop an otherwise-valid deal. So a fare within floor +DEAL_CAP_PCT stays
+    a deal even if the buffer pushes the displayed price slightly past the cap.
+    A fare whose real price is already above floor +DEAL_CAP_PCT is dropped.
+    Runs for every ok candidate, so routes with no live price (scrape down) still
+    get the buffer on the cached fare."""
     for r in results:
         if r.get("status") != "ok" or not r.get("is_deal"):
             continue
@@ -379,14 +384,13 @@ def apply_conservative_pricing(results):
         live = r.get("realtime_krw")
         if live:
             anchor = max(anchor, live)
-        display = math.ceil(anchor * (1 + DISPLAY_SAFETY_BUFFER_PCT / 100) / 1000) * 1000
-        r["display_price"] = display
-        r["discount"] = (baseline - display) / baseline * 100
-        if display > baseline * (1 + DEAL_CAP_PCT / 100):
+        r["display_price"] = math.ceil(anchor * (1 + DISPLAY_SAFETY_BUFFER_PCT / 100) / 1000) * 1000
+        r["discount"] = (baseline - r["display_price"]) / baseline * 100
+        if anchor > baseline * (1 + DEAL_CAP_PCT / 100):
             r["is_deal"] = False
             r["price_note"] = (
-                f"OVER-CAP after buffer: {display:,} > floor+{DEAL_CAP_PCT:.0f}% "
-                f"({round(baseline * (1 + DEAL_CAP_PCT / 100)):,})"
+                f"above floor+{DEAL_CAP_PCT:.0f}%: anchor {anchor:,} > "
+                f"{round(baseline * (1 + DEAL_CAP_PCT / 100)):,}"
             )
 
 
