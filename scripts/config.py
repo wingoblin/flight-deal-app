@@ -56,6 +56,32 @@ MIN_HISTORY_DAYS = 3
 # against the bad single fares that thin samples are prone to.
 MIN_TODAY_FARES = 3
 
+# Regional (low-coverage) origins — 부산/대구/제주/청주/무안. Travelpayouts barely
+# caches these, so the strict guards above starve them and only ICN/GMP ever
+# surface. Relax both the history and today-fare guards for these origins only;
+# major hubs keep the strict values.
+#
+# Business-class noise: the DISPLAYED price is always the cheapest fare, which
+# is economy unless an entire day cached only business — so the price the user
+# sees stays clean. The baseline is mean(lowest-5 daily mins); on a thin route
+# (<5 days) every daily min feeds it, so a business-contaminated day CAN inflate
+# the baseline. That inflation only makes a normal price look like a fake deal,
+# and the resulting implausible discount is caught by the sanity guard
+# (SANITY_MAX_DISCOUNT_PCT). The per-day top-OUTLIER_DROP_TOP_PCT cabin-mix
+# filter also still runs on every route. Residual mild-inflation risk is small
+# because regional routes (대구/제주/부산) are LCC/economy-dominated.
+REGIONAL_ORIGINS = {"PUS", "TAE", "CJU", "CJJ", "MWX"}
+REGIONAL_MIN_HISTORY_DAYS = 2
+REGIONAL_MIN_TODAY_FARES = 2
+
+
+def guards_for_origin(origin):
+    """(min_history_days, min_today_fares) for an origin: relaxed for regional
+    origins, strict for major hubs (ICN/GMP)."""
+    if origin in REGIONAL_ORIGINS:
+        return REGIONAL_MIN_HISTORY_DAYS, REGIONAL_MIN_TODAY_FARES
+    return MIN_HISTORY_DAYS, MIN_TODAY_FARES
+
 # Cabin-mix protector (Step 2-A-0). The Travelpayouts API doesn't expose
 # cabin class and trip_class=0 is partially ignored by the cache, so a
 # fraction of business/first fares (3-10x economy) can sneak in. Drop the

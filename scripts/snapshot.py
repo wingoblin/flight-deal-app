@@ -17,6 +17,7 @@ from config import (
     DEAL_CAP_PCT,
     DESTINATIONS,
     DISPLAY_SAFETY_BUFFER_PCT,
+    guards_for_origin,
     LIVE_SAFETY_BUFFER_PCT,
     MAX_CACHE_AGE_DAYS,
     MAX_ERROR_RATE,
@@ -196,7 +197,8 @@ def _filter_and_summarize(raw_items, latest, now, max_age_days):
     return kept, dropped, summarize(kept)
 
 
-def judge(stats, history, today_items_count):
+def judge(stats, history, today_items_count,
+          min_history_days=MIN_HISTORY_DAYS, min_today_fares=MIN_TODAY_FARES):
     """Compute (baseline, discount, is_deal, diag) under the near-floor model.
 
     Baseline = mean of the 5 lowest daily minimums within the rolling window
@@ -208,10 +210,14 @@ def judge(stats, history, today_items_count):
     sit above the floor).
 
     Guards (each forces is_deal=False; diag.guard_triggered names the one):
-      - "history": fewer than MIN_HISTORY_DAYS daily mins in window → warmup
-      - "today_n": fewer than MIN_TODAY_FARES fares after filter_items + outliers
+      - "history": fewer than min_history_days daily mins in window → warmup
+      - "today_n": fewer than min_today_fares fares after filter_items + outliers
       - "sanity": discount > SANITY_MAX_DISCOUNT_PCT (min far below floor) →
         almost always residual contamination; WARN log
+
+    min_history_days / min_today_fares default to the strict global guards; the
+    caller passes the relaxed regional values (config.guards_for_origin) for
+    low-coverage origins so sparse regional routes can surface.
 
     today_items_count is the count AFTER filter_price_outliers — caller
     passes stats["n"] (summarize() runs on the already-filtered list).
@@ -227,11 +233,11 @@ def judge(stats, history, today_items_count):
                                     # cabin, so we label the survivors).
     }
 
-    if len(history) < MIN_HISTORY_DAYS:
+    if len(history) < min_history_days:
         diag["guard_triggered"] = "history"
         return None, 0.0, False, diag
 
-    if today_items_count < MIN_TODAY_FARES:
+    if today_items_count < min_today_fares:
         diag["guard_triggered"] = "today_n"
         return None, 0.0, False, diag
 
@@ -342,7 +348,9 @@ def main():
                     conn, origin, dest, trip_label, today,
                     window_days=BASELINE_WINDOW_DAYS,
                 )
-                baseline, discount, is_deal, diag = judge(stats, history, stats["n"])
+                min_history_days, min_today_fares = guards_for_origin(origin)
+                baseline, discount, is_deal, diag = judge(
+                    stats, history, stats["n"], min_history_days, min_today_fares)
                 # Caller-side diag enrichment: outlier counts known here.
                 diag["outliers_removed_count"] = len(dropped_outlier_prices)
                 diag["outliers_removed_prices"] = list(dropped_outlier_prices)
