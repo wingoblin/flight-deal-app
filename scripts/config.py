@@ -66,13 +66,11 @@ MIN_TODAY_FARES = 3
 #
 # Business-class noise: the DISPLAYED price is always the cheapest fare, which
 # is economy unless an entire day cached only business — so the price the user
-# sees stays clean. The baseline is mean(lowest-5 daily mins); on a thin route
-# (<5 days) every daily min feeds it, so a business-contaminated day CAN inflate
-# the baseline. That inflation only makes a normal price look like a fake deal,
-# and the resulting implausible discount is caught by the sanity guard
-# (SANITY_MAX_DISCOUNT_PCT). The per-day top-OUTLIER_DROP_TOP_PCT cabin-mix
-# filter also still runs on every route. Residual mild-inflation risk is small
-# because regional routes (대구/제주/부산) are LCC/economy-dominated.
+# sees stays clean. The baseline is the median of daily mins, which is robust to
+# a single business-contaminated day even on a thin route (a high outlier doesn't
+# move the median, unlike a mean). The per-day top-OUTLIER_DROP_TOP_PCT cabin-mix
+# filter also still runs on every route, and the sanity guard
+# (SANITY_MAX_DISCOUNT_PCT) blocks any residual implausible discount.
 REGIONAL_ORIGINS = {"PUS", "TAE", "CJU", "CJJ", "MWX"}
 REGIONAL_MIN_HISTORY_DAYS = 2
 REGIONAL_MIN_TODAY_FARES = 2
