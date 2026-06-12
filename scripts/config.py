@@ -29,24 +29,27 @@ DESTINATIONS = [
 ]
 TRIPS = [("oneway", True), ("roundtrip", False)]
 
-# --- Deal judgment (Step 3: "near floor") ---
-# A deal = current min is at or below the route's recent price floor
-# +DEAL_CAP_PCT. The floor (baseline) is the mean of the 5 lowest daily-minimums
-# within a rolling window. Above floor +DEAL_CAP_PCT it's not a deal. All deals
-# are shown the same way (no color tiers).
-DEAL_CAP_PCT = 20.0
+# --- Deal judgment (Step 3: "below typical") ---
+# A deal = current min is at least DEAL_THRESHOLD_PCT *below* the route's typical
+# price. The baseline is the MEDIAN of the daily minimums in a rolling window —
+# what the route's cheapest fare normally is, not its all-time floor. Comparing
+# to the floor (and allowing a band *above* it) made almost every normal price
+# qualify and the shown "discount" come out near zero or negative; comparing to
+# the typical price and requiring a real discount below it surfaces only
+# genuinely cheap days and lets the app show an honest "N% below usual". All
+# deals are shown the same way (no color tiers).
+DEAL_THRESHOLD_PCT = 7.0
 
 # Baseline is computed only from daily-mins within this rolling window (days
-# back from today). Keeps the floor on the current season — older data stays
-# in the DB for backtest/audit but is excluded from the baseline so that
-# off-season prices don't distort it. If fewer days exist (e.g. 7 so far),
-# use what's there.
+# back from today). Keeps the baseline on the current season — older data stays
+# in the DB for backtest/audit but is excluded so that off-season prices don't
+# distort it. If fewer days exist (e.g. 7 so far), use what's there.
 BASELINE_WINDOW_DAYS = 30
 
-# Baseline = mean of the 5 lowest daily minimums within BASELINE_WINDOW_DAYS.
-# Below MIN_HISTORY_DAYS days of data we can't trust the floor — history guard
+# Baseline = median of the daily minimums within BASELINE_WINDOW_DAYS.
+# Below MIN_HISTORY_DAYS days of data we can't trust the baseline — history guard
 # blocks the alert. Kept low (3) so sparse routes (regional airports like TAE/CJU
-# with only a handful of cached fares) can still build a usable floor.
+# with only a handful of cached fares) can still build a usable baseline.
 MIN_HISTORY_DAYS = 3
 
 # Minimum number of fares today (after the outlier filter) to judge a deal.
@@ -91,8 +94,8 @@ def guards_for_origin(origin):
 # observed in production.
 OUTLIER_DROP_TOP_PCT = 0.30
 
-# Sanity guard (Step 2-A-4). Even in the near-floor model, a min more than this
-# far BELOW the floor is almost always residual contamination, not a real
+# Sanity guard (Step 2-A-4). In the below-typical model, a min more than this
+# far BELOW the typical price is almost always residual contamination, not a real
 # fare. is_deal=False + WARN log when fired.
 SANITY_MAX_DISCOUNT_PCT = 50.0
 
