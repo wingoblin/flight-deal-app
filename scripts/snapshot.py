@@ -344,7 +344,7 @@ def main():
                 })
 
                 # Rolling-window baseline: only daily-mins within the last
-                # BASELINE_WINDOW_DAYS feed the floor (older rows stay in DB).
+                # BASELINE_WINDOW_DAYS feed the median (older rows stay in DB).
                 history = dealdb.historical_mins(
                     conn, origin, dest, trip_label, today,
                     window_days=BASELINE_WINDOW_DAYS,
