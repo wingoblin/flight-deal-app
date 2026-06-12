@@ -13,7 +13,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import datetime as dt
 
-from config import DISPLAY_SAFETY_BUFFER_PCT, LIVE_SAFETY_BUFFER_PCT
+from config import (
+    DISPLAY_SAFETY_BUFFER_PCT,
+    LIVE_SAFETY_BUFFER_PCT,
+    REGIONAL_ORIGINS,
+    guards_for_origin,
+)
 from snapshot import (
     _guard_publish_safety,
     apply_conservative_pricing,
@@ -183,6 +188,67 @@ class JudgeTests(unittest.TestCase):
         history = [100, 200, 300, 400, 500, 9999, 9999, 9999, 9999, 9999]
         baseline, _, _, _ = judge(self._stats(1), history, 20)
         self.assertEqual(baseline, 300)
+
+
+class RegionalGuardTests(unittest.TestCase):
+    """Regional origins get relaxed history/today-fare guards (2 vs 3); major
+    hubs stay strict. Thin samples never let business-class noise in because the
+    judged/shown values use the cheapest fare and the lowest-N daily mins."""
+
+    def _stats(self, min_price, n=10):
+        return {"n": n, "min": min_price, "p25": 0, "median": 0, "mean": 0}
+
+    def test_major_hubs_strict_regional_relaxed(self):
+        for o in ("ICN", "GMP"):
+            self.assertEqual(guards_for_origin(o), (3, 3))
+        for o in REGIONAL_ORIGINS:
+            self.assertEqual(guards_for_origin(o), (2, 2))
+
+    def test_regional_origins_membership(self):
+        self.assertEqual(REGIONAL_ORIGINS, {"PUS", "TAE", "CJU", "CJJ", "MWX"})
+
+    def test_two_day_history_blocks_major_passes_regional(self):
+        """2 days of history + 2 fares: blocked for ICN, surfaces for a regional
+        origin under the relaxed guards."""
+        stats, history = self._stats(100_000, n=2), [100_000, 105_000]
+
+        icn = judge(stats, history, stats["n"], *guards_for_origin("ICN"))
+        self.assertFalse(icn[2])
+        self.assertEqual(icn[3]["guard_triggered"], "history")
+
+        tae = judge(stats, history, stats["n"], *guards_for_origin("TAE"))
+        self.assertTrue(tae[2])
+        self.assertIsNone(tae[3]["guard_triggered"])
+
+    def test_relaxed_guard_still_blocks_below_two(self):
+        """Even relaxed, a single day / single fare is too thin and stays blocked."""
+        stats = self._stats(100_000, n=1)
+        one_day = judge(stats, [100_000], stats["n"], *guards_for_origin("CJU"))
+        self.assertEqual(one_day[3]["guard_triggered"], "history")
+
+    def test_thin_economy_sample_surfaces_clean(self):
+        """All-economy thin regional sample → judged on the economy min, real
+        deal, no noise. baseline = mean of all daily mins (fewer than 5)."""
+        history = [90_000, 95_000, 100_000]
+        stats = self._stats(80_000, n=2)
+        baseline, discount, is_deal, _ = judge(
+            stats, history, stats["n"], *guards_for_origin("CJU"))
+        self.assertEqual(baseline, 95_000)
+        self.assertLess(discount, 50.0)
+        self.assertTrue(is_deal)
+
+    def test_business_inflated_thin_baseline_blocked_by_sanity(self):
+        """In a thin sample (<5 days) every daily min feeds the baseline, so a
+        business-contaminated day can inflate it. The resulting implausible
+        discount (>SANITY_MAX_DISCOUNT_PCT) is caught by the sanity guard, so it
+        can't surface as a fake deal. The shown price stays the economy min."""
+        history = [90_000, 95_000, 600_000]  # 600k = business-contaminated day
+        stats = self._stats(88_000, n=2)
+        _, discount, is_deal, diag = judge(
+            stats, history, stats["n"], *guards_for_origin("TAE"))
+        self.assertGreater(discount, 50.0)
+        self.assertFalse(is_deal)
+        self.assertEqual(diag["guard_triggered"], "sanity")
 
 
 class HistoricalMinsWindowTests(unittest.TestCase):
