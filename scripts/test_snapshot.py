@@ -401,17 +401,18 @@ class ApplyConservativePricingTests(unittest.TestCase):
     def test_below_threshold_stays_deal_despite_buffer(self):
         """Real fare below the threshold stays a deal even if the buffer pushes
         the displayed price back above it (buffer is display-only, not a gate)."""
-        # baseline 100,000, threshold -7% → cutoff 93,000. anchor 92,000 (a deal);
-        # display 92,000*1.07 = 98,440 -> 99,000 (over cutoff) but still a deal.
-        r = self._deal(min=92_000, baseline=100_000)
+        baseline = 100_000
+        cutoff = baseline * (1 - DEAL_THRESHOLD_PCT / 100)
+        r = self._deal(min=int(cutoff) - 2_000, baseline=baseline)  # below cutoff = deal
         apply_conservative_pricing([r])
         self.assertTrue(r["is_deal"])
-        self.assertGreater(r["display_price"], 93_000)
+        self.assertGreater(r["display_price"], cutoff)  # buffer pushed it back over
 
     def test_anchor_above_threshold_drops_deal(self):
         """Real fare not far enough below typical → not a deal."""
-        # baseline 100,000, cutoff 93,000. anchor 94,000 > cutoff → dropped.
-        r = self._deal(min=94_000, baseline=100_000)
+        baseline = 100_000
+        cutoff = baseline * (1 - DEAL_THRESHOLD_PCT / 100)
+        r = self._deal(min=int(cutoff) + 2_000, baseline=baseline)  # above cutoff
         apply_conservative_pricing([r])
         self.assertFalse(r["is_deal"])
         self.assertIn("below typical", r["price_note"])
@@ -420,6 +421,43 @@ class ApplyConservativePricingTests(unittest.TestCase):
         r = self._deal(is_deal=False)
         apply_conservative_pricing([r])
         self.assertNotIn("display_price", r)
+
+
+class RequireRealtimeVerificationTests(unittest.TestCase):
+    """REQUIRE_REALTIME_VERIFICATION: when the realtime system is up, candidates
+    with no confirmed live price are dropped (their cached fare may have sold
+    out); the verified ones are kept."""
+
+    def _candidate(self, dest):
+        return {
+            "status": "ok", "is_deal": True, "origin": "ICN", "dest": dest,
+            "trip": "oneway", "min": 100_000, "baseline": 120_000,
+            "cheap": {"departure_at": "2026-07-01T08:00:00+09:00", "return_at": None},
+        }
+
+    def test_unverified_dropped_verified_kept(self):
+        import sys
+        import types
+        from unittest import mock
+        import realtime as rt
+        import snapshot as snap
+
+        verified = self._candidate("NRT")     # live price found
+        unverified = self._candidate("KIX")   # no live price
+        fake_ff = types.ModuleType("fast_flights")
+
+        def fake_live(origin, dest, depart, ret, fx):
+            return 105_000 if dest == "NRT" else None  # only NRT confirmed
+
+        with mock.patch.dict(sys.modules, {"fast_flights": fake_ff}), \
+                mock.patch.object(rt, "usd_to_krw", return_value=1_350.0), \
+                mock.patch.object(rt, "cheapest_krw", side_effect=fake_live):
+            snap.crosscheck_realtime([verified, unverified])
+
+        self.assertTrue(verified["is_deal"])
+        self.assertEqual(verified["realtime_krw"], 105_000)
+        self.assertFalse(unverified["is_deal"])
+        self.assertIn("unverified", unverified.get("realtime_note", ""))
 
 
 if __name__ == "__main__":

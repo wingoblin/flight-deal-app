@@ -38,7 +38,7 @@ TRIPS = [("oneway", True), ("roundtrip", False)]
 # the typical price and requiring a real discount below it surfaces only
 # genuinely cheap days and lets the app show an honest "N% below usual". All
 # deals are shown the same way (no color tiers).
-DEAL_THRESHOLD_PCT = 7.0
+DEAL_THRESHOLD_PCT = 4.0
 
 # Baseline is computed only from daily-mins within this rolling window (days
 # back from today). Keeps the baseline on the current season — older data stays
@@ -66,13 +66,11 @@ MIN_TODAY_FARES = 3
 #
 # Business-class noise: the DISPLAYED price is always the cheapest fare, which
 # is economy unless an entire day cached only business — so the price the user
-# sees stays clean. The baseline is mean(lowest-5 daily mins); on a thin route
-# (<5 days) every daily min feeds it, so a business-contaminated day CAN inflate
-# the baseline. That inflation only makes a normal price look like a fake deal,
-# and the resulting implausible discount is caught by the sanity guard
-# (SANITY_MAX_DISCOUNT_PCT). The per-day top-OUTLIER_DROP_TOP_PCT cabin-mix
-# filter also still runs on every route. Residual mild-inflation risk is small
-# because regional routes (대구/제주/부산) are LCC/economy-dominated.
+# sees stays clean. The baseline is the median of daily mins, which is robust to
+# a single business-contaminated day even on a thin route (a high outlier doesn't
+# move the median, unlike a mean). The per-day top-OUTLIER_DROP_TOP_PCT cabin-mix
+# filter also still runs on every route, and the sanity guard
+# (SANITY_MAX_DISCOUNT_PCT) blocks any residual implausible discount.
 REGIONAL_ORIGINS = {"PUS", "TAE", "CJU", "CJJ", "MWX"}
 REGIONAL_MIN_HISTORY_DAYS = 2
 REGIONAL_MIN_TODAY_FARES = 2
@@ -161,6 +159,17 @@ MIN_HOURS_BEFORE_DEPARTURE = 24
 REALTIME_CROSSCHECK = True
 MAX_PRICE_DIVERGENCE_PCT = 20.0
 REALTIME_REQUEST_DELAY_SEC = 1.0
+
+# Require live verification to publish. The cached cheapest fare can be gone
+# (the cheap seat sold out) while the cache still lists it, so a candidate the
+# realtime cross-check could NOT confirm (no live price found) is dropped rather
+# than published — clicking through such a fare is the main cause of the "price
+# jumped at booking" surprise. This only fires per-route when the realtime system
+# is up: if fast-flights/FX is entirely unavailable the cross-check returns early
+# and every candidate is kept (graceful degradation, feed never emptied by an
+# outage). The 0-deals publish guard preserves the last good feed if a bad
+# realtime day would otherwise empty it.
+REQUIRE_REALTIME_VERIFICATION = True
 
 # Conservative display pricing. The published price is the higher of the cached
 # cheapest fare and the live cross-check fare, plus a safety buffer, rounded up

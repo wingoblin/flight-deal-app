@@ -30,6 +30,7 @@ from config import (
     OUTLIER_MIN_N,
     REALTIME_CROSSCHECK,
     REALTIME_REQUEST_DELAY_SEC,
+    REQUIRE_REALTIME_VERIFICATION,
     ROUNDTRIP_VS_ONEWAY_MEDIAN_RATIO,
     SANITY_MAX_DISCOUNT_PCT,
     SPARSE_CACHE_AGE_DAYS,
@@ -460,6 +461,18 @@ def crosscheck_realtime(results):
             print(f"#   DROP {r['origin']}->{r['dest']} [{r['trip']}] TP {r['min']:,} vs live {live:,} (+{divergence:.0f}%)")
         else:
             print(f"#   keep {r['origin']}->{r['dest']} [{r['trip']}] TP {r['min']:,} vs live {live:,} ({divergence:+.0f}%)")
+
+    # Require verification: now that the realtime system ran (we got past the
+    # fast-flights/FX guards above), drop any candidate we could NOT confirm
+    # live. Its cached fare may have sold out, so publishing it risks the
+    # "price jumped at booking" surprise. An entirely-down realtime system
+    # returns early before this point, so all candidates are kept then.
+    if REQUIRE_REALTIME_VERIFICATION:
+        for r in deals:
+            if r.get("is_deal") and not r.get("realtime_krw"):
+                r["is_deal"] = False
+                r["realtime_note"] = "unverified: no live price to confirm the fare is still available"
+                print(f"#   DROP {r['origin']}->{r['dest']} [{r['trip']}] unverified (no live price)")
 
 
 def select_deals(results):
