@@ -14,7 +14,7 @@ import tpclient
 from config import (
     BASELINE_WINDOW_DAYS,
     BLOCKED_GATES,
-    DEAL_CAP_PCT,
+    DEAL_THRESHOLD_PCT,
     DESTINATIONS,
     DISPLAY_SAFETY_BUFFER_PCT,
     guards_for_origin,
@@ -199,20 +199,21 @@ def _filter_and_summarize(raw_items, latest, now, max_age_days):
 
 def judge(stats, history, today_items_count,
           min_history_days=MIN_HISTORY_DAYS, min_today_fares=MIN_TODAY_FARES):
-    """Compute (baseline, discount, is_deal, diag) under the near-floor model.
+    """Compute (baseline, discount, is_deal, diag) under the below-typical model.
 
-    Baseline = mean of the 5 lowest daily minimums within the rolling window
-    (caller windows the history via dealdb.historical_mins).
+    Baseline = median of the daily minimums within the rolling window (caller
+    windows the history via dealdb.historical_mins) — the route's typical
+    cheapest fare, not its all-time floor.
 
     Deal decision (Step 3): is_deal iff current min <= baseline ×
-    (1 + DEAL_CAP_PCT/100). `discount` ((baseline-min)/baseline×100) is kept for
-    display/logging and can be negative (deals from the floor up to +DEAL_CAP_PCT
-    sit above the floor).
+    (1 - DEAL_THRESHOLD_PCT/100), i.e. at least DEAL_THRESHOLD_PCT below the
+    typical price. `discount` ((baseline-min)/baseline×100) is the % below the
+    typical price and is positive for deals.
 
     Guards (each forces is_deal=False; diag.guard_triggered names the one):
       - "history": fewer than min_history_days daily mins in window → warmup
       - "today_n": fewer than min_today_fares fares after filter_items + outliers
-      - "sanity": discount > SANITY_MAX_DISCOUNT_PCT (min far below floor) →
+      - "sanity": discount > SANITY_MAX_DISCOUNT_PCT (min far below typical) →
         almost always residual contamination; WARN log
 
     min_history_days / min_today_fares default to the strict global guards; the
@@ -224,7 +225,7 @@ def judge(stats, history, today_items_count,
     """
     diag = {
         "baseline_value": None,
-        "baseline_method": "rolling_n5_lowest",
+        "baseline_method": "rolling_median",
         "history_days_used": len(history),
         "today_items_count_after_outlier_filter": today_items_count,
         "guard_triggered": None,
@@ -241,7 +242,7 @@ def judge(stats, history, today_items_count,
         diag["guard_triggered"] = "today_n"
         return None, 0.0, False, diag
 
-    baseline = statistics.mean(sorted(history)[:5])
+    baseline = statistics.median(history)
     diag["baseline_value"] = baseline
     discount = (baseline - stats["min"]) / baseline * 100
 
@@ -251,7 +252,7 @@ def judge(stats, history, today_items_count,
         diag["guard_triggered"] = "sanity"
         return baseline, discount, False, diag
 
-    is_deal = stats["min"] <= baseline * (1 + DEAL_CAP_PCT / 100)
+    is_deal = stats["min"] <= baseline * (1 - DEAL_THRESHOLD_PCT / 100)
     return baseline, discount, is_deal, diag
 
 
@@ -380,9 +381,9 @@ def apply_conservative_pricing(results):
 
     Deal qualification is judged on the *anchor* (the actual fare), NOT the
     buffered price: the buffer only makes the shown number booking-safe and must
-    not drop an otherwise-valid deal. So a fare within floor +DEAL_CAP_PCT stays
-    a deal even if the buffer pushes the displayed price slightly past the cap.
-    A fare whose real price is already above floor +DEAL_CAP_PCT is dropped.
+    not drop an otherwise-valid deal. So a fare at least DEAL_THRESHOLD_PCT below
+    the typical price stays a deal even if the buffer pushes the displayed price
+    slightly up. A fare whose real price is not that far below typical is dropped.
     Runs for every ok candidate, so routes with no live price (scrape down) still
     get the buffer on the cached fare."""
     for r in results:
@@ -398,11 +399,11 @@ def apply_conservative_pricing(results):
         buffer_pct = LIVE_SAFETY_BUFFER_PCT if live else DISPLAY_SAFETY_BUFFER_PCT
         r["display_price"] = math.ceil(anchor * (1 + buffer_pct / 100) / 1000) * 1000
         r["discount"] = (baseline - r["display_price"]) / baseline * 100
-        if anchor > baseline * (1 + DEAL_CAP_PCT / 100):
+        if anchor > baseline * (1 - DEAL_THRESHOLD_PCT / 100):
             r["is_deal"] = False
             r["price_note"] = (
-                f"above floor+{DEAL_CAP_PCT:.0f}%: anchor {anchor:,} > "
-                f"{round(baseline * (1 + DEAL_CAP_PCT / 100)):,}"
+                f"not {DEAL_THRESHOLD_PCT:.0f}% below typical: anchor {anchor:,} > "
+                f"{round(baseline * (1 - DEAL_THRESHOLD_PCT / 100)):,}"
             )
 
 
@@ -518,8 +519,9 @@ def write_deals_json(results):
         "origin": ORIGINS[0],
         "origins": ORIGINS,
         "currency": "KRW",
-        # A deal runs from below the floor up to floor +deal_cap_pct.
-        "deal_cap_pct": DEAL_CAP_PCT,
+        # A deal is at least deal_threshold_pct below the route's typical price
+        # (median of daily mins).
+        "deal_threshold_pct": DEAL_THRESHOLD_PCT,
         # "price" is the conservative published price: max(cache, live) + an
         # adaptive buffer (live_safety_buffer_pct when realtime_price is set,
         # else display_safety_buffer_pct), rounded up. cache_price/realtime_price
@@ -591,7 +593,7 @@ def drop_impossible_roundtrips(results):
 
 
 def report(results, today):
-    print(f"# Snapshot {today}  (deal = min <= floor +{DEAL_CAP_PCT:.0f}%)\n")
+    print(f"# Snapshot {today}  (deal = min <= typical -{DEAL_THRESHOLD_PCT:.0f}%)\n")
     header = f"{'Route':<10}{'Trip':<11}{'Min':>10}{'Baseline':>11}{'Disc':>8}  {'Deal':<7} Basis"
     print(header)
     print("-" * len(header))
@@ -609,9 +611,9 @@ def report(results, today):
             basis = (f"GUARD:{guard} (hist={diag.get('history_days_used')}d "
                      f"n_post_outlier={diag.get('today_items_count_after_outlier_filter')})")
         else:
-            basis = (f"n5-min hist={diag.get('history_days_used')}d "
+            basis = (f"median hist={diag.get('history_days_used')}d "
                      f"n={diag.get('today_items_count_after_outlier_filter')} "
-                     f"floor+{DEAL_CAP_PCT:.0f}%")
+                     f"typical-{DEAL_THRESHOLD_PCT:.0f}%")
         if r.get("sanity_note"):
             mark = "DROP"
         elif r["is_deal"]:
@@ -639,7 +641,7 @@ def report(results, today):
         print(
             f"- {r['origin']}->{r['dest']} [{r['trip']}]{tag} "
             f"{r['display_price']:,} KRW ({src}) "
-            f"(baseline {round(r['baseline']):,}, vs floor {r['discount']:+.1f}%) "
+            f"(typical {round(r['baseline']):,}, vs typical {r['discount']:+.1f}%) "
             f"출발 {(c.get('departure_at') or '')[:10]}{ret} "
             f"{c.get('airline', '')}/{c.get('gate', '')}"
         )

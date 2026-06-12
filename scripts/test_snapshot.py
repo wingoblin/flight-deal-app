@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import datetime as dt
 
 from config import (
+    DEAL_THRESHOLD_PCT,
     DISPLAY_SAFETY_BUFFER_PCT,
     LIVE_SAFETY_BUFFER_PCT,
     REGIONAL_ORIGINS,
@@ -90,7 +91,7 @@ class FilterPriceOutliersTests(unittest.TestCase):
 
 
 class JudgeTests(unittest.TestCase):
-    """Baseline = mean(sorted(history)[:5]); three guards."""
+    """Baseline = median(history); deal = min <= baseline*(1-threshold); guards."""
 
     def _stats(self, min_price, n=10):
         return {"n": n, "min": min_price, "p25": 0, "median": 0, "mean": 0}
@@ -128,47 +129,45 @@ class JudgeTests(unittest.TestCase):
         )
         self.assertNotEqual(diag["guard_triggered"], "today_n")
 
-    def test_deal_below_floor(self):
-        """min cheaper than the floor → deal, positive discount."""
-        history = [500_000, 550_000, 600_000, 650_000, 700_000, 800_000]
-        # baseline = mean(lowest 5) = 600,000
+    def test_deal_below_typical(self):
+        """min at least DEAL_THRESHOLD_PCT below the typical (median) → deal."""
+        history = [500_000, 550_000, 600_000, 650_000, 700_000]  # median 600,000
         baseline, discount, is_deal, diag = judge(
-            self._stats(540_000), history, today_items_count=20,
+            self._stats(500_000), history, today_items_count=20,
         )
         self.assertEqual(baseline, 600_000)
-        self.assertGreater(discount, 0)   # below floor → positive discount
+        self.assertGreater(discount, 0)   # below typical → positive discount
         self.assertTrue(is_deal)
         self.assertIsNone(diag["guard_triggered"])
 
-    def test_deal_at_floor(self):
-        """at the floor → deal, ~0 discount."""
-        history = [600_000] * 5            # baseline 600,000
-        _, discount, is_deal, _ = judge(self._stats(600_000), history, 20)
+    def test_threshold_edge_inclusive(self):
+        """min exactly DEAL_THRESHOLD_PCT below typical → deal (inclusive)."""
+        history = [600_000] * 5
+        cutoff = int(600_000 * (1 - DEAL_THRESHOLD_PCT / 100))  # 7% → 558,000
+        _, _, is_deal, _ = judge(self._stats(cutoff), history, 20)
         self.assertTrue(is_deal)
-        self.assertAlmostEqual(discount, 0.0, places=4)
 
-    def test_deal_up_to_cap(self):
-        """floor .. floor+20% → deal; +20% edge inclusive."""
-        history = [600_000] * 5            # +20% = 720,000
-        _, _, is_deal, _ = judge(self._stats(660_000), history, 20)
-        self.assertTrue(is_deal)
-        # +20% exact → still a deal
-        _, _, is_deal_edge, _ = judge(self._stats(720_000), history, 20)
-        self.assertTrue(is_deal_edge)
-
-    def test_no_deal_above_cap(self):
-        """min above floor+20% → not a deal, no guard."""
-        history = [600_000] * 5            # +20% = 720,000
+    def test_at_typical_not_a_deal(self):
+        """min at the typical price isn't cheap enough → not a deal, no guard."""
+        history = [600_000] * 5
         baseline, discount, is_deal, diag = judge(
-            self._stats(720_001), history, today_items_count=20,
+            self._stats(600_000), history, today_items_count=20,
         )
         self.assertEqual(baseline, 600_000)
-        self.assertLess(discount, 0)
+        self.assertAlmostEqual(discount, 0.0, places=4)
         self.assertFalse(is_deal)
         self.assertIsNone(diag["guard_triggered"])
 
-    def test_sanity_guard_blocks_far_below_floor(self):
-        """discount > 50% (min far below floor) → block as contamination."""
+    def test_just_above_threshold_not_a_deal(self):
+        """min just under DEAL_THRESHOLD_PCT below typical → not a deal, no guard."""
+        history = [600_000] * 5
+        cutoff = int(600_000 * (1 - DEAL_THRESHOLD_PCT / 100))
+        _, _, is_deal, diag = judge(self._stats(cutoff + 1_000), history, 20)
+        self.assertFalse(is_deal)
+        self.assertIsNone(diag["guard_triggered"])
+
+    def test_sanity_guard_blocks_far_below_typical(self):
+        """discount > 50% (min far below typical) → block as contamination."""
         history = [1_000_000] * 5
         baseline, discount, is_deal, diag = judge(
             self._stats(100_000), history, today_items_count=20,
@@ -181,13 +180,14 @@ class JudgeTests(unittest.TestCase):
     def test_diag_baseline_method_and_cabin(self):
         history = [500_000] * 5
         _, _, _, diag = judge(self._stats(450_000), history, 20)
-        self.assertEqual(diag["baseline_method"], "rolling_n5_lowest")
+        self.assertEqual(diag["baseline_method"], "rolling_median")
         self.assertEqual(diag["cabin_class"], "economy")
 
-    def test_baseline_uses_only_5_lowest_even_with_more_history(self):
-        history = [100, 200, 300, 400, 500, 9999, 9999, 9999, 9999, 9999]
+    def test_baseline_is_median_of_history(self):
+        """Baseline is the median of all daily mins (robust to high outliers)."""
+        history = [100, 200, 300, 400, 500, 9999, 9999]  # median = 400
         baseline, _, _, _ = judge(self._stats(1), history, 20)
-        self.assertEqual(baseline, 300)
+        self.assertEqual(baseline, 400)
 
 
 class RegionalGuardTests(unittest.TestCase):
@@ -210,7 +210,8 @@ class RegionalGuardTests(unittest.TestCase):
     def test_two_day_history_blocks_major_passes_regional(self):
         """2 days of history + 2 fares: blocked for ICN, surfaces for a regional
         origin under the relaxed guards."""
-        stats, history = self._stats(100_000, n=2), [100_000, 105_000]
+        # median([100k,105k]) = 102,500; -7% cutoff = 95,325, so min 90k is a deal.
+        stats, history = self._stats(90_000, n=2), [100_000, 105_000]
 
         icn = judge(stats, history, stats["n"], *guards_for_origin("ICN"))
         self.assertFalse(icn[2])
@@ -228,7 +229,7 @@ class RegionalGuardTests(unittest.TestCase):
 
     def test_thin_economy_sample_surfaces_clean(self):
         """All-economy thin regional sample → judged on the economy min, real
-        deal, no noise. baseline = mean of all daily mins (fewer than 5)."""
+        deal, no noise. baseline = median of the daily mins."""
         history = [90_000, 95_000, 100_000]
         stats = self._stats(80_000, n=2)
         baseline, discount, is_deal, _ = judge(
@@ -237,18 +238,19 @@ class RegionalGuardTests(unittest.TestCase):
         self.assertLess(discount, 50.0)
         self.assertTrue(is_deal)
 
-    def test_business_inflated_thin_baseline_blocked_by_sanity(self):
-        """In a thin sample (<5 days) every daily min feeds the baseline, so a
-        business-contaminated day can inflate it. The resulting implausible
-        discount (>SANITY_MAX_DISCOUNT_PCT) is caught by the sanity guard, so it
-        can't surface as a fake deal. The shown price stays the economy min."""
+    def test_median_baseline_robust_to_business_day(self):
+        """In a thin sample a business-contaminated day is a high outlier; the
+        MEDIAN baseline ignores it (a mean would not), so the baseline isn't
+        distorted and the economy min is judged against a clean typical price."""
         history = [90_000, 95_000, 600_000]  # 600k = business-contaminated day
-        stats = self._stats(88_000, n=2)
-        _, discount, is_deal, diag = judge(
+        stats = self._stats(85_000, n=2)
+        baseline, discount, is_deal, diag = judge(
             stats, history, stats["n"], *guards_for_origin("TAE"))
-        self.assertGreater(discount, 50.0)
-        self.assertFalse(is_deal)
-        self.assertEqual(diag["guard_triggered"], "sanity")
+        self.assertEqual(baseline, 95_000)        # median ignores the 600k outlier
+        self.assertIsNone(diag["guard_triggered"])
+        self.assertLess(discount, 50.0)
+        # 85,000 <= 95,000 * (1 - 7%) = 88,350 → genuine deal on a clean baseline
+        self.assertTrue(is_deal)
 
 
 class HistoricalMinsWindowTests(unittest.TestCase):
@@ -396,22 +398,23 @@ class ApplyConservativePricingTests(unittest.TestCase):
         apply_conservative_pricing([r])
         self.assertEqual(r["display_price"], self._buffered_round(100_000, live=True))
 
-    def test_within_cap_stays_deal_despite_buffer(self):
-        """Real fare within floor+cap stays a deal even if the buffer pushes the
-        displayed price past the cap (buffer is display-only, not a deal gate)."""
-        # baseline 100,000, cap +20% = 120,000. anchor 117,000 (within cap);
-        # display 117,000*1.07 = 125,190 -> 126,000 (over cap) but still a deal.
-        r = self._deal(min=117_000, baseline=100_000)
+    def test_below_threshold_stays_deal_despite_buffer(self):
+        """Real fare below the threshold stays a deal even if the buffer pushes
+        the displayed price back above it (buffer is display-only, not a gate)."""
+        # baseline 100,000, threshold -7% → cutoff 93,000. anchor 92,000 (a deal);
+        # display 92,000*1.07 = 98,440 -> 99,000 (over cutoff) but still a deal.
+        r = self._deal(min=92_000, baseline=100_000)
         apply_conservative_pricing([r])
         self.assertTrue(r["is_deal"])
-        self.assertGreater(r["display_price"], 120_000)
+        self.assertGreater(r["display_price"], 93_000)
 
-    def test_anchor_above_cap_drops_deal(self):
-        """Real fare already above floor+cap → not a deal."""
-        r = self._deal(min=121_000, baseline=100_000)
+    def test_anchor_above_threshold_drops_deal(self):
+        """Real fare not far enough below typical → not a deal."""
+        # baseline 100,000, cutoff 93,000. anchor 94,000 > cutoff → dropped.
+        r = self._deal(min=94_000, baseline=100_000)
         apply_conservative_pricing([r])
         self.assertFalse(r["is_deal"])
-        self.assertIn("above floor", r["price_note"])
+        self.assertIn("below typical", r["price_note"])
 
     def test_non_deals_untouched(self):
         r = self._deal(is_deal=False)
