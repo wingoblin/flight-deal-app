@@ -40,11 +40,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Install Playwright browser (for local-mode verification)
-        # Non-fatal: if the browser install fails, realtime.cheapest_krw falls
-        # back to the serverless fetch mode, so the run still publishes.
-        run: python -m playwright install --with-deps chromium || echo "playwright browser install failed; verification will use fallback mode"
-
       - name: Run snapshot and judge deals
         if: env.DRY_RUN != 'true' || env.DIAGNOSE_API == 'true'
         env:

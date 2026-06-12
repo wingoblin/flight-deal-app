@@ -1,2 +1,1 @@
 fast-flights==2.2
-playwright
