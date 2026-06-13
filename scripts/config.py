@@ -171,6 +171,18 @@ REALTIME_REQUEST_DELAY_SEC = 1.0
 # realtime day would otherwise empty it.
 REQUIRE_REALTIME_VERIFICATION = True
 
+# Freshness fallback for REQUIRE_REALTIME_VERIFICATION. The live cross-check
+# fails for almost all round-trips (fast-flights can't search them), so requiring
+# it drops most round-trips. As a softer second signal, keep an unverified
+# candidate anyway if its cached fare was found at most this many days ago — a
+# fare seen today is much less likely to have sold out than a stale one, so it's
+# a reasonable (weaker) stand-in for the live check. Kept tight (1 day) so only
+# genuinely fresh fares slip through; the stale fares that actually cause the
+# "price jumped" surprise (the regional 30-day cache ones) are still dropped.
+# Set to 0 to keep only same-day fares, or negative to disable the fallback
+# entirely (back to strict verify-or-drop).
+FRESH_VERIFY_MAX_AGE_DAYS = 1
+
 # Conservative display pricing. The published price is the higher of the cached
 # cheapest fare and the live cross-check fare, plus a safety buffer, rounded up
 # to the nearest 1,000 KRW. Goal: the shown price is almost always >= what the

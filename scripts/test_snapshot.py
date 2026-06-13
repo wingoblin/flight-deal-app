@@ -424,40 +424,57 @@ class ApplyConservativePricingTests(unittest.TestCase):
 
 
 class RequireRealtimeVerificationTests(unittest.TestCase):
-    """REQUIRE_REALTIME_VERIFICATION: when the realtime system is up, candidates
-    with no confirmed live price are dropped (their cached fare may have sold
-    out); the verified ones are kept."""
+    """REQUIRE_REALTIME_VERIFICATION: candidates with no confirmed live price are
+    dropped (their cached fare may have sold out), EXCEPT ones whose cached fare
+    is fresh (found <= FRESH_VERIFY_MAX_AGE_DAYS ago), which are kept."""
 
-    def _candidate(self, dest):
+    TODAY = "2026-07-01"
+
+    def _candidate(self, dest, link=None):
         return {
             "status": "ok", "is_deal": True, "origin": "ICN", "dest": dest,
             "trip": "oneway", "min": 100_000, "baseline": 120_000,
-            "cheap": {"departure_at": "2026-07-01T08:00:00+09:00", "return_at": None},
+            "cheap": {"departure_at": "2026-07-01T08:00:00+09:00",
+                      "return_at": None, "link": link},
         }
 
-    def test_unverified_dropped_verified_kept(self):
+    def _run(self, candidates):
         import sys
         import types
         from unittest import mock
         import realtime as rt
         import snapshot as snap
 
-        verified = self._candidate("NRT")     # live price found
-        unverified = self._candidate("KIX")   # no live price
         fake_ff = types.ModuleType("fast_flights")
 
         def fake_live(origin, dest, depart, ret, fx):
-            return 105_000 if dest == "NRT" else None  # only NRT confirmed
+            return 105_000 if dest == "NRT" else None  # only NRT confirmed live
 
         with mock.patch.dict(sys.modules, {"fast_flights": fake_ff}), \
                 mock.patch.object(rt, "usd_to_krw", return_value=1_350.0), \
                 mock.patch.object(rt, "cheapest_krw", side_effect=fake_live):
-            snap.crosscheck_realtime([verified, unverified])
+            snap.crosscheck_realtime(candidates, self.TODAY)
+
+    def test_unverified_stale_dropped_verified_kept(self):
+        verified = self._candidate("NRT")                       # live price found
+        unverified = self._candidate("KIX")                     # no live, no fresh cache
+        self._run([verified, unverified])
 
         self.assertTrue(verified["is_deal"])
         self.assertEqual(verified["realtime_krw"], 105_000)
         self.assertFalse(unverified["is_deal"])
         self.assertIn("unverified", unverified.get("realtime_note", ""))
+
+    def test_unverified_but_fresh_cache_kept(self):
+        # search_date=01072026 -> cache_date 2026-07-01 == TODAY (0 days old) -> fresh
+        fresh = self._candidate("KIX", link="/search/x?t=abc&search_date=01072026")
+        # search_date=24062026 -> 2026-06-24 (7 days old) -> stale -> dropped
+        stale = self._candidate("CTS", link="/search/y?t=def&search_date=24062026")
+        self._run([fresh, stale])
+
+        self.assertTrue(fresh["is_deal"])                # kept via freshness fallback
+        self.assertIn("fresh", fresh.get("realtime_note", ""))
+        self.assertFalse(stale["is_deal"])               # too old -> dropped
 
 
 if __name__ == "__main__":
