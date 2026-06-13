@@ -17,6 +17,7 @@ from config import (
     DEAL_THRESHOLD_PCT,
     DESTINATIONS,
     DISPLAY_SAFETY_BUFFER_PCT,
+    FRESH_VERIFY_MAX_AGE_DAYS,
     guards_for_origin,
     LIVE_SAFETY_BUFFER_PCT,
     MAX_CACHE_AGE_DAYS,
@@ -366,7 +367,7 @@ def main():
 
     conn.close()
     drop_impossible_roundtrips(results)
-    crosscheck_realtime(results)
+    crosscheck_realtime(results, today)
     apply_conservative_pricing(results)   # set the published price + re-judge
     report(results, today)            # diagnostics always reach the log
     _guard_publish_safety(results)    # abort here (pre-write) if the run looks broken
@@ -408,7 +409,7 @@ def apply_conservative_pricing(results):
             )
 
 
-def crosscheck_realtime(results):
+def crosscheck_realtime(results, today):
     """Look up each candidate's live Google Flights price (via fast-flights) and
     record it as realtime_krw for apply_conservative_pricing to anchor on. Drop
     the candidate only when the live price is at least MAX_PRICE_DIVERGENCE_PCT
@@ -468,11 +469,27 @@ def crosscheck_realtime(results):
     # "price jumped at booking" surprise. An entirely-down realtime system
     # returns early before this point, so all candidates are kept then.
     if REQUIRE_REALTIME_VERIFICATION:
+        today_date = dt.date.fromisoformat(today)
         for r in deals:
-            if r.get("is_deal") and not r.get("realtime_krw"):
-                r["is_deal"] = False
-                r["realtime_note"] = "unverified: no live price to confirm the fare is still available"
-                print(f"#   DROP {r['origin']}->{r['dest']} [{r['trip']}] unverified (no live price)")
+            if not (r.get("is_deal") and not r.get("realtime_krw")):
+                continue
+            # Freshness fallback: keep an unverified candidate if its cached fare
+            # was found at most FRESH_VERIFY_MAX_AGE_DAYS ago — a fare seen that
+            # recently is unlikely to have sold out, a softer stand-in for the
+            # live check. Stale fares (the ones that actually jump at booking)
+            # still fail and get dropped.
+            cache_date = cache_date_from_link((r.get("cheap") or {}).get("link"))
+            age_days = None
+            if cache_date:
+                age_days = (today_date - dt.date.fromisoformat(cache_date)).days
+            if age_days is not None and age_days <= FRESH_VERIFY_MAX_AGE_DAYS:
+                r["realtime_note"] = f"unverified but fresh (cache {cache_date}, {age_days}d)"
+                print(f"#   KEEP-FRESH {r['origin']}->{r['dest']} [{r['trip']}] "
+                      f"unverified, cache {cache_date} ({age_days}d old)")
+                continue
+            r["is_deal"] = False
+            r["realtime_note"] = f"unverified: no live price, cache stale ({cache_date})"
+            print(f"#   DROP {r['origin']}->{r['dest']} [{r['trip']}] unverified (cache {cache_date})")
 
 
 def select_deals(results):
