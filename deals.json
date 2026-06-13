@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-13T12:25:01+00:00",
+  "generated_at": "2026-06-13T14:36:51+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -209,6 +209,25 @@
     },
     {
       "from": "PUS",
+      "destination": "BKK",
+      "trip": "oneway",
+      "price": 200000,
+      "cache_price": 193216,
+      "realtime_price": 177532,
+      "baseline": 217408,
+      "discount_pct": 8.0,
+      "sparse": true,
+      "departure_at": "2026-12-09T08:00:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "VJ",
+      "gate": "City.Travel",
+      "cache_date": "2026-06-10",
+      "link": "/search/PUS0912BKK1?t=VJ17968032001796828100000535PUSSGNBKK_3d2f96ec6880e412c2cb38a41389a732_9113&search_date=10062026",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "PUS",
       "destination": "MNL",
       "trip": "roundtrip",
       "price": 515000,
@@ -262,25 +281,6 @@
       "gate": "City.Travel",
       "cache_date": "2026-06-09",
       "link": "/search/ICN2310CEB1?t=5J17927913001792804800000285ICNCEB_2cc4539cc6308a5c99c15048a3e99ccd_8791&search_date=09062026&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "PUS",
-      "destination": "SGN",
-      "trip": "roundtrip",
-      "price": 507000,
-      "cache_price": 474461,
-      "realtime_price": 491627,
-      "baseline": 525699,
-      "discount_pct": 3.6,
-      "sparse": false,
-      "departure_at": "2026-07-10T08:10:00+09:00",
-      "return_at": "2026-07-17T17:30:00+07:00",
-      "transfers": 1,
-      "airline": "VJ",
-      "gate": "Vayama",
-      "cache_date": "2026-06-13",
-      "link": "/search/PUS1007SGN17071?t=VJ17836710001783681500000295PUSSGN17843094001784356800000670SGNPQCPUS_2622040f6f9b338ffa8c42a7c9a1067e_22644&search_date=13062026",
       "cabin_class": "economy"
     },
     {
