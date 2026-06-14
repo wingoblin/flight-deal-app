@@ -38,7 +38,7 @@ TRIPS = [("oneway", True), ("roundtrip", False)]
 # the typical price and requiring a real discount below it surfaces only
 # genuinely cheap days and lets the app show an honest "N% below usual". All
 # deals are shown the same way (no color tiers).
-DEAL_THRESHOLD_PCT = 4.0
+DEAL_THRESHOLD_PCT = 0.0
 
 # Baseline is computed only from daily-mins within this rolling window (days
 # back from today). Keeps the baseline on the current season — older data stays
