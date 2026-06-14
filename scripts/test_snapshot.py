@@ -147,14 +147,14 @@ class JudgeTests(unittest.TestCase):
         _, _, is_deal, _ = judge(self._stats(cutoff), history, 20)
         self.assertTrue(is_deal)
 
-    def test_at_typical_not_a_deal(self):
-        """min at the typical price isn't cheap enough → not a deal, no guard."""
+    def test_above_typical_not_a_deal(self):
+        """min above the typical price → not a deal, no guard (any threshold)."""
         history = [600_000] * 5
         baseline, discount, is_deal, diag = judge(
-            self._stats(600_000), history, today_items_count=20,
+            self._stats(650_000), history, today_items_count=20,  # above median
         )
         self.assertEqual(baseline, 600_000)
-        self.assertAlmostEqual(discount, 0.0, places=4)
+        self.assertLess(discount, 0)   # above typical → negative discount
         self.assertFalse(is_deal)
         self.assertIsNone(diag["guard_triggered"])
 
