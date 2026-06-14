@@ -138,7 +138,6 @@ SPARSE_CACHE_AGE_DAYS = 30
 # (e.g. Trip.com, City.Travel, Kiwi.com, Mytrip.com). Tune as needed.
 BLOCKED_GATES = {
     "Авиасейлс",
-    "Farera",
     "Biletix",
     "Clickavia",
     "Tickets",
