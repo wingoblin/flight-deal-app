@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-27T19:56:10+00:00",
+  "generated_at": "2026-06-27T21:10:21+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -224,6 +224,25 @@
       "gate": "Т-Банк",
       "cache_date": "2026-06-25",
       "link": "/search/ICN0207MFM1?t=7C17829858001782996600000240ICNMFM_92a6bd14e2bee3e98a0378ca31ead786_8474&search_date=25062026&itinerary_key=oAIjCudDlOpYtwz0pFnB8A&origin_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "OSA",
+      "trip": "roundtrip",
+      "price": 185000,
+      "cache_price": 172264,
+      "realtime_price": null,
+      "baseline": 200667,
+      "discount_pct": 7.8,
+      "sparse": false,
+      "departure_at": "2026-07-18T15:55:00+09:00",
+      "return_at": "2026-07-23T11:35:00+09:00",
+      "transfers": 0,
+      "airline": "TW",
+      "gate": "Farera",
+      "cache_date": "2026-06-27",
+      "link": "/search/ICN1807OSA23071?t=TW17843901001784397900000130ICNKIX17848065001784813400000115KIXICN_1d5c96c406778487c4ea9d54dfbce973_8854&search_date=27062026&itinerary_key=e8op4Xrv2DpFRW5Xwe0Baw&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
