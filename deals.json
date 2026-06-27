@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-27T07:28:09+00:00",
+  "generated_at": "2026-06-27T10:02:45+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -34,25 +34,6 @@
       "gate": "Trip.com",
       "cache_date": "2026-06-25",
       "link": "/search/CJU0109DPS1?t=TR17882550001788307500000935CJUSINDPS_c1ceeaa184abd55ced454a34520a5a9d_11158&search_date=25062026&itinerary_key=S_JzPPvtbSXFYAK5DAfb4A",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "TAE",
-      "destination": "DAD",
-      "trip": "roundtrip",
-      "price": 459000,
-      "cache_price": 425239,
-      "realtime_price": 445443,
-      "baseline": 599398,
-      "discount_pct": 23.4,
-      "sparse": false,
-      "departure_at": "2026-08-17T21:10:00+09:00",
-      "return_at": "2026-08-21T01:30:00+07:00",
-      "transfers": 0,
-      "airline": "TW",
-      "gate": "Trip.com",
-      "cache_date": "2026-06-27",
-      "link": "/search/TAE1708DAD21081?t=TW17870010001787010900000285TAEDAD17872758001787300100000285DADTAE_6c62fd1ab7f0f6d721787595f0a0d0ed_21539&search_date=27062026&itinerary_key=iQgPtSHubPgTdFu4UYKziQ",
       "cabin_class": "economy"
     },
     {
@@ -436,25 +417,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "PUS",
-      "destination": "CXR",
-      "trip": "roundtrip",
-      "price": 358000,
-      "cache_price": 347461,
-      "realtime_price": 337922,
-      "baseline": 364907,
-      "discount_pct": 1.9,
-      "sparse": false,
-      "departure_at": "2026-07-01T10:55:00+09:00",
-      "return_at": "2026-07-08T03:10:00+07:00",
-      "transfers": 0,
-      "airline": "VJ",
-      "gate": "Wingie",
-      "cache_date": "2026-06-25",
-      "link": "/search/PUS0107CXR08071?t=VJ17829033001782912900000280PUSCXR17834802001783504200000280CXRPUS_ee26f57f060ed18b77b4e8e7e5803e4a_16847&search_date=25062026&itinerary_key=MUfxMjJdR0BUrJqUGGLJSw&origin_airports=1&destination_airports=0",
-      "cabin_class": "economy"
-    },
-    {
       "from": "GMP",
       "destination": "DOH",
       "trip": "oneway",
@@ -569,25 +531,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "PUS",
-      "destination": "PVG",
-      "trip": "oneway",
-      "price": 162000,
-      "cache_price": 152394,
-      "realtime_price": 156673,
-      "baseline": 161413,
-      "discount_pct": -0.4,
-      "sparse": false,
-      "departure_at": "2026-09-09T22:05:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "7C",
-      "gate": "Mytrip.com",
-      "cache_date": "2026-06-25",
-      "link": "/search/PUS0909PVG1?t=7C17889915001788994500000110PUSPVG_585420621156ffb0a64efaa36409ada9_7389&search_date=25062026&itinerary_key=qxHysP2S-Q4ucBJBTBDl1Q&destination_airports=0",
-      "cabin_class": "economy"
-    },
-    {
       "from": "ICN",
       "destination": "CXR",
       "trip": "oneway",
@@ -664,6 +607,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "PUS",
+      "destination": "CXR",
+      "trip": "roundtrip",
+      "price": 371000,
+      "cache_price": 359659,
+      "realtime_price": 350210,
+      "baseline": 364907,
+      "discount_pct": -1.7,
+      "sparse": false,
+      "departure_at": "2026-08-28T10:55:00+09:00",
+      "return_at": "2026-09-03T03:10:00+07:00",
+      "transfers": 0,
+      "airline": "VJ",
+      "gate": "Wingie",
+      "cache_date": "2026-06-25",
+      "link": "/search/PUS2808CXR03091?t=VJ17879145001787924100000280PUSCXR17884050001788429000000280CXRPUS_7525eb75550c14a90265aad021698041_17492&search_date=25062026&itinerary_key=NuXtJHQIP-PzTvOTVvD6Vg&origin_airports=1&destination_airports=0",
+      "cabin_class": "economy"
+    },
+    {
       "from": "ICN",
       "destination": "HKT",
       "trip": "oneway",
@@ -722,25 +684,6 @@
     },
     {
       "from": "ICN",
-      "destination": "OKA",
-      "trip": "oneway",
-      "price": 150000,
-      "cache_price": 145196,
-      "realtime_price": 142849,
-      "baseline": 146754,
-      "discount_pct": -2.2,
-      "sparse": false,
-      "departure_at": "2026-08-19T13:15:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "7C",
-      "gate": "Т-Банк",
-      "cache_date": "2026-06-25",
-      "link": "/search/ICN1908OKA1?t=7C17871453001787154300000150ICNOKA_76f0358e2772d2d013061f5b86adf150_7040&search_date=25062026&itinerary_key=mT6xpp4S9Tm3zrTG8sZJ1A&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
       "destination": "CGK",
       "trip": "oneway",
       "price": 231000,
@@ -775,6 +718,25 @@
       "gate": "City.Travel",
       "cache_date": "2026-06-25",
       "link": "/search/PUS2407TPE27071?t=ZE17849310001784938500000185PUSTPE17851197001785132300000150TPEPUS_157f0bd1fc93228409c27214bc852c5e_12759&search_date=25062026&itinerary_key=1pPSRi8q782uxZhO6kuLOw",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "GMP",
+      "destination": "CXR",
+      "trip": "roundtrip",
+      "price": 536000,
+      "cache_price": 500202,
+      "realtime_price": null,
+      "baseline": 521048,
+      "discount_pct": -2.9,
+      "sparse": false,
+      "departure_at": "2026-07-02T07:20:00+09:00",
+      "return_at": "2026-07-08T03:10:00+07:00",
+      "transfers": 1,
+      "airline": "BX",
+      "gate": "Kupi.com",
+      "cache_date": "2026-06-27",
+      "link": "/search/GMP0207CXR08071?t=VJ17829768001782999300000495GMPPUSCXR17834802001783530600000720CXRPUSGMP_aad7389df4a4f6577cb97eae8881ccff_25336&search_date=27062026&itinerary_key=Vdf4xylwKx1aj5kDaKDa3g&origin_airports=0%2C1&destination_airports=0%2C1",
       "cabin_class": "economy"
     },
     {
