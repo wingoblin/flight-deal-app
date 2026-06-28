@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-28T19:19:13+00:00",
+  "generated_at": "2026-06-28T20:47:20+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -417,6 +417,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "GMP",
+      "destination": "BKK",
+      "trip": "oneway",
+      "price": 258000,
+      "cache_price": 245205,
+      "realtime_price": 250446,
+      "baseline": 262906,
+      "discount_pct": 1.9,
+      "sparse": false,
+      "departure_at": "2026-07-19T10:40:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "BX",
+      "gate": "Vayama",
+      "cache_date": "2026-06-28",
+      "link": "/search/GMP1907BKK1?t=7C17844576001784505000000910GMPPUSBKK_d266d2c881fcb50f3c6ccc60c51a0578_12603&search_date=28062026&itinerary_key=7hCey4mUxItDOcu1GVnOMQ&origin_airports=0",
+      "cabin_class": "economy"
+    },
+    {
       "from": "CJU",
       "destination": "SIN",
       "trip": "oneway",
@@ -588,25 +607,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "GMP",
-      "destination": "BKK",
-      "trip": "oneway",
-      "price": 263000,
-      "cache_price": 245205,
-      "realtime_price": null,
-      "baseline": 262906,
-      "discount_pct": -0.0,
-      "sparse": false,
-      "departure_at": "2026-07-19T10:40:00+09:00",
-      "return_at": null,
-      "transfers": 1,
-      "airline": "BX",
-      "gate": "Vayama",
-      "cache_date": "2026-06-28",
-      "link": "/search/GMP1907BKK1?t=7C17844576001784505000000910GMPPUSBKK_d266d2c881fcb50f3c6ccc60c51a0578_12603&search_date=28062026&itinerary_key=7hCey4mUxItDOcu1GVnOMQ&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
       "from": "ICN",
       "destination": "OKA",
       "trip": "oneway",
@@ -683,6 +683,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "GMP",
+      "destination": "SFO",
+      "trip": "roundtrip",
+      "price": 1982000,
+      "cache_price": 1924051,
+      "realtime_price": 1892944,
+      "baseline": 1958195,
+      "discount_pct": -1.2,
+      "sparse": true,
+      "departure_at": "2027-03-20T13:50:00+09:00",
+      "return_at": "2027-04-09T00:25:00-07:00",
+      "transfers": 1,
+      "airline": "BR",
+      "gate": "Mytrip.com",
+      "cache_date": "2026-06-24",
+      "link": "/search/GMP2003SFO09041?t=BR18055506001805558400001090GMPTSATPESFO18072303001807361400001225SFOTPETSAGMP_b1cf4a300e059a3cb1341683112d8c2e_92948&search_date=24062026&itinerary_key=neJvcEBYLxyXb8jK6YODag&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
       "from": "ICN",
       "destination": "BCN",
       "trip": "oneway",
@@ -699,6 +718,25 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-06-27",
       "link": "/search/ICN0507BCN1?t=ZH17832735001783330800001375ICNSZXBCN_daf2552cf47e948d184450b1730e59b1_22047&search_date=27062026&itinerary_key=TTTHieFyy_6Tx0XDZjjaKQ&origin_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "GMP",
+      "destination": "BKK",
+      "trip": "roundtrip",
+      "price": 559000,
+      "cache_price": 542299,
+      "realtime_price": 516258,
+      "baseline": 547603,
+      "discount_pct": -2.1,
+      "sparse": false,
+      "departure_at": "2026-07-21T19:55:00+09:00",
+      "return_at": "2026-07-28T00:50:00+07:00",
+      "transfers": 1,
+      "airline": "7C",
+      "gate": "Wingie",
+      "cache_date": "2026-06-28",
+      "link": "/search/GMP2107BKK28071?t=7C17846637001784764200001795GMPPUSBKK17851998001785312900001765BKKPUSGMP_c474276fdaea7a75752600febbf9fd0f_27873&search_date=28062026&itinerary_key=uHkU1tpLXsCNPnLkME0u_A&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
@@ -946,25 +984,6 @@
       "gate": "Kupi.com",
       "cache_date": "2026-06-28",
       "link": "/search/ICN0407HRB22071?t=MU17831829001783206900000460ICNTAOHRB17847615001784818500000890HRBYNTICN_a12296b034ede0c439d3867bf03a759d_19662&search_date=28062026&itinerary_key=PGh4Qli1rrXTIvYiANK-wQ&origin_airports=0&destination_airports=1",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "GMP",
-      "destination": "BKK",
-      "trip": "roundtrip",
-      "price": 581000,
-      "cache_price": 542299,
-      "realtime_price": null,
-      "baseline": 547603,
-      "discount_pct": -6.1,
-      "sparse": false,
-      "departure_at": "2026-07-21T19:55:00+09:00",
-      "return_at": "2026-07-28T00:50:00+07:00",
-      "transfers": 1,
-      "airline": "7C",
-      "gate": "Wingie",
-      "cache_date": "2026-06-28",
-      "link": "/search/GMP2107BKK28071?t=7C17846637001784764200001795GMPPUSBKK17851998001785312900001765BKKPUSGMP_c474276fdaea7a75752600febbf9fd0f_27873&search_date=28062026&itinerary_key=uHkU1tpLXsCNPnLkME0u_A&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     }
   ]
