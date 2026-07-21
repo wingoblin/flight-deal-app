@@ -303,7 +303,9 @@ def render_png(html, out_path):
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(args=["--no-sandbox"])
-            page = browser.new_page(viewport={"width": 440, "height": 200}, device_scale_factor=2)
+            # Render at 3x so the 440px card is ~1320px wide — above phone
+            # screen width, so Telegram doesn't upscale (and blur) it.
+            page = browser.new_page(viewport={"width": 440, "height": 200}, device_scale_factor=3)
             page.set_content(html, wait_until="networkidle")
             # clip tightly to the body box so no empty vertical space remains
             page.locator("body").screenshot(path=str(out_path))
