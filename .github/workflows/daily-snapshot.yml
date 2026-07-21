@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # to dispatch the telegram-deals workflow when deals.json changes
 
 concurrency:
   group: daily-snapshot
@@ -61,6 +62,8 @@ jobs:
 
       - name: Commit snapshot data and log
         if: env.DRY_RUN != 'true' && env.DIAGNOSE_API != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -70,6 +73,18 @@ jobs:
           else
             git commit -m "Daily snapshot $(date -u +%F)"
             git push
+            # A GITHUB_TOKEN push does NOT fire the telegram workflow's push
+            # trigger (GitHub blocks recursive triggers), so dispatch it
+            # explicitly whenever deals.json actually changed. workflow_dispatch
+            # is exempt from that rule, so this reliably fires the alert.
+            if ! git diff --quiet HEAD~1 HEAD -- deals.json; then
+              echo "deals.json changed — dispatching telegram-deals"
+              # non-fatal: a dispatch hiccup must not fail the snapshot pipeline
+              gh workflow run telegram-deals.yml --ref main -f dry_run=false \
+                || echo "telegram dispatch failed (non-fatal)"
+            else
+              echo "deals.json unchanged — no telegram alert"
+            fi
           fi
 
       - name: Mirror deals.json to airpick-legal (public)
