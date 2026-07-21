@@ -15,6 +15,8 @@ Secrets / env:
   TELEGRAM_CHAT_ID     Channel id, e.g. "@airpick" or "-100..." (required)
   TELEGRAM_MIN_DISCOUNT   Minimum discount_pct to consider (default 0)
   TELEGRAM_MAX_PRICE      Only surface round-trips at/under this KRW price (default none)
+  TELEGRAM_PRICE_OVERRIDE_DISCOUNT  Discount_pct at/above which the price ceiling
+                                    is ignored (catch long-haul steals; default none)
   TELEGRAM_MAX_CARDS      Max deals per run (default 6)
   TELEGRAM_WINDOW_HOURS   Don't resend a deal seen within this many hours (default 24)
   TELEGRAM_STATE_FILE     Where the "already sent" state lives (default data/telegram_sent.json)
@@ -99,16 +101,21 @@ def deal_key(d):
 # ----------------------------- selection -------------------------------------
 
 def select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
-                 max_price=None):
+                 max_price=None, price_override_discount=None):
     window = dt.timedelta(hours=window_hours)
     sent = state.get("sent", {})
     candidates = []
     for d in deals:
         if d.get("trip") != "roundtrip":  # round-trip only
             continue
-        if float(d.get("discount_pct", 0)) < min_discount:
+        disc = float(d.get("discount_pct", 0))
+        if disc < min_discount:
             continue
-        if max_price is not None:  # only surface fares at/under the ceiling
+        # Price ceiling — but a big enough drop (e.g. a long-haul half-off
+        # steal) overrides it, since that's a deal worth surfacing anyway.
+        if max_price is not None and not (
+            price_override_discount is not None and disc >= price_override_discount
+        ):
             try:
                 if float(d.get("price", 1e18)) > max_price:
                     continue
@@ -403,6 +410,8 @@ def main():
     rank = env("TELEGRAM_RANK", "discount")
     max_price = env("TELEGRAM_MAX_PRICE")
     max_price = float(max_price) if max_price else None
+    price_override_discount = env("TELEGRAM_PRICE_OVERRIDE_DISCOUNT")
+    price_override_discount = float(price_override_discount) if price_override_discount else None
     state_file = Path(env("TELEGRAM_STATE_FILE", str(ROOT / "data" / "telegram_sent.json")))
     dry_run = env("DRY_RUN", "false").lower() == "true"
 
@@ -410,7 +419,7 @@ def main():
     state = load_json(state_file, {"version": 1, "sent": {}})
 
     picked = select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
-                          max_price=max_price)
+                          max_price=max_price, price_override_discount=price_override_discount)
     fields_list = [card_fields(d, meta) for d in picked]
 
     if dump_html is not None:
