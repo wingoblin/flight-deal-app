@@ -57,11 +57,12 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_STATE_FILE: .telegram-state/sent.json
-          # Only surface round-trips at/under this KRW price. Discount floor is
-          # off — price is the gate — so nothing sends unless a genuinely cheap
-          # round-trip shows up (keeps the channel from getting spammy).
-          TELEGRAM_MIN_DISCOUNT: "0"
-          TELEGRAM_MAX_PRICE: "250000"
+          # A deal only pings if it's a genuine drop AND affordable: at least
+          # this much off its own baseline, and at/under this KRW price. Gating
+          # on discount (not just price) keeps out routes that are cheap anyway
+          # but barely discounted.
+          TELEGRAM_MIN_DISCOUNT: "20"
+          TELEGRAM_MAX_PRICE: "500000"
           TELEGRAM_MAX_CARDS: "6"
           # Manual "resend" dispatch drops the dedupe window to 0 for that run.
           TELEGRAM_WINDOW_HOURS: ${{ github.event.inputs.resend == 'true' && '0' || '24' }}
