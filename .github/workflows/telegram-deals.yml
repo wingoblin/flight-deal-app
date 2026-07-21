@@ -13,6 +13,10 @@ on:
         description: "Dry run — build/render but do NOT send to Telegram."
         type: boolean
         default: true
+      resend:
+        description: "Ignore the 24h dedupe for this run (re-send even if already sent). For manual test posts."
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -53,9 +57,16 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_STATE_FILE: .telegram-state/sent.json
-          TELEGRAM_MIN_DISCOUNT: "18"
-          TELEGRAM_MAX_CARDS: "3"
-          TELEGRAM_WINDOW_HOURS: "24"
-          TELEGRAM_BASE_URL: "https://airpick.app"
+          # A deal only pings if it's a genuine drop AND affordable: at least
+          # this much off its own baseline, and at/under this KRW price. Gating
+          # on discount (not just price) keeps out routes that are cheap anyway
+          # but barely discounted. A big enough drop (≥35%) overrides the price
+          # ceiling so long-haul half-off steals still get through.
+          TELEGRAM_MIN_DISCOUNT: "25"
+          TELEGRAM_MAX_PRICE: "500000"
+          TELEGRAM_PRICE_OVERRIDE_DISCOUNT: "35"
+          TELEGRAM_MAX_CARDS: "6"
+          # Manual "resend" dispatch drops the dedupe window to 0 for that run.
+          TELEGRAM_WINDOW_HOURS: ${{ github.event.inputs.resend == 'true' && '0' || '24' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: python scripts/telegram_notify.py

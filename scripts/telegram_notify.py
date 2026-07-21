@@ -13,11 +13,13 @@ only network calls are to api.telegram.org.
 Secrets / env:
   TELEGRAM_BOT_TOKEN   Bot token from @BotFather (required to actually send)
   TELEGRAM_CHAT_ID     Channel id, e.g. "@airpick" or "-100..." (required)
-  TELEGRAM_MIN_DISCOUNT   Minimum discount_pct to consider (default 18)
-  TELEGRAM_MAX_CARDS      Max deals per run (default 3)
+  TELEGRAM_MIN_DISCOUNT   Minimum discount_pct to consider (default 0)
+  TELEGRAM_MAX_PRICE      Only surface round-trips at/under this KRW price (default none)
+  TELEGRAM_PRICE_OVERRIDE_DISCOUNT  Discount_pct at/above which the price ceiling
+                                    is ignored (catch long-haul steals; default none)
+  TELEGRAM_MAX_CARDS      Max deals per run (default 6)
   TELEGRAM_WINDOW_HOURS   Don't resend a deal seen within this many hours (default 24)
   TELEGRAM_STATE_FILE     Where the "already sent" state lives (default data/telegram_sent.json)
-  TELEGRAM_BASE_URL       Booking link base (default https://airpick.app)
   TELEGRAM_RANK           "discount" (default) or "price"
   DRY_RUN                 "true" -> build/render but do NOT send
 
@@ -98,13 +100,27 @@ def deal_key(d):
 
 # ----------------------------- selection -------------------------------------
 
-def select_deals(deals, state, now, min_discount, max_cards, window_hours, rank):
+def select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
+                 max_price=None, price_override_discount=None):
     window = dt.timedelta(hours=window_hours)
     sent = state.get("sent", {})
     candidates = []
     for d in deals:
-        if float(d.get("discount_pct", 0)) < min_discount:
+        if d.get("trip") != "roundtrip":  # round-trip only
             continue
+        disc = float(d.get("discount_pct", 0))
+        if disc < min_discount:
+            continue
+        # Price ceiling — but a big enough drop (e.g. a long-haul half-off
+        # steal) overrides it, since that's a deal worth surfacing anyway.
+        if max_price is not None and not (
+            price_override_discount is not None and disc >= price_override_discount
+        ):
+            try:
+                if float(d.get("price", 1e18)) > max_price:
+                    continue
+            except (TypeError, ValueError):
+                continue
         try:
             if d_day(d.get("departure_at")) < 0:  # already departed
                 continue
@@ -159,41 +175,41 @@ CARD_CSS = """
 body {
   font-family:'Noto Sans CJK KR','Noto Sans KR','Apple SD Gothic Neo',sans-serif;
   background:#eef0f3;
-  padding:18px;
-  width:440px;
+  padding:13px;
+  width:360px;
   -webkit-font-smoothing:antialiased;
 }
 .card {
-  background:#fff; border-radius:16px; padding:15px 16px;
-  box-shadow:0 1px 2px rgba(15,23,42,.05), 0 8px 22px rgba(15,23,42,.07);
-  margin-bottom:12px;
+  background:#fff; border-radius:13px; padding:11px 13px;
+  box-shadow:0 1px 2px rgba(15,23,42,.05), 0 6px 16px rgba(15,23,42,.07);
+  margin-bottom:8px;
 }
 .card:last-child { margin-bottom:0; }
 .top { display:flex; align-items:flex-start; justify-content:space-between; }
-.left { display:flex; gap:11px; align-items:center; min-width:0; }
+.left { display:flex; gap:9px; align-items:center; min-width:0; }
 .badge {
-  width:40px; height:40px; border-radius:12px; flex:0 0 auto;
+  width:33px; height:33px; border-radius:10px; flex:0 0 auto;
   display:flex; align-items:center; justify-content:center;
-  color:#fff; font-weight:800; font-size:13px; letter-spacing:-.3px;
+  color:#fff; font-weight:800; font-size:11px; letter-spacing:-.3px;
 }
-.name-row { display:flex; align-items:center; gap:6px; }
-.city { font-size:18px; font-weight:800; color:#0c1116; letter-spacing:-.4px; }
-.country { font-size:12.5px; color:#8b95a3; font-weight:600; }
+.name-row { display:flex; align-items:center; gap:5px; }
+.city { font-size:15.5px; font-weight:800; color:#0c1116; letter-spacing:-.4px; }
+.country { font-size:11px; color:#8b95a3; font-weight:600; }
 .code {
-  font-size:11px; color:#6b7480; font-weight:700; background:#f0f2f5;
-  padding:2px 7px; border-radius:6px; letter-spacing:.3px;
+  font-size:10px; color:#6b7480; font-weight:700; background:#f0f2f5;
+  padding:1px 6px; border-radius:5px; letter-spacing:.3px;
 }
-.route { font-size:13px; color:#8b95a3; font-weight:600; margin-top:3px; }
+.route { font-size:11.5px; color:#8b95a3; font-weight:600; margin-top:2px; }
 .dday {
-  font-size:13px; font-weight:800; color:#3a4350; background:#f0f2f5;
-  padding:4px 10px; border-radius:999px; white-space:nowrap;
+  font-size:11.5px; font-weight:800; color:#3a4350; background:#f0f2f5;
+  padding:3px 9px; border-radius:999px; white-space:nowrap;
 }
-.divider { height:1px; background:#eef0f2; margin:13px 0; }
+.divider { height:1px; background:#eef0f2; margin:10px 0; }
 .bottom { display:flex; align-items:flex-end; justify-content:space-between; }
-.dates { font-size:14px; font-weight:700; color:#0c1116; letter-spacing:-.2px; }
-.meta { font-size:12px; color:#8b95a3; font-weight:600; margin-top:4px; }
-.price { font-size:21px; font-weight:800; color:#0c1116; letter-spacing:-.6px; text-align:right; }
-.low { font-size:11.5px; color:#8b95a3; font-weight:600; text-align:right; margin-top:3px; }
+.dates { font-size:12.5px; font-weight:500; color:#0c1116; letter-spacing:-.2px; }
+.meta { font-size:11px; color:#8b95a3; font-weight:600; margin-top:3px; }
+.price { font-size:18px; font-weight:800; color:#0c1116; letter-spacing:-.6px; text-align:right; }
+.low { font-size:10.5px; color:#8b95a3; font-weight:600; text-align:right; margin-top:2px; }
 """
 
 
@@ -294,7 +310,9 @@ def render_png(html, out_path):
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(args=["--no-sandbox"])
-            page = browser.new_page(viewport={"width": 440, "height": 200}, device_scale_factor=2)
+            # Render at 3x so the 440px card is ~1320px wide — above phone
+            # screen width, so Telegram doesn't upscale (and blur) it.
+            page = browser.new_page(viewport={"width": 440, "height": 200}, device_scale_factor=3)
             page.set_content(html, wait_until="networkidle")
             # clip tightly to the body box so no empty vertical space remains
             page.locator("body").screenshot(path=str(out_path))
@@ -334,7 +352,19 @@ def _tg_call(token, method, fields, files=None):
         return json.loads(resp.read().decode("utf-8"))
 
 
-def send_photo(token, chat_id, png_bytes, caption, keyboard):
+# App-store links shown under every alert so readers can jump to the markets.
+APP_STORE_URL = "https://apps.apple.com/kr/app/id6781919421"
+PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.airpick.app"
+
+
+def app_links_keyboard():
+    return [[
+        {"text": "아이폰", "url": APP_STORE_URL},
+        {"text": "안드로이드", "url": PLAY_STORE_URL},
+    ]]
+
+
+def send_photo(token, chat_id, png_bytes, caption, keyboard=None):
     fields = {"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"}
     if keyboard:
         fields["reply_markup"] = json.dumps({"inline_keyboard": keyboard})
@@ -342,7 +372,7 @@ def send_photo(token, chat_id, png_bytes, caption, keyboard):
     return _tg_call(token, "sendPhoto", fields, files)
 
 
-def send_message(token, chat_id, text, keyboard):
+def send_message(token, chat_id, text, keyboard=None):
     fields = {"chat_id": chat_id, "text": text, "parse_mode": "HTML",
               "disable_web_page_preview": True}
     if keyboard:
@@ -350,18 +380,8 @@ def send_message(token, chat_id, text, keyboard):
     return _tg_call(token, "sendMessage", fields)
 
 
-def build_keyboard(fields_list, base_url):
-    rows = []
-    circled = ["①", "②", "③", "④", "⑤", "⑥"]
-    for i, f in enumerate(fields_list):
-        label = f"{circled[i] if i < len(circled) else i + 1} {f['city']} {f['price']}원~ 예약"
-        url = base_url.rstrip("/") + f["link"] if f["link"] else base_url
-        rows.append([{"text": label, "url": url}])
-    return rows
-
-
 def text_fallback(fields_list):
-    lines = ["✈️ <b>지금 뜬 특가</b>  놓치면 아까운 항공권 모았어요 👇", ""]
+    lines = ["✈️ <b>실시간 특가알람</b>", ""]
     for i, f in enumerate(fields_list, 1):
         low = f"  ·  최근최저가 ₩{f['baseline']}" if f["baseline"] else ""
         lines.append(
@@ -384,18 +404,22 @@ def main():
     deals = data.get("deals", [])
     meta = load_json(META_JSON, {"dests": {}, "airlines": {}, "origins": {}})
 
-    min_discount = float(env("TELEGRAM_MIN_DISCOUNT", "18"))
-    max_cards = int(env("TELEGRAM_MAX_CARDS", "3"))
+    min_discount = float(env("TELEGRAM_MIN_DISCOUNT", "0"))
+    max_cards = int(env("TELEGRAM_MAX_CARDS", "6"))
     window_hours = float(env("TELEGRAM_WINDOW_HOURS", "24"))
     rank = env("TELEGRAM_RANK", "discount")
-    base_url = env("TELEGRAM_BASE_URL", "https://airpick.app")
+    max_price = env("TELEGRAM_MAX_PRICE")
+    max_price = float(max_price) if max_price else None
+    price_override_discount = env("TELEGRAM_PRICE_OVERRIDE_DISCOUNT")
+    price_override_discount = float(price_override_discount) if price_override_discount else None
     state_file = Path(env("TELEGRAM_STATE_FILE", str(ROOT / "data" / "telegram_sent.json")))
     dry_run = env("DRY_RUN", "false").lower() == "true"
 
     now = dt.datetime.now(dt.timezone.utc)
     state = load_json(state_file, {"version": 1, "sent": {}})
 
-    picked = select_deals(deals, state, now, min_discount, max_cards, window_hours, rank)
+    picked = select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
+                          max_price=max_price, price_override_discount=price_override_discount)
     fields_list = [card_fields(d, meta) for d in picked]
 
     if dump_html is not None:
@@ -420,8 +444,8 @@ def main():
               "(configure repo secrets to enable).")
         return 0
 
-    caption = f"✈️ <b>지금 뜬 특가 TOP {len(fields_list)}</b>\n놓치면 아까운 항공권 모았어요 👇"
-    keyboard = build_keyboard(fields_list, base_url)
+    caption = "✈️ <b>실시간 특가알람</b>"
+    keyboard = app_links_keyboard()
 
     png = ROOT / "telegram_cards.png"
     rendered = False
