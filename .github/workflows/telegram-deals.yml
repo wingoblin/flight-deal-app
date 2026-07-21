@@ -13,6 +13,10 @@ on:
         description: "Dry run — build/render but do NOT send to Telegram."
         type: boolean
         default: true
+      resend:
+        description: "Ignore the 24h dedupe for this run (re-send even if already sent). For manual test posts."
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -59,6 +63,7 @@ jobs:
           TELEGRAM_MIN_DISCOUNT: "0"
           TELEGRAM_MAX_PRICE: "250000"
           TELEGRAM_MAX_CARDS: "6"
-          TELEGRAM_WINDOW_HOURS: "24"
+          # Manual "resend" dispatch drops the dedupe window to 0 for that run.
+          TELEGRAM_WINDOW_HOURS: ${{ github.event.inputs.resend == 'true' && '0' || '24' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: python scripts/telegram_notify.py

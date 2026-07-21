@@ -343,20 +343,36 @@ def _tg_call(token, method, fields, files=None):
         return json.loads(resp.read().decode("utf-8"))
 
 
-def send_photo(token, chat_id, png_bytes, caption):
+# App-store links shown under every alert so readers can jump to the markets.
+APP_STORE_URL = "https://apps.apple.com/kr/app/id6781919421"
+PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.airpick.app"
+
+
+def app_links_keyboard():
+    return [[
+        {"text": "아이폰", "url": APP_STORE_URL},
+        {"text": "안드로이드", "url": PLAY_STORE_URL},
+    ]]
+
+
+def send_photo(token, chat_id, png_bytes, caption, keyboard=None):
     fields = {"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"}
+    if keyboard:
+        fields["reply_markup"] = json.dumps({"inline_keyboard": keyboard})
     files = {"photo": ("deals.png", png_bytes, "image/png")}
     return _tg_call(token, "sendPhoto", fields, files)
 
 
-def send_message(token, chat_id, text):
+def send_message(token, chat_id, text, keyboard=None):
     fields = {"chat_id": chat_id, "text": text, "parse_mode": "HTML",
               "disable_web_page_preview": True}
+    if keyboard:
+        fields["reply_markup"] = json.dumps({"inline_keyboard": keyboard})
     return _tg_call(token, "sendMessage", fields)
 
 
 def text_fallback(fields_list):
-    lines = ["✈️ <b>왕복 특가</b>  놓치면 아까운 항공권 모았어요 👇", ""]
+    lines = ["✈️ <b>실시간 특가알람</b>", ""]
     for i, f in enumerate(fields_list, 1):
         low = f"  ·  최근최저가 ₩{f['baseline']}" if f["baseline"] else ""
         lines.append(
@@ -417,11 +433,8 @@ def main():
               "(configure repo secrets to enable).")
         return 0
 
-    if max_price:
-        caption = (f"✈️ <b>{int(max_price // 10000)}만원 이하 왕복 특가</b>\n"
-                   "지금 이 가격, 놓치면 아까워요 👇")
-    else:
-        caption = "✈️ <b>왕복 특가</b>\n놓치면 아까운 항공권 모았어요 👇"
+    caption = "✈️ <b>실시간 특가알람</b>"
+    keyboard = app_links_keyboard()
 
     png = ROOT / "telegram_cards.png"
     rendered = False
@@ -437,9 +450,9 @@ def main():
 
     try:
         if rendered:
-            resp = send_photo(token, chat_id, png.read_bytes(), caption)
+            resp = send_photo(token, chat_id, png.read_bytes(), caption, keyboard)
         else:
-            resp = send_message(token, chat_id, text_fallback(fields_list))
+            resp = send_message(token, chat_id, text_fallback(fields_list), keyboard)
         if not resp.get("ok"):
             print(f"[telegram] API error: {resp}")
             return 1
