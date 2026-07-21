@@ -13,11 +13,11 @@ only network calls are to api.telegram.org.
 Secrets / env:
   TELEGRAM_BOT_TOKEN   Bot token from @BotFather (required to actually send)
   TELEGRAM_CHAT_ID     Channel id, e.g. "@airpick" or "-100..." (required)
-  TELEGRAM_MIN_DISCOUNT   Minimum discount_pct to consider (default 18)
-  TELEGRAM_MAX_CARDS      Max deals per run (default 3)
+  TELEGRAM_MIN_DISCOUNT   Minimum discount_pct to consider (default 0)
+  TELEGRAM_MAX_PRICE      Only surface round-trips at/under this KRW price (default none)
+  TELEGRAM_MAX_CARDS      Max deals per run (default 6)
   TELEGRAM_WINDOW_HOURS   Don't resend a deal seen within this many hours (default 24)
   TELEGRAM_STATE_FILE     Where the "already sent" state lives (default data/telegram_sent.json)
-  TELEGRAM_BASE_URL       Booking link base (default https://airpick.app)
   TELEGRAM_RANK           "discount" (default) or "price"
   DRY_RUN                 "true" -> build/render but do NOT send
 
@@ -98,13 +98,22 @@ def deal_key(d):
 
 # ----------------------------- selection -------------------------------------
 
-def select_deals(deals, state, now, min_discount, max_cards, window_hours, rank):
+def select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
+                 max_price=None):
     window = dt.timedelta(hours=window_hours)
     sent = state.get("sent", {})
     candidates = []
     for d in deals:
+        if d.get("trip") != "roundtrip":  # round-trip only
+            continue
         if float(d.get("discount_pct", 0)) < min_discount:
             continue
+        if max_price is not None:  # only surface fares at/under the ceiling
+            try:
+                if float(d.get("price", 1e18)) > max_price:
+                    continue
+            except (TypeError, ValueError):
+                continue
         try:
             if d_day(d.get("departure_at")) < 0:  # already departed
                 continue
@@ -334,34 +343,20 @@ def _tg_call(token, method, fields, files=None):
         return json.loads(resp.read().decode("utf-8"))
 
 
-def send_photo(token, chat_id, png_bytes, caption, keyboard):
+def send_photo(token, chat_id, png_bytes, caption):
     fields = {"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"}
-    if keyboard:
-        fields["reply_markup"] = json.dumps({"inline_keyboard": keyboard})
     files = {"photo": ("deals.png", png_bytes, "image/png")}
     return _tg_call(token, "sendPhoto", fields, files)
 
 
-def send_message(token, chat_id, text, keyboard):
+def send_message(token, chat_id, text):
     fields = {"chat_id": chat_id, "text": text, "parse_mode": "HTML",
               "disable_web_page_preview": True}
-    if keyboard:
-        fields["reply_markup"] = json.dumps({"inline_keyboard": keyboard})
     return _tg_call(token, "sendMessage", fields)
 
 
-def build_keyboard(fields_list, base_url):
-    rows = []
-    circled = ["①", "②", "③", "④", "⑤", "⑥"]
-    for i, f in enumerate(fields_list):
-        label = f"{circled[i] if i < len(circled) else i + 1} {f['city']} {f['price']}원~ 예약"
-        url = base_url.rstrip("/") + f["link"] if f["link"] else base_url
-        rows.append([{"text": label, "url": url}])
-    return rows
-
-
 def text_fallback(fields_list):
-    lines = ["✈️ <b>지금 뜬 특가</b>  놓치면 아까운 항공권 모았어요 👇", ""]
+    lines = ["✈️ <b>왕복 특가</b>  놓치면 아까운 항공권 모았어요 👇", ""]
     for i, f in enumerate(fields_list, 1):
         low = f"  ·  최근최저가 ₩{f['baseline']}" if f["baseline"] else ""
         lines.append(
@@ -384,18 +379,20 @@ def main():
     deals = data.get("deals", [])
     meta = load_json(META_JSON, {"dests": {}, "airlines": {}, "origins": {}})
 
-    min_discount = float(env("TELEGRAM_MIN_DISCOUNT", "18"))
-    max_cards = int(env("TELEGRAM_MAX_CARDS", "3"))
+    min_discount = float(env("TELEGRAM_MIN_DISCOUNT", "0"))
+    max_cards = int(env("TELEGRAM_MAX_CARDS", "6"))
     window_hours = float(env("TELEGRAM_WINDOW_HOURS", "24"))
     rank = env("TELEGRAM_RANK", "discount")
-    base_url = env("TELEGRAM_BASE_URL", "https://airpick.app")
+    max_price = env("TELEGRAM_MAX_PRICE")
+    max_price = float(max_price) if max_price else None
     state_file = Path(env("TELEGRAM_STATE_FILE", str(ROOT / "data" / "telegram_sent.json")))
     dry_run = env("DRY_RUN", "false").lower() == "true"
 
     now = dt.datetime.now(dt.timezone.utc)
     state = load_json(state_file, {"version": 1, "sent": {}})
 
-    picked = select_deals(deals, state, now, min_discount, max_cards, window_hours, rank)
+    picked = select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
+                          max_price=max_price)
     fields_list = [card_fields(d, meta) for d in picked]
 
     if dump_html is not None:
@@ -420,8 +417,11 @@ def main():
               "(configure repo secrets to enable).")
         return 0
 
-    caption = f"✈️ <b>지금 뜬 특가 TOP {len(fields_list)}</b>\n놓치면 아까운 항공권 모았어요 👇"
-    keyboard = build_keyboard(fields_list, base_url)
+    if max_price:
+        caption = (f"✈️ <b>{int(max_price // 10000)}만원 이하 왕복 특가</b>\n"
+                   "지금 이 가격, 놓치면 아까워요 👇")
+    else:
+        caption = "✈️ <b>왕복 특가</b>\n놓치면 아까운 항공권 모았어요 👇"
 
     png = ROOT / "telegram_cards.png"
     rendered = False
@@ -437,9 +437,9 @@ def main():
 
     try:
         if rendered:
-            resp = send_photo(token, chat_id, png.read_bytes(), caption, keyboard)
+            resp = send_photo(token, chat_id, png.read_bytes(), caption)
         else:
-            resp = send_message(token, chat_id, text_fallback(fields_list), keyboard)
+            resp = send_message(token, chat_id, text_fallback(fields_list))
         if not resp.get("ok"):
             print(f"[telegram] API error: {resp}")
             return 1

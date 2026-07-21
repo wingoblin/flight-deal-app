@@ -53,9 +53,12 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_STATE_FILE: .telegram-state/sent.json
-          TELEGRAM_MIN_DISCOUNT: "18"
-          TELEGRAM_MAX_CARDS: "3"
+          # Only surface round-trips at/under this KRW price. Discount floor is
+          # off — price is the gate — so nothing sends unless a genuinely cheap
+          # round-trip shows up (keeps the channel from getting spammy).
+          TELEGRAM_MIN_DISCOUNT: "0"
+          TELEGRAM_MAX_PRICE: "250000"
+          TELEGRAM_MAX_CARDS: "6"
           TELEGRAM_WINDOW_HOURS: "24"
-          TELEGRAM_BASE_URL: "https://airpick.app"
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: python scripts/telegram_notify.py
