@@ -17,8 +17,8 @@ Secrets / env:
   TELEGRAM_MAX_PRICE      Only surface round-trips at/under this KRW price (default none)
   TELEGRAM_PRICE_OVERRIDE_DISCOUNT  Discount_pct at/above which the price ceiling
                                     is ignored (catch long-haul steals; default none)
-  TELEGRAM_CHEAP_MAX_PRICE  Absolute-price lane: any fare at/under this KRW price
-                            alerts regardless of trip type or discount (default none)
+  TELEGRAM_CHEAP_MAX_PRICE  Absolute-price lane: a round-trip at/under this KRW
+                            price alerts regardless of discount (default none)
   TELEGRAM_MAX_CARDS      Max deals per run (default 6)
   TELEGRAM_WINDOW_HOURS   Don't resend a deal seen within this many hours (default 24)
   TELEGRAM_STATE_FILE     Where the "already sent" state lives (default data/telegram_sent.json)
@@ -146,23 +146,29 @@ def select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
                  max_price=None, price_override_discount=None, cheap_price=None):
     """Pick the deals to alert on, from two independent lanes.
 
-    cheap lane   — absolute-price steals (<= cheap_price), any trip type,
-                   discount ignored.
-    discount lane — the original rule: round-trip only, a genuine drop off the
-                   route's own baseline.
+    Round-trip only, in both lanes — one-way fares are never alerted on, however
+    cheap they are. That is a product decision, not an oversight: the app sells
+    trips, so a one-way price the reader can't actually travel on isn't a deal.
+
+    cheap lane   — absolute-price steals (<= cheap_price), discount ignored.
+    discount lane — the original rule: a genuine drop off the route's own
+                   baseline.
 
     Two lanes because one gate can't serve both. Requiring a discount on top of
     a low price structurally excluded every cheap fare: routes that are always
-    cheap (오사카 54,000원 편도) can't post a big drop off their own baseline, so
-    a 25% floor filtered out all 40 sub-180k fares on a representative day while
-    passing 313,000원 and 947,000원 ones. Conversely a price ceiling alone would
-    drop the long-haul half-off steals the discount lane exists to catch.
+    cheap (부산-오사카 152,000원 왕복) can't post a big drop off their own
+    baseline, so the 25% floor rejected every sub-180k round-trip on a
+    representative day while passing 313,000원 and 947,000원 ones. Conversely a
+    price ceiling alone would drop the long-haul half-off steals the discount
+    lane exists to catch.
     """
     window = dt.timedelta(hours=window_hours)
     sent = state.get("sent", {})
     cheap_lane, discount_lane = [], []
 
     for d in deals:
+        if d.get("trip") != "roundtrip":  # round-trip only — both lanes
+            continue
         try:
             if d_day(d.get("departure_at")) < 0:  # already departed
                 continue
@@ -185,8 +191,6 @@ def select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
                 cheap_lane.append(d)
             continue  # cheap fares never fall through to the discount lane
 
-        if d.get("trip") != "roundtrip":  # round-trip only
-            continue
         if disc < min_discount:
             continue
         # Price ceiling — but a big enough drop (e.g. a long-haul half-off

@@ -20,7 +20,7 @@ TODAY = "2026-08-01"
 NOW = dt.datetime(2026, 8, 1, 12, 0, tzinfo=dt.timezone.utc)
 
 
-def deal(dest, price, disc, trip="oneway", origin="ICN", dep="2026-09-10",
+def deal(dest, price, disc, trip="roundtrip", origin="ICN", dep="2026-09-10",
          ret="2026-09-15", airline="XX"):
     d = {
         "from": origin,
@@ -47,21 +47,17 @@ def select(deals, state=None, cheap_price=180000, min_discount=25, max_cards=6,
 
 
 class CheapLaneTests(unittest.TestCase):
-    """Absolute-price lane: <= cheap_price alerts on price alone."""
+    """Absolute-price lane: a round-trip <= cheap_price alerts on price alone."""
 
-    def test_cheap_oneway_with_no_discount_is_selected(self):
+    def test_cheap_roundtrip_below_min_discount_is_selected(self):
         # The exact case that was silently dropped in production: a genuinely
-        # cheap one-way whose discount is far below the 25% gate.
-        d = deal("OSA", 54000, 11.5, origin="PUS")
+        # cheap round-trip whose discount is far below the 25% gate.
+        d = deal("OSA", 152000, 12.0, origin="PUS")
         self.assertEqual(select([d]), [d])
 
     def test_cheap_fare_with_negative_discount_is_selected(self):
         # Priced above its own baseline but cheap in absolute terms -> still alerts.
-        d = deal("FUK", 67000, -0.7)
-        self.assertEqual(select([d]), [d])
-
-    def test_cheap_roundtrip_is_selected(self):
-        d = deal("OSA", 152000, 12.0, trip="roundtrip", origin="PUS")
+        d = deal("FUK", 167000, -0.7)
         self.assertEqual(select([d]), [d])
 
     def test_price_at_the_boundary_is_inclusive(self):
@@ -69,9 +65,11 @@ class CheapLaneTests(unittest.TestCase):
         self.assertEqual(select([d]), [d])
 
     def test_just_over_the_boundary_falls_to_discount_lane(self):
-        # 180,001 one-way: too expensive for the cheap lane, and the discount
-        # lane is round-trip only -> nothing.
+        # 180,001: too expensive for the cheap lane, so the discount gate
+        # applies again and 0% doesn't clear it.
         self.assertEqual(select([deal("PQC", 180001, 0)]), [])
+        d = deal("PQC", 180001, 26.0)
+        self.assertEqual(select([d]), [d])
 
     def test_cheap_lane_ranks_by_price(self):
         a, b, c = deal("OSA", 90000, 0), deal("TYO", 64000, 0), deal("FUK", 120000, 0)
@@ -82,34 +80,47 @@ class CheapLaneTests(unittest.TestCase):
         self.assertEqual(select([deal("OSA", 54000, 11.5)], cheap_price=None), [])
 
 
+class RoundTripOnlyTests(unittest.TestCase):
+    """One-way fares are never alerted on, in either lane, at any price."""
+
+    def test_cheap_oneway_is_rejected(self):
+        self.assertEqual(select([deal("OSA", 54000, 11.5, trip="oneway", origin="PUS")]), [])
+
+    def test_very_cheap_oneway_is_rejected(self):
+        self.assertEqual(select([deal("TYO", 10000, 90.0, trip="oneway")]), [])
+
+    def test_expensive_oneway_is_rejected(self):
+        self.assertEqual(select([deal("MEL", 947000, 36.8, trip="oneway")]), [])
+
+    def test_oneway_does_not_consume_a_card_slot(self):
+        oneway = [deal(f"O{i}", 50000, 0, trip="oneway") for i in range(10)]
+        rt = deal("OSA", 152000, 12.0, origin="PUS")
+        self.assertEqual(select(oneway + [rt]), [rt])
+
+
 class DiscountLaneTests(unittest.TestCase):
     """The original rule must survive unchanged."""
 
     def test_roundtrip_above_min_discount_is_selected(self):
-        d = deal("SGN", 262000, 25.9, trip="roundtrip")
+        d = deal("SGN", 262000, 25.9)
         self.assertEqual(select([d]), [d])
 
     def test_roundtrip_below_min_discount_is_rejected(self):
-        self.assertEqual(select([deal("HKG", 313000, 24.9, trip="roundtrip")]), [])
-
-    def test_expensive_oneway_is_still_rejected(self):
-        # Round-trip-only still applies above the cheap threshold.
-        self.assertEqual(select([deal("MEL", 947000, 36.8)]), [])
+        self.assertEqual(select([deal("HKG", 313000, 24.9)]), [])
 
     def test_price_ceiling_blocks_expensive_moderate_discount(self):
-        self.assertEqual(select([deal("MEL", 947000, 30.0, trip="roundtrip")]), [])
+        self.assertEqual(select([deal("MEL", 947000, 30.0)]), [])
 
     def test_big_discount_overrides_price_ceiling(self):
-        d = deal("MEL", 947000, 36.8, trip="roundtrip")
+        d = deal("MEL", 947000, 36.8)
         self.assertEqual(select([d]), [d])
 
 
 class LaneInteractionTests(unittest.TestCase):
 
     def test_cheap_lane_does_not_starve_discount_lane(self):
-        cheap = [deal(f"C{i}", 50000 + i, 0) for i in range(10)]
-        pricey = [deal("SGN", 262000, 25.9, trip="roundtrip"),
-                  deal("MEL", 947000, 36.8, trip="roundtrip")]
+        cheap = [deal(f"C{i}", 150000 + i, 0) for i in range(10)]
+        pricey = [deal("SGN", 262000, 25.9), deal("MEL", 947000, 36.8)]
         picked = select(cheap + pricey, max_cards=6)
         self.assertEqual(len(picked), 6)
         # Alternating lanes -> both discount deals survive alongside cheap ones.
@@ -117,12 +128,12 @@ class LaneInteractionTests(unittest.TestCase):
         self.assertIn(pricey[1], picked)
 
     def test_one_lane_absorbs_remainder_when_other_is_empty(self):
-        cheap = [deal(f"C{i}", 50000 + i, 0) for i in range(10)]
+        cheap = [deal(f"C{i}", 150000 + i, 0) for i in range(10)]
         self.assertEqual(len(select(cheap, max_cards=6)), 6)
 
     def test_cheap_deal_is_not_double_counted_in_both_lanes(self):
-        # Cheap AND a big round-trip discount: must appear exactly once.
-        d = deal("OSA", 150000, 40.0, trip="roundtrip")
+        # Cheap AND a big discount: must appear exactly once.
+        d = deal("OSA", 150000, 40.0)
         self.assertEqual(select([d]), [d])
 
     def test_interleave_preserves_order_within_each_lane(self):
