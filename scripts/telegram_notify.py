@@ -17,6 +17,8 @@ Secrets / env:
   TELEGRAM_MAX_PRICE      Only surface round-trips at/under this KRW price (default none)
   TELEGRAM_PRICE_OVERRIDE_DISCOUNT  Discount_pct at/above which the price ceiling
                                     is ignored (catch long-haul steals; default none)
+  TELEGRAM_CHEAP_MAX_PRICE  Absolute-price lane: a round-trip at/under this KRW
+                            price alerts regardless of discount (default none)
   TELEGRAM_MAX_CARDS      Max deals per run (default 6)
   TELEGRAM_WINDOW_HOURS   Don't resend a deal seen within this many hours (default 24)
   TELEGRAM_STATE_FILE     Where the "already sent" state lives (default data/telegram_sent.json)
@@ -98,17 +100,97 @@ def deal_key(d):
     ])
 
 
+def route_key(d):
+    """Route identity ignoring dates. The cheap lane needs this: a route that is
+    under the price floor every day (오사카, 후쿠오카) offers a different
+    departure date each snapshot, so deal_key alone would read every one as new
+    and re-alert the same route all day."""
+    return "route|" + "|".join([
+        str(d.get("from", "")),
+        str(d.get("destination", "")),
+        str(d.get("trip", "")),
+    ])
+
+
+def recently_sent(sent, key, now, window):
+    last = sent.get(key)
+    if not last:
+        return False
+    try:
+        return now - dt.datetime.fromisoformat(last) < window
+    except ValueError:
+        return False
+
+
 # ----------------------------- selection -------------------------------------
 
+def interleave(a, b, limit):
+    """Alternate between two ranked lanes up to `limit`. Taking the top N of a
+    merged list would let whichever lane has more candidates crowd the other out
+    — the cheap lane routinely has 10x the discount lane — so alternate instead
+    and let either lane absorb the remainder when the other runs dry."""
+    out, ia, ib = [], 0, 0
+    while len(out) < limit and (ia < len(a) or ib < len(b)):
+        if ia < len(a):
+            out.append(a[ia])
+            ia += 1
+            if len(out) >= limit:
+                break
+        if ib < len(b):
+            out.append(b[ib])
+            ib += 1
+    return out
+
+
 def select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
-                 max_price=None, price_override_discount=None):
+                 max_price=None, price_override_discount=None, cheap_price=None):
+    """Pick the deals to alert on, from two independent lanes.
+
+    Round-trip only, in both lanes — one-way fares are never alerted on, however
+    cheap they are. That is a product decision, not an oversight: the app sells
+    trips, so a one-way price the reader can't actually travel on isn't a deal.
+
+    cheap lane   — absolute-price steals (<= cheap_price), discount ignored.
+    discount lane — the original rule: a genuine drop off the route's own
+                   baseline.
+
+    Two lanes because one gate can't serve both. Requiring a discount on top of
+    a low price structurally excluded every cheap fare: routes that are always
+    cheap (부산-오사카 152,000원 왕복) can't post a big drop off their own
+    baseline, so the 25% floor rejected every sub-180k round-trip on a
+    representative day while passing 313,000원 and 947,000원 ones. Conversely a
+    price ceiling alone would drop the long-haul half-off steals the discount
+    lane exists to catch.
+    """
     window = dt.timedelta(hours=window_hours)
     sent = state.get("sent", {})
-    candidates = []
+    cheap_lane, discount_lane = [], []
+
     for d in deals:
-        if d.get("trip") != "roundtrip":  # round-trip only
+        if d.get("trip") != "roundtrip":  # round-trip only — both lanes
             continue
-        disc = float(d.get("discount_pct", 0))
+        try:
+            if d_day(d.get("departure_at")) < 0:  # already departed
+                continue
+        except ValueError:
+            continue
+        try:
+            price = float(d.get("price"))
+        except (TypeError, ValueError):
+            continue
+        try:
+            disc = float(d.get("discount_pct", 0) or 0)
+        except (TypeError, ValueError):
+            disc = 0.0
+
+        if cheap_price is not None and price <= cheap_price:
+            # Also gated on route_key, so a permanently-cheap route alerts at
+            # most once per window however many departure dates it offers.
+            if not recently_sent(sent, deal_key(d), now, window) and \
+                    not recently_sent(sent, route_key(d), now, window):
+                cheap_lane.append(d)
+            continue  # cheap fares never fall through to the discount lane
+
         if disc < min_discount:
             continue
         # Price ceiling — but a big enough drop (e.g. a long-haul half-off
@@ -116,32 +198,19 @@ def select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
         if max_price is not None and not (
             price_override_discount is not None and disc >= price_override_discount
         ):
-            try:
-                if float(d.get("price", 1e18)) > max_price:
-                    continue
-            except (TypeError, ValueError):
+            if price > max_price:
                 continue
-        try:
-            if d_day(d.get("departure_at")) < 0:  # already departed
-                continue
-        except ValueError:
+        if recently_sent(sent, deal_key(d), now, window):
             continue
-        key = deal_key(d)
-        last = sent.get(key)
-        if last:
-            try:
-                last_dt = dt.datetime.fromisoformat(last)
-                if now - last_dt < window:
-                    continue  # sent recently — skip
-            except ValueError:
-                pass
-        candidates.append(d)
+        discount_lane.append(d)
 
+    # Cheap lane always ranks by price — its whole premise is the absolute number.
+    cheap_lane.sort(key=lambda d: (d.get("price", 1e18), -float(d.get("discount_pct", 0) or 0)))
     if rank == "price":
-        candidates.sort(key=lambda d: (d.get("price", 1e18), -float(d.get("discount_pct", 0))))
+        discount_lane.sort(key=lambda d: (d.get("price", 1e18), -float(d.get("discount_pct", 0) or 0)))
     else:  # discount
-        candidates.sort(key=lambda d: (-float(d.get("discount_pct", 0)), d.get("price", 1e18)))
-    return candidates[:max_cards]
+        discount_lane.sort(key=lambda d: (-float(d.get("discount_pct", 0) or 0), d.get("price", 1e18)))
+    return interleave(cheap_lane, discount_lane, max_cards)
 
 
 def prune_state(state, now, window_hours):
@@ -412,6 +481,8 @@ def main():
     max_price = float(max_price) if max_price else None
     price_override_discount = env("TELEGRAM_PRICE_OVERRIDE_DISCOUNT")
     price_override_discount = float(price_override_discount) if price_override_discount else None
+    cheap_price = env("TELEGRAM_CHEAP_MAX_PRICE")
+    cheap_price = float(cheap_price) if cheap_price else None
     state_file = Path(env("TELEGRAM_STATE_FILE", str(ROOT / "data" / "telegram_sent.json")))
     dry_run = env("DRY_RUN", "false").lower() == "true"
 
@@ -419,7 +490,8 @@ def main():
     state = load_json(state_file, {"version": 1, "sent": {}})
 
     picked = select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
-                          max_price=max_price, price_override_discount=price_override_discount)
+                          max_price=max_price, price_override_discount=price_override_discount,
+                          cheap_price=cheap_price)
     fields_list = [card_fields(d, meta) for d in picked]
 
     if dump_html is not None:
@@ -478,6 +550,11 @@ def main():
     iso = now.isoformat()
     for d in picked:
         state.setdefault("sent", {})[deal_key(d)] = iso
+        # route_key is written for every send but only *checked* by the cheap
+        # lane, so the discount lane keeps its original per-departure-date
+        # behaviour while a route alerted by either lane still suppresses the
+        # cheap lane's duplicate for the window.
+        state["sent"][route_key(d)] = iso
     prune_state(state, now, window_hours)
     state_file.parent.mkdir(parents=True, exist_ok=True)
     state_file.write_text(json.dumps(state, ensure_ascii=False, indent=0), encoding="utf-8")
