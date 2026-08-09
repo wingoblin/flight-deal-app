@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-09T17:15:48+00:00",
+  "generated_at": "2026-08-09T18:11:20+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -94,6 +94,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "PUS",
+      "destination": "TPE",
+      "trip": "roundtrip",
+      "price": 216000,
+      "cache_price": 209270,
+      "realtime_price": 196295,
+      "baseline": 308485,
+      "discount_pct": 30.0,
+      "sparse": true,
+      "departure_at": "2026-09-01T09:30:00+09:00",
+      "return_at": "2026-09-02T02:40:00+08:00",
+      "transfers": 0,
+      "airline": "7C",
+      "gate": "Trip.com",
+      "cache_date": "2026-08-05",
+      "link": "/search/PUS0109TPE02091?t=7C17882550001788260400000150PUSTPE17883168001788329400000150TPEPUS_6f86135f7303ea5421e57c0f15321fbe_11868&search_date=05082026&itinerary_key=EY2hl9ZQHTpU6aESrmojBg",
+      "cabin_class": "economy"
+    },
+    {
       "from": "TAE",
       "destination": "BKK",
       "trip": "oneway",
@@ -129,25 +148,6 @@
       "gate": "Aviakassa",
       "cache_date": "2026-08-08",
       "link": "/search/PUS3003SGN1?t=VJ18063942001806404700000295PUSSGN_cfe65072e9133b21c0c50a675f6f1e70_8223&search_date=08082026&itinerary_key=kLd10H38IcQqKDq7QhISAA",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "PUS",
-      "destination": "TPE",
-      "trip": "roundtrip",
-      "price": 223000,
-      "cache_price": 209270,
-      "realtime_price": 216066,
-      "baseline": 308485,
-      "discount_pct": 27.7,
-      "sparse": true,
-      "departure_at": "2026-09-01T09:30:00+09:00",
-      "return_at": "2026-09-02T02:40:00+08:00",
-      "transfers": 0,
-      "airline": "7C",
-      "gate": "Trip.com",
-      "cache_date": "2026-08-05",
-      "link": "/search/PUS0109TPE02091?t=7C17882550001788260400000150PUSTPE17883168001788329400000150TPEPUS_6f86135f7303ea5421e57c0f15321fbe_11868&search_date=05082026&itinerary_key=EY2hl9ZQHTpU6aESrmojBg",
       "cabin_class": "economy"
     },
     {
@@ -1101,25 +1101,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "GMP",
-      "destination": "OSA",
-      "trip": "oneway",
-      "price": 67000,
-      "cache_price": 64776,
-      "realtime_price": 64961,
-      "baseline": 74451,
-      "discount_pct": 10.0,
-      "sparse": false,
-      "departure_at": "2026-09-15T08:10:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "7C",
-      "gate": "Т-Банк",
-      "cache_date": "2026-08-08",
-      "link": "/search/GMP1509OSA1?t=7C17894598001789466400000110GMPKIX_1d27892085217c9e253ece61faba271e_3785&search_date=08082026&itinerary_key=ZJbpTTZVw4psDeYhjixXhQ&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
       "from": "ICN",
       "destination": "HKG",
       "trip": "roundtrip",
@@ -1231,6 +1212,25 @@
       "gate": "Mytrip.com",
       "cache_date": "2026-08-08",
       "link": "/search/GMP2908YNJ02091?t=MU17880366001788108300001255GMPSHAPVGYNJ17883726001788433200000950YNJPVGSHAGMP_eb3ffedb88fae772e35de504ff0c2bd4_33869&search_date=08082026&itinerary_key=p1hQ6j4UYIvivIErQjEuGQ&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "GMP",
+      "destination": "OSA",
+      "trip": "oneway",
+      "price": 68000,
+      "cache_price": 65063,
+      "realtime_price": 64961,
+      "baseline": 74451,
+      "discount_pct": 8.7,
+      "sparse": false,
+      "departure_at": "2026-09-15T08:10:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "7C",
+      "gate": "Kupi.com",
+      "cache_date": "2026-08-09",
+      "link": "/search/GMP1509OSA1?t=7C17894598001789466400000110GMPKIX_1d27892085217c9e253ece61faba271e_3771&search_date=09082026&itinerary_key=ZJbpTTZVw4psDeYhjixXhQ&origin_airports=0",
       "cabin_class": "economy"
     },
     {
