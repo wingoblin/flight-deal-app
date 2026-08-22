@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-22T07:23:02+00:00",
+  "generated_at": "2026-08-22T08:11:16+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -740,25 +740,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "ICN",
-      "destination": "SIN",
-      "trip": "oneway",
-      "price": 110000,
-      "cache_price": 106502,
-      "realtime_price": 106702,
-      "baseline": 109204,
-      "discount_pct": -0.7,
-      "sparse": false,
-      "departure_at": "2026-09-02T18:10:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "7C",
-      "gate": "Trip.com",
-      "cache_date": "2026-08-22",
-      "link": "/search/ICN0209SIN1?t=7C17883726001788392400000390ICNSIN_3c6b15e467777d9f426af2f9a9cff6ae_6353&search_date=22082026&itinerary_key=RVHnXdtANJrJiJCO8l7ECA&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
       "from": "PUS",
       "destination": "CXR",
       "trip": "oneway",
@@ -794,6 +775,25 @@
       "gate": "Trip.com",
       "cache_date": "2026-08-21",
       "link": "/search/PUS2608BKK1?t=7C17877744001787788200000350PUSBKK_ece18e37ce46aedc965398ebdbd172ac_6157&search_date=21082026&itinerary_key=SBmJetrJbb4uU6N-Kjcb0w",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "SIN",
+      "trip": "oneway",
+      "price": 111000,
+      "cache_price": 107189,
+      "realtime_price": 106702,
+      "baseline": 109204,
+      "discount_pct": -1.6,
+      "sparse": false,
+      "departure_at": "2026-09-02T18:10:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "7C",
+      "gate": "Trip.com",
+      "cache_date": "2026-08-22",
+      "link": "/search/ICN0209SIN1?t=7C17883726001788392400000390ICNSIN_3c6b15e467777d9f426af2f9a9cff6ae_6394&search_date=22082026&itinerary_key=RVHnXdtANJrJiJCO8l7ECA&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -1003,25 +1003,6 @@
       "gate": "Trip.com",
       "cache_date": "2026-08-20",
       "link": "/search/ICN1110PVG14101?t=CZ17917227001791758100000650ICNSHEPVG17919642001792002000000570PVGCGQICN_9c81bbd3f48ed491fe7446ecf795e8a4_15829&search_date=20082026&itinerary_key=vqYHNowMJckJoLK_qWmTZQ&origin_airports=0%2C1&destination_airports=0%2C1",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "GMP",
-      "destination": "CXR",
-      "trip": "oneway",
-      "price": 168000,
-      "cache_price": 156190,
-      "realtime_price": null,
-      "baseline": 161020,
-      "discount_pct": -4.3,
-      "sparse": false,
-      "departure_at": "2026-09-29T19:55:00+09:00",
-      "return_at": null,
-      "transfers": 1,
-      "airline": "7C",
-      "gate": "Kupi.com",
-      "cache_date": "2026-08-21",
-      "link": "/search/GMP2909CXR1?t=BX17907117001790806800001705GMPPUSCXR_1c203740bf5a9c6e2e444bbdd07a1f14_9317&search_date=21082026&itinerary_key=XtqfksSMbdpMTpu6dpyyVA&origin_airports=0&destination_airports=0",
       "cabin_class": "economy"
     },
     {
