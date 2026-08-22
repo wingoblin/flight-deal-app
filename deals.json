@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-22T08:11:16+00:00",
+  "generated_at": "2026-08-22T09:08:11+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -72,6 +72,25 @@
       "gate": "Trip.com",
       "cache_date": "2026-08-19",
       "link": "/search/PUS1311CTS15111?t=BX17945604001794569400000150PUSCTS17947458001794756600000180CTSPUS_89165771fce2788c4f184527a7d70b04_20185&search_date=19082026&itinerary_key=btcqNjZwsOwd2oz8OHakRA&origin_airports=1&destination_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "GMP",
+      "destination": "KHH",
+      "trip": "oneway",
+      "price": 102000,
+      "cache_price": 92235,
+      "realtime_price": 98388,
+      "baseline": 121239,
+      "discount_pct": 15.9,
+      "sparse": true,
+      "departure_at": "2026-09-02T10:50:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "TW",
+      "gate": "Trip.com",
+      "cache_date": "2026-08-22",
+      "link": "/search/GMP0209KHH1?t=TW17883462001788353100000175GMPKHH_998052cc2bfd3c2ca4b1b199a655faf0_5502&search_date=22082026&itinerary_key=se8_479Hf40ITdS2z1IjZQ&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -418,6 +437,25 @@
     },
     {
       "from": "ICN",
+      "destination": "BKK",
+      "trip": "roundtrip",
+      "price": 288000,
+      "cache_price": 268960,
+      "realtime_price": null,
+      "baseline": 300048,
+      "discount_pct": 4.0,
+      "sparse": false,
+      "departure_at": "2026-09-13T12:10:00+09:00",
+      "return_at": "2026-09-18T02:25:00+07:00",
+      "transfers": 0,
+      "airline": "VZ",
+      "gate": "Farera",
+      "cache_date": "2026-08-21",
+      "link": "/search/ICN1309BKK18091?t=VZ17893014001789315200000350ICNBKK17896983001789725600000335BKKICN_c9ea77049a8cf028d295a1fbb159f1bd_16049&search_date=21082026&itinerary_key=BN5puqWZ-6g_s_L6EpleVA&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
       "destination": "XMN",
       "trip": "roundtrip",
       "price": 343000,
@@ -471,25 +509,6 @@
       "gate": "Kupi.com",
       "cache_date": "2026-08-21",
       "link": "/search/PUS1809HRB1?t=CA17897355001789759800000465PUSPEKHRB_4521e197a76aa94ffe08983bd6235113_9045&search_date=21082026&itinerary_key=FQ8R9XDXLEt5UphiLNVHSQ",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "BKK",
-      "trip": "roundtrip",
-      "price": 292000,
-      "cache_price": 268960,
-      "realtime_price": 282691,
-      "baseline": 300048,
-      "discount_pct": 2.7,
-      "sparse": false,
-      "departure_at": "2026-09-13T12:10:00+09:00",
-      "return_at": "2026-09-18T02:25:00+07:00",
-      "transfers": 0,
-      "airline": "VZ",
-      "gate": "Farera",
-      "cache_date": "2026-08-21",
-      "link": "/search/ICN1309BKK18091?t=VZ17893014001789315200000350ICNBKK17896983001789725600000335BKKICN_c9ea77049a8cf028d295a1fbb159f1bd_16049&search_date=21082026&itinerary_key=BN5puqWZ-6g_s_L6EpleVA&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
