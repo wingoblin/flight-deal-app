@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-22T05:08:48+00:00",
+  "generated_at": "2026-08-22T06:03:39+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -813,6 +813,25 @@
       "gate": "Trip.com",
       "cache_date": "2026-08-17",
       "link": "/search/ICN3010SFO06111?t=AC17933829001793376360000851ICNYVRSFO17939556001794071400000910SFOYVRICN_961c5fb6e595ba112547f2e70a806a9b_54522&search_date=17082026&itinerary_key=b-5y4EmiV8Ltjpu75fIyrw&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "PUS",
+      "destination": "CXR",
+      "trip": "roundtrip",
+      "price": 267000,
+      "cache_price": 249113,
+      "realtime_price": null,
+      "baseline": 261772,
+      "discount_pct": -2.0,
+      "sparse": false,
+      "departure_at": "2026-08-24T19:20:00+09:00",
+      "return_at": "2026-09-11T23:20:00+07:00",
+      "transfers": 0,
+      "airline": "BX",
+      "gate": "Farera",
+      "cache_date": "2026-08-22",
+      "link": "/search/PUS2408CXR11091?t=BX17875992001787610000000300PUSCXR17891688001789194000000300CXRPUS_c22e897da88d98029c156ee3229c99ba_14860&search_date=22082026&itinerary_key=WX-M2p47NkHzSOmuDebv9Q&origin_airports=1&destination_airports=0",
       "cabin_class": "economy"
     },
     {
