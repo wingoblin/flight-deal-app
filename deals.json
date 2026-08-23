@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-23T07:17:38+00:00",
+  "generated_at": "2026-08-23T08:11:14+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -99,7 +99,7 @@
       "trip": "roundtrip",
       "price": 380000,
       "cache_price": 368646,
-      "realtime_price": 351666,
+      "realtime_price": 362742,
       "baseline": 497912,
       "discount_pct": 23.7,
       "sparse": true,
@@ -688,7 +688,7 @@
       "trip": "roundtrip",
       "price": 779000,
       "cache_price": 755660,
-      "realtime_price": 755944,
+      "realtime_price": 695026,
       "baseline": 789912,
       "discount_pct": 1.4,
       "sparse": false,
@@ -877,7 +877,7 @@
       "destination": "BKK",
       "trip": "oneway",
       "price": 109000,
-      "cache_price": 103183,
+      "cache_price": 102511,
       "realtime_price": 105223,
       "baseline": 107324,
       "discount_pct": -1.6,
@@ -887,8 +887,8 @@
       "transfers": 0,
       "airline": "7C",
       "gate": "Trip.com",
-      "cache_date": "2026-08-21",
-      "link": "/search/PUS2608BKK1?t=7C17877744001787788200000350PUSBKK_ece18e37ce46aedc965398ebdbd172ac_6157&search_date=21082026&itinerary_key=SBmJetrJbb4uU6N-Kjcb0w",
+      "cache_date": "2026-08-23",
+      "link": "/search/PUS2608BKK1?t=7C17877744001787788200000350PUSBKK_ece18e37ce46aedc965398ebdbd172ac_6113&search_date=23082026&itinerary_key=SBmJetrJbb4uU6N-Kjcb0w",
       "cabin_class": "economy"
     },
     {
@@ -1117,25 +1117,6 @@
       "gate": "Trip.com",
       "cache_date": "2026-08-23",
       "link": "/search/PUS1209CXR16091?t=BX17892408001789251600000300PUSCXR17895282001789552200000280CXRPUS_8b59cf167bcb8d04e9acf4c296ab52cf_14614&search_date=23082026&itinerary_key=Dg8nUIShnWPHL1wAk3u0sA&origin_airports=1&destination_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "OKA",
-      "trip": "oneway",
-      "price": 102000,
-      "cache_price": 93427,
-      "realtime_price": 98300,
-      "baseline": 98413,
-      "discount_pct": -3.6,
-      "sparse": false,
-      "departure_at": "2026-09-28T11:00:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "TW",
-      "gate": "Trip.com",
-      "cache_date": "2026-08-21",
-      "link": "/search/ICN2809OKA1?t=TW17905932001790602500000155ICNOKA_904bbdedf874e54ae1fcd82a900afe51_5563&search_date=21082026&itinerary_key=GfJ0ZtHZniol9GPw7naunA&origin_airports=0",
       "cabin_class": "economy"
     },
     {
