@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-05T17:47:11+00:00",
+  "generated_at": "2026-09-05T19:50:10+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -151,25 +151,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "PUS",
-      "destination": "SGN",
-      "trip": "roundtrip",
-      "price": 288000,
-      "cache_price": 274603,
-      "realtime_price": 279241,
-      "baseline": 330840,
-      "discount_pct": 12.9,
-      "sparse": true,
-      "departure_at": "2026-10-22T08:10:00+09:00",
-      "return_at": "2026-10-27T00:05:00+07:00",
-      "transfers": 0,
-      "airline": "VJ",
-      "gate": "Farera",
-      "cache_date": "2026-09-05",
-      "link": "/search/PUS2210SGN27101?t=VJ17926566001792667100000295PUSSGN17930595001793084100000290SGNPUS_cece5c97af71f1cdb6b16281e0264d28_17499&search_date=05092026&itinerary_key=213NEGqUZYBIAruSrRQAWA",
-      "cabin_class": "economy"
-    },
-    {
       "from": "CJU",
       "destination": "PVG",
       "trip": "roundtrip",
@@ -186,6 +167,25 @@
       "gate": "City.Travel",
       "cache_date": "2026-09-02",
       "link": "/search/CJU0512PVG21121?t=9C17964570001796459400000100CJUPVG17978388001797847500000085PVGCJU_a6cc161ec38a07d6fd3b9e61a9599225_12727&search_date=02092026&itinerary_key=TcExHXSOp98YAA1DlkH2DA&origin_airports=1&destination_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "PUS",
+      "destination": "SGN",
+      "trip": "roundtrip",
+      "price": 294000,
+      "cache_price": 274603,
+      "realtime_price": null,
+      "baseline": 330840,
+      "discount_pct": 11.1,
+      "sparse": true,
+      "departure_at": "2026-10-22T08:10:00+09:00",
+      "return_at": "2026-10-27T00:05:00+07:00",
+      "transfers": 0,
+      "airline": "VJ",
+      "gate": "Farera",
+      "cache_date": "2026-09-05",
+      "link": "/search/PUS2210SGN27101?t=VJ17926566001792667100000295PUSSGN17930595001793084100000290SGNPUS_cece5c97af71f1cdb6b16281e0264d28_17499&search_date=05092026&itinerary_key=213NEGqUZYBIAruSrRQAWA",
       "cabin_class": "economy"
     },
     {
@@ -300,25 +300,6 @@
       "gate": "Aviakassa",
       "cache_date": "2026-09-04",
       "link": "/search/ICN1512BNE1?t=JQ17973702001797408000000570ICNBNE_9ebe13b5bbe76ab7b983f4f9d3b4119f_25029&search_date=04092026&itinerary_key=ncz87Za1L1meXPXUvXnKgA&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "CXR",
-      "trip": "roundtrip",
-      "price": 237000,
-      "cache_price": 225707,
-      "realtime_price": 229328,
-      "baseline": 240486,
-      "discount_pct": 1.4,
-      "sparse": false,
-      "departure_at": "2026-09-29T06:45:00+09:00",
-      "return_at": "2026-10-02T00:05:00+07:00",
-      "transfers": 0,
-      "airline": "VJ",
-      "gate": "Trip.com",
-      "cache_date": "2026-09-04",
-      "link": "/search/ICN2909CXR02101?t=RS17906643001790674500000290ICNCXR17908995001790925000000305CXRICN_442ad0ac6060e5dc8e9d4eb9ba301c98_14535&search_date=04092026&itinerary_key=qE3zJQyfMOh_dJ1CCvlctg&origin_airports=0%2C1&destination_airports=0%2C1",
       "cabin_class": "economy"
     },
     {
