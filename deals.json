@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T18:39:34+00:00",
+  "generated_at": "2026-09-06T21:15:47+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -17,25 +17,6 @@
   "refresh_interval_hours": 1,
   "disclaimer": "캐시 기반 가격으로 실시간이 아닙니다. 좌석이 빠르게 팔릴 수 있어 클릭 시 이미 매진되었거나 가격이 변동됐을 수 있습니다.",
   "deals": [
-    {
-      "from": "CJU",
-      "destination": "TPE",
-      "trip": "oneway",
-      "price": 128000,
-      "cache_price": 114880,
-      "realtime_price": 124185,
-      "baseline": 161124,
-      "discount_pct": 20.6,
-      "sparse": false,
-      "departure_at": "2026-10-08T10:40:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "IT",
-      "gate": "Trip.com",
-      "cache_date": "2026-09-04",
-      "link": "/search/CJU0810TPE1?t=IT17914560001791459900000125CJUTPE_b7f6d294983ee4cd1fd6e20154794426_7328&search_date=04092026&itinerary_key=BhGhx8zMuHIKEhRIG54NPg",
-      "cabin_class": "economy"
-    },
     {
       "from": "TAE",
       "destination": "OSA",
@@ -167,6 +148,25 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-09-05",
       "link": "/search/ICN0212MEL1?t=TR17962110001796332800001910ICNSINMEL_2afbc21c5ec5d14fb2269eec249293b7_20375&search_date=05092026&itinerary_key=P1qhZqzeJNOnFAX10X-n5w&origin_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "PUS",
+      "destination": "VIE",
+      "trip": "roundtrip",
+      "price": 854000,
+      "cache_price": 797877,
+      "realtime_price": null,
+      "baseline": 962955,
+      "discount_pct": 11.3,
+      "sparse": true,
+      "departure_at": "2026-10-22T17:50:00+09:00",
+      "return_at": "2026-10-27T06:00:00+01:00",
+      "transfers": 2,
+      "airline": "FM",
+      "gate": "Gotogate",
+      "cache_date": "2026-09-06",
+      "link": "/search/PUS2210VIE27101?t=MU17926914001792792200002100PUSPVGMXPVIE17930808001793187300001295VIEMXPPVGPUS_a71b8ec32d27165370ca6e3c2c943173_51294&search_date=06092026&itinerary_key=bYqZjTkzLFXd-P4rTp82Ug",
       "cabin_class": "economy"
     },
     {
@@ -341,6 +341,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "CJU",
+      "destination": "TPE",
+      "trip": "oneway",
+      "price": 159000,
+      "cache_price": 137148,
+      "realtime_price": 153881,
+      "baseline": 161124,
+      "discount_pct": 1.3,
+      "sparse": false,
+      "departure_at": "2026-12-04T11:45:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "IT",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-09-06",
+      "link": "/search/CJU0412TPE1?t=IT17963847001796388900000130CJUTPE_3d9a0bb3883bf1bde4950bea51591eed_8817&search_date=06092026&itinerary_key=NvLUXKF2tfjzdTC9cR-Jag",
+      "cabin_class": "economy"
+    },
+    {
       "from": "ICN",
       "destination": "LHR",
       "trip": "roundtrip",
@@ -376,25 +395,6 @@
       "gate": "Mytrip.com",
       "cache_date": "2026-09-06",
       "link": "/search/PUS3108KUL1?t=VN18197100001819738800000540PUSHANKUL_a1d91e68df79ebab54fd9ea95137300c_12215&search_date=06092026&itinerary_key=ecq2aCMyj05Zbn7DB4DwlA",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "CJU",
-      "destination": "CAN",
-      "trip": "oneway",
-      "price": 203000,
-      "cache_price": 196175,
-      "realtime_price": 195726,
-      "baseline": 199975,
-      "discount_pct": -1.5,
-      "sparse": true,
-      "departure_at": "2027-03-25T12:30:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "9C",
-      "gate": "City.Travel",
-      "cache_date": "2026-09-02",
-      "link": "/search/CJU2503CAN1?t=9C18059778001805986500000205CJUCAN_ac71145024d8dad4c9c18d5d02d2bcd9_12471&search_date=02092026&itinerary_key=wBhY0KG9Wv6___cg8-TfJw",
       "cabin_class": "economy"
     },
     {
