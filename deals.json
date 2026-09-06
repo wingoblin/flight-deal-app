@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-05T22:04:16+00:00",
+  "generated_at": "2026-09-06T00:08:52+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -262,6 +262,25 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-09-01",
       "link": "/search/TAE3009BKK07101?t=TW17908035001790816700000340TAEBKK17913387001791366000000335BKKTAE_312567ceda1f705dfd08f31079171410_25869&search_date=01092026&itinerary_key=zG3066sCmAmptlB8FRS4Zw",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "FCO",
+      "trip": "roundtrip",
+      "price": 721000,
+      "cache_price": 673382,
+      "realtime_price": null,
+      "baseline": 742014,
+      "discount_pct": 2.8,
+      "sparse": true,
+      "departure_at": "2026-10-29T12:55:00+09:00",
+      "return_at": "2026-11-02T20:15:00+01:00",
+      "transfers": 1,
+      "airline": "MU",
+      "gate": "SuperKassa",
+      "cache_date": "2026-09-05",
+      "link": "/search/ICN2910FCO02111?t=MU17932785001793384100002240ICNPVGFCO17936505001793804700002090FCOPVGICN_5515d40b8cc26456bc7c23e653ed6568_42911&search_date=05092026&itinerary_key=wXP1j4ro6n_wbeNDaAPtDw&origin_airports=0%2C1&destination_airports=0%2C1",
       "cabin_class": "economy"
     },
     {
