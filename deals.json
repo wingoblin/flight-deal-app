@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T16:14:13+00:00",
+  "generated_at": "2026-09-06T18:39:34+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -91,6 +91,25 @@
       "gate": "Trip.com",
       "cache_date": "2026-09-05",
       "link": "/search/CJJ2709DAD06101?t=RF17905425001790553300000300CJJDAD17912478001791272100000285DADCJJ_5955b398379960bfa517b014408837fd_22827&search_date=05092026&itinerary_key=XNdH6SrrTzm1IuuGRMl2Eg",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "PUS",
+      "destination": "PVG",
+      "trip": "oneway",
+      "price": 98000,
+      "cache_price": 89254,
+      "realtime_price": 94489,
+      "baseline": 113659,
+      "discount_pct": 13.8,
+      "sparse": false,
+      "departure_at": "2026-09-25T22:30:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "9C",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-09-06",
+      "link": "/search/PUS2509PVG1?t=9C17903754001790379300000125PUSPVG_f80abc7a46c9741872e9c4b9478ab604_5738&search_date=06092026&itinerary_key=G-_EoMqQvVovHMrHL4r-3A&destination_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -322,6 +341,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "ICN",
+      "destination": "LHR",
+      "trip": "roundtrip",
+      "price": 857000,
+      "cache_price": 781401,
+      "realtime_price": 831500,
+      "baseline": 849157,
+      "discount_pct": -0.9,
+      "sparse": true,
+      "departure_at": "2026-10-19T09:25:00+09:00",
+      "return_at": "2026-11-12T21:30:00Z",
+      "transfers": 1,
+      "airline": "CZ",
+      "gate": "Wingie",
+      "cache_date": "2026-09-03",
+      "link": "/search/ICN1910LHR12111?t=CZ17924019001792433100001000ICNPKXLHR17945190001794607800000940LHRPKXICN_66c548424968652208c6ddf3b4d18bb3_49956&search_date=03092026&itinerary_key=MIYKKbtJgx-1iKGzwmiOzw&origin_airports=0%2C1&destination_airports=0%2C1",
+      "cabin_class": "economy"
+    },
+    {
       "from": "PUS",
       "destination": "KUL",
       "trip": "oneway",
@@ -338,25 +376,6 @@
       "gate": "Mytrip.com",
       "cache_date": "2026-09-06",
       "link": "/search/PUS3108KUL1?t=VN18197100001819738800000540PUSHANKUL_a1d91e68df79ebab54fd9ea95137300c_12215&search_date=06092026&itinerary_key=ecq2aCMyj05Zbn7DB4DwlA",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "CXR",
-      "trip": "roundtrip",
-      "price": 243000,
-      "cache_price": 226804,
-      "realtime_price": null,
-      "baseline": 239710,
-      "discount_pct": -1.4,
-      "sparse": false,
-      "departure_at": "2026-09-28T06:45:00+09:00",
-      "return_at": "2026-10-01T00:05:00+07:00",
-      "transfers": 0,
-      "airline": "VJ",
-      "gate": "Trip.com",
-      "cache_date": "2026-09-05",
-      "link": "/search/ICN2809CXR01101?t=RS17905779001790588100000290ICNCXR17908131001790838600000305CXRICN_249b4a0e7cd9b4e3e34c2f747f520ea7_14453&search_date=05092026&itinerary_key=qE3zJQyfMOh_dJ1CCvlctg&origin_airports=0%2C1&destination_airports=0%2C1",
       "cabin_class": "economy"
     },
     {
@@ -414,6 +433,25 @@
       "gate": "City.Travel",
       "cache_date": "2026-09-05",
       "link": "/search/ICN1209CNX23091?t=7C17892366001789250400000350ICNCNX17901999001790226300000320CNXICN_73de8b0399d9ba4531956857b72af033_21175&search_date=05092026&itinerary_key=88RKrHDQ0s9Bt-vtXlJ2Ow&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "PNH",
+      "trip": "oneway",
+      "price": 259000,
+      "cache_price": 241602,
+      "realtime_price": null,
+      "baseline": 246848,
+      "discount_pct": -4.9,
+      "sparse": false,
+      "departure_at": "2026-09-17T15:15:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "ZH",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-09-06",
+      "link": "/search/ICN1709PNH1?t=ZH17896581001789729800001315ICNSZXKTI_4593929af2e72ed8e9ad4deed3464e68_15396&search_date=06092026&itinerary_key=_muqATxcPYplBcXULz464w&origin_airports=0",
       "cabin_class": "economy"
     },
     {
