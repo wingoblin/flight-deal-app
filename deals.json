@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-12T16:57:13+00:00",
+  "generated_at": "2026-09-12T19:10:23+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -379,25 +379,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "GMP",
-      "destination": "DFW",
-      "trip": "roundtrip",
-      "price": 2060000,
-      "cache_price": 1825723,
-      "realtime_price": 1999034,
-      "baseline": 2068729,
-      "discount_pct": 0.4,
-      "sparse": true,
-      "departure_at": "2026-10-06T19:15:00+09:00",
-      "return_at": "2026-10-13T00:15:00-05:00",
-      "transfers": 1,
-      "airline": "BR",
-      "gate": "Gotogate",
-      "cache_date": "2026-09-08",
-      "link": "/search/GMP0610DFW13101?t=BR17913141001791403800002335GMPTSATPEDFW17918505001792005300001740DFWTPETSAGMP_8cfc35b9f7de6fba32437fe74c8c9e33_117493&search_date=08092026&itinerary_key=sa4b04Yi7KPafX8S3b014g&origin_airports=0&destination_airports=1",
-      "cabin_class": "economy"
-    },
-    {
       "from": "ICN",
       "destination": "YNJ",
       "trip": "roundtrip",
@@ -414,6 +395,25 @@
       "gate": "Т-Банк",
       "cache_date": "2026-09-12",
       "link": "/search/ICN1211YNJ15111?t=7C17944989001794504300000150ICNYNJ17947674001794780600000160YNJICN_361edb325e9a2f10dfed6d0185e68977_18718&search_date=12092026&itinerary_key=jnKUMUvNWa_d_d3N_oqD4A&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "CJU",
+      "destination": "PVG",
+      "trip": "oneway",
+      "price": 82000,
+      "cache_price": 76102,
+      "realtime_price": null,
+      "baseline": 81661,
+      "discount_pct": -0.4,
+      "sparse": false,
+      "departure_at": "2026-09-29T21:30:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "9C",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-09-12",
+      "link": "/search/CJU2909PVG1?t=9C17907174001790720100000105CJUPVG_5fd5dd35e8bf5469e52fb2cf0c08c7dc_4774&search_date=12092026&itinerary_key=pRWZdnuCSGB4ZKg2E65-nA&destination_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -471,25 +471,6 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-09-06",
       "link": "/search/TAE2109TYO30091?t=TW17899872001789994700000125TAENRT17907759001790784000000135NRTTAE_8a77ef84a34939820a187d3d23b26218_25024&search_date=06092026&itinerary_key=oElabYIs61I8rUM0v0c5wA",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "GMP",
-      "destination": "NGO",
-      "trip": "roundtrip",
-      "price": 285000,
-      "cache_price": 266698,
-      "realtime_price": 276562,
-      "baseline": 278403,
-      "discount_pct": -2.4,
-      "sparse": true,
-      "departure_at": "2026-09-20T11:20:00+09:00",
-      "return_at": "2026-09-24T15:00:00+09:00",
-      "transfers": 0,
-      "airline": "MM",
-      "gate": "Kiwi.com",
-      "cache_date": "2026-09-06",
-      "link": "/search/GMP2009NGO24091?t=MM17899032001789909800000110GMPNGO17902620001790269200000120NGOGMP_1d7e0d4fff68a5517c878e9fb78d7786_17158&search_date=06092026&itinerary_key=chgZSEIlQ1e5MPV7dJ29SA&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
