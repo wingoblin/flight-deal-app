@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-12T13:34:11+00:00",
+  "generated_at": "2026-09-12T16:57:13+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -113,25 +113,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "PUS",
-      "destination": "PVG",
-      "trip": "roundtrip",
-      "price": 201000,
-      "cache_price": 177628,
-      "realtime_price": 194667,
-      "baseline": 233222,
-      "discount_pct": 13.8,
-      "sparse": true,
-      "departure_at": "2026-09-30T22:30:00+09:00",
-      "return_at": "2026-10-07T18:30:00+08:00",
-      "transfers": 0,
-      "airline": "9C",
-      "gate": "Farera",
-      "cache_date": "2026-09-10",
-      "link": "/search/PUS3009PVG07101?t=9C17908074001790811300000125PUSPVG17913978001791408600000120PVGPUS_815116e189cfe57f3f84280fbf2d400e_11185&search_date=10092026&itinerary_key=yFJOdAG89Aj4F-chSZxjcg&origin_airports=1&destination_airports=0",
-      "cabin_class": "economy"
-    },
-    {
       "from": "ICN",
       "destination": "SPN",
       "trip": "oneway",
@@ -224,6 +205,25 @@
       "gate": "Turna.com",
       "cache_date": "2026-09-12",
       "link": "/search/GMP2909PQC09101?t=MU17906832001790726700000845GMPSHAPVGPQC17915079001791575400001005PQCPVGSHAGMP_e7821a1809699e048d894dfd613cd399_23520&search_date=12092026&itinerary_key=EspMc57sAh7fRCJtdb7L-A&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "LHR",
+      "trip": "roundtrip",
+      "price": 819000,
+      "cache_price": 794297,
+      "realtime_price": 785383,
+      "baseline": 849157,
+      "discount_pct": 3.6,
+      "sparse": true,
+      "departure_at": "2027-01-23T13:15:00+09:00",
+      "return_at": "2027-02-06T18:20:00Z",
+      "transfers": 1,
+      "airline": "LO",
+      "gate": "Mytrip.com",
+      "cache_date": "2026-09-06",
+      "link": "/search/ICN2301LHR06021?t=LO18007101001800811200002225ICNWAWLHR18019380001802082600001870LHRWAWICN_723a5ab6b4db13285fdd2bec053e7e95_51101&search_date=06092026&itinerary_key=RRqtl-icUGqJjQ-HsVT90g&origin_airports=0%2C1&destination_airports=0%2C1",
       "cabin_class": "economy"
     },
     {
@@ -379,6 +379,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "GMP",
+      "destination": "DFW",
+      "trip": "roundtrip",
+      "price": 2060000,
+      "cache_price": 1825723,
+      "realtime_price": 1999034,
+      "baseline": 2068729,
+      "discount_pct": 0.4,
+      "sparse": true,
+      "departure_at": "2026-10-06T19:15:00+09:00",
+      "return_at": "2026-10-13T00:15:00-05:00",
+      "transfers": 1,
+      "airline": "BR",
+      "gate": "Gotogate",
+      "cache_date": "2026-09-08",
+      "link": "/search/GMP0610DFW13101?t=BR17913141001791403800002335GMPTSATPEDFW17918505001792005300001740DFWTPETSAGMP_8cfc35b9f7de6fba32437fe74c8c9e33_117493&search_date=08092026&itinerary_key=sa4b04Yi7KPafX8S3b014g&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
       "from": "ICN",
       "destination": "YNJ",
       "trip": "roundtrip",
@@ -474,6 +493,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "GMP",
+      "destination": "DPS",
+      "trip": "roundtrip",
+      "price": 652000,
+      "cache_price": 608910,
+      "realtime_price": null,
+      "baseline": 635601,
+      "discount_pct": -2.6,
+      "sparse": false,
+      "departure_at": "2026-09-26T20:50:00+09:00",
+      "return_at": "2026-10-02T18:15:00+08:00",
+      "transfers": 1,
+      "airline": "MU",
+      "gate": "Farera",
+      "cache_date": "2026-09-12",
+      "link": "/search/GMP2609DPS02101?t=MU17904558001790553300001685GMPSHAPVGDPS17909649001791057000001475DPSPVGSHAGMP_0961248716c483b39e5075348a4edda5_38198&search_date=12092026&itinerary_key=U-Wbzwn9E1s7N8Q4EEdl_Q&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
       "from": "ICN",
       "destination": "CXR",
       "trip": "roundtrip",
@@ -497,18 +535,18 @@
       "destination": "HAN",
       "trip": "oneway",
       "price": 128000,
-      "cache_price": 121725,
+      "cache_price": 120736,
       "realtime_price": 123513,
       "baseline": 124069,
       "discount_pct": -3.2,
       "sparse": false,
-      "departure_at": "2026-09-28T08:10:00+09:00",
+      "departure_at": "2026-09-18T08:10:00+09:00",
       "return_at": null,
       "transfers": 0,
       "airline": "VJ",
-      "gate": "Trip.com",
-      "cache_date": "2026-09-11",
-      "link": "/search/PUS2809HAN1?t=VJ17905830001790592000000270PUSHAN_b5351da2c22ced64c228c82def52622c_7636&search_date=11092026&itinerary_key=fNjq_opL-aSmPAUHBwI92A",
+      "gate": "Farera",
+      "cache_date": "2026-09-12",
+      "link": "/search/PUS1809HAN1?t=VJ17897190001789728000000270PUSHAN_414f8ce5785f06f7ad28172fd057ab3f_7574&search_date=12092026&itinerary_key=fNjq_opL-aSmPAUHBwI92A",
       "cabin_class": "economy"
     },
     {
@@ -585,25 +623,6 @@
       "gate": "Trip.com",
       "cache_date": "2026-09-11",
       "link": "/search/PUS2709PQC1?t=ZE17905353001790547900000330PUSPQC_c79f6e32a6f19fc18a48bc3094fcbd8d_7776&search_date=11092026&itinerary_key=_aYBSMZedTnpVK0s_tLcNw",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "GMP",
-      "destination": "AKL",
-      "trip": "oneway",
-      "price": 799000,
-      "cache_price": 745925,
-      "realtime_price": null,
-      "baseline": 748535,
-      "discount_pct": -6.7,
-      "sparse": false,
-      "departure_at": "2026-09-16T20:50:00+09:00",
-      "return_at": null,
-      "transfers": 1,
-      "airline": "FM",
-      "gate": "Trip.com",
-      "cache_date": "2026-09-11",
-      "link": "/search/GMP1609AKL1?t=MU17895918001789666200001060GMPSHAPVGAKL_c0b87b52164717c3a11e01ba088f683d_46901&search_date=11092026&itinerary_key=VGtb4pu2X8Pt6LWCIB71mg&origin_airports=0",
       "cabin_class": "economy"
     }
   ]
