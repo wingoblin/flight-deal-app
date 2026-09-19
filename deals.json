@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-19T20:43:29+00:00",
+  "generated_at": "2026-09-19T22:55:01+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -368,7 +368,7 @@
       "realtime_price": null,
       "baseline": 210122,
       "discount_pct": 11.5,
-      "sparse": false,
+      "sparse": true,
       "departure_at": "2026-09-26T06:10:00+09:00",
       "return_at": null,
       "transfers": 1,
@@ -509,6 +509,25 @@
       "gate": "Trip.com",
       "cache_date": "2026-09-19",
       "link": "/search/PUS2210HAN1?t=VJ17926566001792665600000270PUSHAN_30ad38d00a4b263f6304f82b8138e719_6238&search_date=19092026&itinerary_key=fNjq_opL-aSmPAUHBwI92A",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "CJU",
+      "destination": "DPS",
+      "trip": "oneway",
+      "price": 288000,
+      "cache_price": 268726,
+      "realtime_price": null,
+      "baseline": 311669,
+      "discount_pct": 7.6,
+      "sparse": true,
+      "departure_at": "2026-12-16T10:50:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "7C",
+      "gate": "Trip.com",
+      "cache_date": "2026-09-19",
+      "link": "/search/CJU1612DPS1?t=BX17974182001797461100000775CJUPUSDPS_897cc8c856ea4511344ca3db0dae9b4e_16362&search_date=19092026&itinerary_key=YiI-pCXbeFrifHEAq-zjFQ",
       "cabin_class": "economy"
     },
     {
@@ -976,7 +995,7 @@
       "realtime_price": null,
       "baseline": 408583,
       "discount_pct": -0.1,
-      "sparse": false,
+      "sparse": true,
       "departure_at": "2026-10-21T14:25:00+09:00",
       "return_at": null,
       "transfers": 1,
@@ -1196,25 +1215,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "GMP",
-      "destination": "PQC",
-      "trip": "oneway",
-      "price": 200000,
-      "cache_price": 186640,
-      "realtime_price": null,
-      "baseline": 196229,
-      "discount_pct": -1.9,
-      "sparse": false,
-      "departure_at": "2026-09-21T14:00:00+09:00",
-      "return_at": null,
-      "transfers": 2,
-      "airline": "TW",
-      "gate": "Kiwi.com",
-      "cache_date": "2026-09-19",
-      "link": "/search/GMP2109PQC1?t=VJ17899992001790075400001390GMPCJUPUSPQC_957e8e5ed0b6e6df6e986991a66d7dac_11364&search_date=19092026&itinerary_key=_EYf1tucAVoiHkukOXxdMA&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
       "from": "PUS",
       "destination": "NGO",
       "trip": "oneway",
@@ -1269,25 +1269,6 @@
       "gate": "Т-Банк",
       "cache_date": "2026-09-18",
       "link": "/search/ICN1710LAX24101?t=AS17922657001792259940000864ICNSEALAX17928546001793036100002065LGBSEAICN_10fa8463e037f50d34f2743eadf7fa76_48839&search_date=18092026&itinerary_key=nFsw43Lv6ckcYbtiwCc3aw&origin_airports=0&destination_airports=1",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "GMP",
-      "destination": "DAD",
-      "trip": "oneway",
-      "price": 174000,
-      "cache_price": 162077,
-      "realtime_price": null,
-      "baseline": 170035,
-      "discount_pct": -2.3,
-      "sparse": false,
-      "departure_at": "2026-10-13T19:55:00+09:00",
-      "return_at": null,
-      "transfers": 1,
-      "airline": "7C",
-      "gate": "Kiwi.com",
-      "cache_date": "2026-09-18",
-      "link": "/search/GMP1310DAD1?t=VJ17919213001791972600000975GMPPUSDAD_c6918e5ff537d8dc894af5db41d26029_9846&search_date=18092026&itinerary_key=VmWcNJxboOKKU4tMF6C2Gg&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -1497,6 +1478,25 @@
       "gate": "City.Travel",
       "cache_date": "2026-09-19",
       "link": "/search/GMP0110SYD15101?t=MU17908878001791014400002050GMPSHAWUHSYD17920656001792148400001500SYDPVGSHAGMP_63c176720f1e6176821c6f06dd45f880_81663&search_date=19092026&itinerary_key=2QHr8n9FAZ2jODKwJQLJgg&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "GMP",
+      "destination": "DAD",
+      "trip": "oneway",
+      "price": 178000,
+      "cache_price": 165535,
+      "realtime_price": null,
+      "baseline": 170035,
+      "discount_pct": -4.7,
+      "sparse": false,
+      "departure_at": "2026-10-13T19:55:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "7C",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-09-19",
+      "link": "/search/GMP1310DAD1?t=VJ17919213001791972600000975GMPPUSDAD_c6918e5ff537d8dc894af5db41d26029_10079&search_date=19092026&itinerary_key=VmWcNJxboOKKU4tMF6C2Gg&origin_airports=0",
       "cabin_class": "economy"
     },
     {
