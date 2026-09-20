@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-20T20:59:52+00:00",
+  "generated_at": "2026-09-20T23:10:26+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -72,6 +72,25 @@
       "gate": "Mytrip.com",
       "cache_date": "2026-09-20",
       "link": "/search/ICN1510MUC1?t=CA17920782001792134300001355ICNPKXPEKMUC_12c5db83c2d922b724bd6e4606d5ebc3_20138&search_date=20092026&itinerary_key=xy4y61R7KqT8qNhc3Mgh2A&origin_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "GMP",
+      "destination": "CNX",
+      "trip": "oneway",
+      "price": 189000,
+      "cache_price": 176028,
+      "realtime_price": null,
+      "baseline": 246303,
+      "discount_pct": 23.3,
+      "sparse": false,
+      "departure_at": "2026-09-30T14:20:00+09:00",
+      "return_at": null,
+      "transfers": 2,
+      "airline": "BX",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-09-20",
+      "link": "/search/GMP3009CNX1?t=BX17907780001790839800001150GMPPUSBKKDMKCNX_ebc1b1c709838cc7065580c3117781cf_10682&search_date=20092026&itinerary_key=JSJpUU1H39PLr40cq1HlDQ&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -360,6 +379,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "TAE",
+      "destination": "OSA",
+      "trip": "roundtrip",
+      "price": 314000,
+      "cache_price": 292659,
+      "realtime_price": null,
+      "baseline": 340352,
+      "discount_pct": 7.7,
+      "sparse": false,
+      "departure_at": "2026-10-12T08:00:00+09:00",
+      "return_at": "2026-10-15T10:40:00+09:00",
+      "transfers": 0,
+      "airline": "TW",
+      "gate": "Farera",
+      "cache_date": "2026-09-20",
+      "link": "/search/TAE1210OSA15101?t=TW17917920001791797400000090TAEKIX17920608001792066200000090KIXTAE_0eb38e5e649376610a7bb78dcf2b9efb_17758&search_date=20092026&itinerary_key=a-huNgPH0stuHNFH7gP8IA",
+      "cabin_class": "economy"
+    },
+    {
       "from": "CJU",
       "destination": "DPS",
       "trip": "oneway",
@@ -395,6 +433,25 @@
       "gate": "Trip.com",
       "cache_date": "2026-09-19",
       "link": "/search/GMP0610FSZ1?t=BX17913126001791370200000960GMPPUSFSZ_0b3e85a827d6bd6b36c60f6052dfe24f_8579&search_date=19092026&itinerary_key=U8Nvdo_28ur66w_IDnEKKA&origin_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "LGK",
+      "trip": "roundtrip",
+      "price": 478000,
+      "cache_price": 446305,
+      "realtime_price": null,
+      "baseline": 514043,
+      "discount_pct": 7.0,
+      "sparse": true,
+      "departure_at": "2026-10-09T16:15:00+09:00",
+      "return_at": "2026-10-14T10:00:00+08:00",
+      "transfers": 2,
+      "airline": "MU",
+      "gate": "Farera",
+      "cache_date": "2026-09-20",
+      "link": "/search/ICN0910LGK14101?t=MU17915625001791663000001735ICNPVGKULLGK17919720001792070100001575LGKKULXIYICN_9008ee6c8486f57e69e743ccca6ed6cc_27081&search_date=20092026&itinerary_key=V1O-DUkwRmN22yUOlWE0dg&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
@@ -566,25 +623,6 @@
       "gate": "Т-Банк",
       "cache_date": "2026-09-19",
       "link": "/search/ICN1611YNJ1?t=7C17948445001794849900000150ICNYNJ_588a98d204cf7ce7a59bd785661142f1_7420&search_date=19092026&itinerary_key=pJqkH2UUmFVUFQ6HDH4Mzw&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "GMP",
-      "destination": "PQC",
-      "trip": "oneway",
-      "price": 190000,
-      "cache_price": 176906,
-      "realtime_price": null,
-      "baseline": 196229,
-      "discount_pct": 3.2,
-      "sparse": false,
-      "departure_at": "2026-09-28T19:55:00+09:00",
-      "return_at": null,
-      "transfers": 1,
-      "airline": "7C",
-      "gate": "Kiwi.com",
-      "cache_date": "2026-09-20",
-      "link": "/search/GMP2809PQC1?t=VJ17906253001790680200001035GMPPUSPQC_8790a61a6baff3d62e568bf1055b7c0b_10732&search_date=20092026&itinerary_key=TFKyEBpGl-WCLBr7mMONJg&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -835,6 +873,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "PUS",
+      "destination": "PQC",
+      "trip": "oneway",
+      "price": 124000,
+      "cache_price": 115402,
+      "realtime_price": null,
+      "baseline": 121853,
+      "discount_pct": -1.8,
+      "sparse": false,
+      "departure_at": "2026-10-13T07:45:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "VJ",
+      "gate": "Trip.com",
+      "cache_date": "2026-09-20",
+      "link": "/search/PUS1310PQC1?t=VJ17918775001791889800000325PUSPQC_9ac6b2af72d54b8ba77e7cb6178b56af_7003&search_date=20092026&itinerary_key=yMgkQjKxb9sZcimMuCiWtg",
+      "cabin_class": "economy"
+    },
+    {
       "from": "GMP",
       "destination": "DLC",
       "trip": "oneway",
@@ -870,6 +927,25 @@
       "gate": "Т-Банк",
       "cache_date": "2026-09-20",
       "link": "/search/ICN1710LAX24101?t=AS17922657001792259940000864ICNSEALAX17928546001793036100002065LGBSEAICN_10fa8463e037f50d34f2743eadf7fa76_48553&search_date=20092026&itinerary_key=nFsw43Lv6ckcYbtiwCc3aw&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "KUL",
+      "trip": "roundtrip",
+      "price": 361000,
+      "cache_price": 336813,
+      "realtime_price": null,
+      "baseline": 350740,
+      "discount_pct": -2.9,
+      "sparse": false,
+      "departure_at": "2026-11-08T12:15:00+09:00",
+      "return_at": "2026-11-15T15:45:00+08:00",
+      "transfers": 2,
+      "airline": "MU",
+      "gate": "Farera",
+      "cache_date": "2026-09-20",
+      "link": "/search/ICN0811KUL15111?t=MU17941401001794235500001650ICNNKGKMGKUL17947575001794826500001090KULKMGYNTICN_1c7f97e0496499e59e6ed1b3a260b485_20439&search_date=20092026&itinerary_key=pHm8oiLqPTZuBio-5Y8R5A&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
@@ -1158,6 +1234,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "ICN",
+      "destination": "LHR",
+      "trip": "oneway",
+      "price": 356000,
+      "cache_price": 331848,
+      "realtime_price": null,
+      "baseline": 339256,
+      "discount_pct": -4.9,
+      "sparse": false,
+      "departure_at": "2026-10-01T22:45:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "CA",
+      "gate": "Flightnetwork",
+      "cache_date": "2026-09-20",
+      "link": "/search/ICN0110LHR1?t=CA17908947001790948700001380ICNTFULHR_29a4ab4ac5f598c97fc90aea5218f046_20147&search_date=20092026&itinerary_key=irU7jLZZQREE7zxHXjzYGg&origin_airports=0&destination_airports=0",
+      "cabin_class": "economy"
+    },
+    {
       "from": "GMP",
       "destination": "SYD",
       "trip": "roundtrip",
@@ -1174,25 +1269,6 @@
       "gate": "City.Travel",
       "cache_date": "2026-09-19",
       "link": "/search/GMP0110SYD15101?t=MU17908878001791014400002050GMPSHAWUHSYD17920656001792148400001500SYDPVGSHAGMP_63c176720f1e6176821c6f06dd45f880_81663&search_date=19092026&itinerary_key=2QHr8n9FAZ2jODKwJQLJgg&origin_airports=0&destination_airports=1",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "KUL",
-      "trip": "roundtrip",
-      "price": 370000,
-      "cache_price": 345129,
-      "realtime_price": null,
-      "baseline": 350740,
-      "discount_pct": -5.5,
-      "sparse": false,
-      "departure_at": "2026-10-20T23:40:00+09:00",
-      "return_at": "2026-10-25T04:05:00+08:00",
-      "transfers": 1,
-      "airline": "SC",
-      "gate": "Farera",
-      "cache_date": "2026-09-19",
-      "link": "/search/ICN2010KUL25101?t=SC17925396001792629900001565ICNTNAKUL17929011001792959000000905KULTNAICN_e7a1ad3c6cb4cb47d55377782f029092_21014&search_date=19092026&itinerary_key=qW5CP1Oj5OuLUPNfBtFpYg&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
@@ -1470,7 +1546,7 @@
       "realtime_price": null,
       "baseline": 484818,
       "discount_pct": -7.1,
-      "sparse": false,
+      "sparse": true,
       "departure_at": "2026-10-21T19:55:00+09:00",
       "return_at": null,
       "transfers": 3,
