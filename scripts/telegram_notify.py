@@ -17,6 +17,9 @@ Secrets / env:
   TELEGRAM_MAX_PRICE      Only surface round-trips at/under this KRW price (default none)
   TELEGRAM_PRICE_OVERRIDE_DISCOUNT  Discount_pct at/above which the price ceiling
                                     is ignored (catch long-haul steals; default none)
+  TELEGRAM_ALWAYS_UNDER_PRICE  Round-trips at/under this KRW price are ALWAYS surfaced,
+                               regardless of discount_pct (catch flat-out cheap fares;
+                               default none)
   TELEGRAM_MAX_CARDS      Max deals per run (default 6)
   TELEGRAM_WINDOW_HOURS   Don't resend a deal seen within this many hours (default 24)
   TELEGRAM_STATE_FILE     Where the "already sent" state lives (default data/telegram_sent.json)
@@ -100,8 +103,23 @@ def deal_key(d):
 
 # ----------------------------- selection -------------------------------------
 
+def _deal_price(d):
+    try:
+        return float(d.get("price", 1e18))
+    except (TypeError, ValueError):
+        return None
+
+
+def _is_always(d, always_under_price):
+    """A flat-out cheap fare that pings regardless of discount %."""
+    if always_under_price is None:
+        return False
+    price = _deal_price(d)
+    return price is not None and price <= always_under_price
+
+
 def select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
-                 max_price=None, price_override_discount=None):
+                 max_price=None, price_override_discount=None, always_under_price=None):
     window = dt.timedelta(hours=window_hours)
     sent = state.get("sent", {})
     candidates = []
@@ -109,18 +127,21 @@ def select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
         if d.get("trip") != "roundtrip":  # round-trip only
             continue
         disc = float(d.get("discount_pct", 0))
-        if disc < min_discount:
-            continue
-        # Price ceiling — but a big enough drop (e.g. a long-haul half-off
-        # steal) overrides it, since that's a deal worth surfacing anyway.
-        if max_price is not None and not (
-            price_override_discount is not None and disc >= price_override_discount
-        ):
-            try:
-                if float(d.get("price", 1e18)) > max_price:
-                    continue
-            except (TypeError, ValueError):
+        always = _is_always(d, always_under_price)
+        # A flat-out cheap fare (at/under ALWAYS_UNDER_PRICE) skips both the
+        # discount gate and the price ceiling — it's worth surfacing on price
+        # alone. Everything else must clear the usual discount + price gates.
+        if not always:
+            if disc < min_discount:
                 continue
+            # Price ceiling — but a big enough drop (e.g. a long-haul half-off
+            # steal) overrides it, since that's a deal worth surfacing anyway.
+            if max_price is not None and not (
+                price_override_discount is not None and disc >= price_override_discount
+            ):
+                price = _deal_price(d)
+                if price is None or price > max_price:
+                    continue
         try:
             if d_day(d.get("departure_at")) < 0:  # already departed
                 continue
@@ -141,7 +162,12 @@ def select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
         candidates.sort(key=lambda d: (d.get("price", 1e18), -float(d.get("discount_pct", 0))))
     else:  # discount
         candidates.sort(key=lambda d: (-float(d.get("discount_pct", 0)), d.get("price", 1e18)))
-    return candidates[:max_cards]
+
+    # Guarantee the "always" cheap fares get first dibs on the limited card
+    # slots so a low discount % never bumps them out of the run.
+    always_deals = [d for d in candidates if _is_always(d, always_under_price)]
+    other_deals = [d for d in candidates if not _is_always(d, always_under_price)]
+    return (always_deals + other_deals)[:max_cards]
 
 
 def prune_state(state, now, window_hours):
@@ -412,6 +438,8 @@ def main():
     max_price = float(max_price) if max_price else None
     price_override_discount = env("TELEGRAM_PRICE_OVERRIDE_DISCOUNT")
     price_override_discount = float(price_override_discount) if price_override_discount else None
+    always_under_price = env("TELEGRAM_ALWAYS_UNDER_PRICE")
+    always_under_price = float(always_under_price) if always_under_price else None
     state_file = Path(env("TELEGRAM_STATE_FILE", str(ROOT / "data" / "telegram_sent.json")))
     dry_run = env("DRY_RUN", "false").lower() == "true"
 
@@ -419,7 +447,8 @@ def main():
     state = load_json(state_file, {"version": 1, "sent": {}})
 
     picked = select_deals(deals, state, now, min_discount, max_cards, window_hours, rank,
-                          max_price=max_price, price_override_discount=price_override_discount)
+                          max_price=max_price, price_override_discount=price_override_discount,
+                          always_under_price=always_under_price)
     fields_list = [card_fields(d, meta) for d in picked]
 
     if dump_html is not None:
