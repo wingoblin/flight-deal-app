@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-17T20:11:58+00:00",
+  "generated_at": "2026-10-17T22:30:05+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -34,6 +34,25 @@
       "gate": "Aviakassa",
       "cache_date": "2026-10-17",
       "link": "/search/PUS3012BKI10011?t=BX17986575001798671900000300PUSBKI17995446001799651400001720BKIHKGPUS_3f7a17de368a3b491a801fea979a1b4d_41345&search_date=17102026&itinerary_key=Xlrdqc689-QTC5dQYgwBow",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "WEH",
+      "trip": "roundtrip",
+      "price": 206000,
+      "cache_price": 191990,
+      "realtime_price": null,
+      "baseline": 262776,
+      "discount_pct": 21.6,
+      "sparse": true,
+      "departure_at": "2026-10-29T10:30:00+09:00",
+      "return_at": "2026-11-02T10:50:00+08:00",
+      "transfers": 0,
+      "airline": "7C",
+      "gate": "Farera",
+      "cache_date": "2026-10-16",
+      "link": "/search/ICN2910WEH02111?t=7C17932698001793271000000080ICNWEH17936166001793624400000070WEHICN_b0394043139f39ebcf1f3a79e001e6be_12067&search_date=16102026&itinerary_key=dnLml_0JP2M8ohfiiZq8Tw&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
@@ -703,6 +722,25 @@
     },
     {
       "from": "ICN",
+      "destination": "YYZ",
+      "trip": "oneway",
+      "price": 662000,
+      "cache_price": 618561,
+      "realtime_price": null,
+      "baseline": 656417,
+      "discount_pct": -0.9,
+      "sparse": false,
+      "departure_at": "2026-11-17T20:40:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "TW",
+      "gate": "Trip.com",
+      "cache_date": "2026-10-17",
+      "link": "/search/ICN1711YYZ1?t=TW17949480001794961500001065ICNYVRYYZ_aa7c2428f8d2da9c21ed2b4c054e5954_38294&search_date=17102026&itinerary_key=04jmYXrerzREKoJxsUSS7A&origin_airports=0&destination_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
       "destination": "GUM",
       "trip": "roundtrip",
       "price": 261000,
@@ -775,25 +813,6 @@
       "gate": "Wingie",
       "cache_date": "2026-10-16",
       "link": "/search/GMP1711WAW18121?t=CA17949255001795022400002095GMPPEKWAW17976222001797771900002015WAWPEKGMP_90cc26e034b615de264677b579779698_68286&search_date=16102026&itinerary_key=MTkpIpucl-ME5qCK2jqyYA&origin_airports=0&destination_airports=1",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "YYZ",
-      "trip": "oneway",
-      "price": 668000,
-      "cache_price": 623956,
-      "realtime_price": null,
-      "baseline": 656417,
-      "discount_pct": -1.8,
-      "sparse": false,
-      "departure_at": "2026-11-07T20:40:00+09:00",
-      "return_at": null,
-      "transfers": 1,
-      "airline": "TW",
-      "gate": "Trip.com",
-      "cache_date": "2026-10-17",
-      "link": "/search/ICN0711YYZ1?t=TW17940840001794124200001510ICNYVRYYZ_e5bed5194cc7d11c6fa6a5a7817009f4_38628&search_date=17102026&itinerary_key=P4-mCqV7dAh2PqKa2DMDhQ&origin_airports=0&destination_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -1288,25 +1307,6 @@
       "gate": "Flightnetwork",
       "cache_date": "2026-10-16",
       "link": "/search/GMP0511SIN08111?t=MU17938719001793984400001935GMPPUSNKGPVGSIN17941599001794258000001575SINNKGPUSGMP_2bf5069893a156f66762d3f1024ce39b_35696&search_date=16102026&itinerary_key=6N3EZMb7L0tWk2jhh_4MMA&origin_airports=0&destination_airports=1",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "ICN",
-      "destination": "CAN",
-      "trip": "roundtrip",
-      "price": 271000,
-      "cache_price": 253230,
-      "realtime_price": null,
-      "baseline": 253528,
-      "discount_pct": -6.9,
-      "sparse": false,
-      "departure_at": "2026-11-04T06:55:00+09:00",
-      "return_at": "2026-11-07T20:30:00+08:00",
-      "transfers": 1,
-      "airline": "SC",
-      "gate": "Farera",
-      "cache_date": "2026-10-17",
-      "link": "/search/ICN0411CAN07111?t=SC17937753001793820300000810ICNTAOCAN17940834001794136800000830CANTAOICN_adbd04885ae1a897803b759baf92b783_15677&search_date=17102026&itinerary_key=sBnwc0YCVolML8UPizaneg&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
