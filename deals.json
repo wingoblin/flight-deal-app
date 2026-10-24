@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-24T17:18:52+00:00",
+  "generated_at": "2026-10-24T19:47:51+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -34,6 +34,25 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-10-24",
       "link": "/search/CJU2411HKG1?t=LJ17955582001795566000000190CJUHKG_7ba2b82e9c6b59b5759c6cac27663ec9_6030&search_date=24102026&itinerary_key=GT51kfb199Qm912bBRb24Q",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "GMP",
+      "destination": "SAI",
+      "trip": "oneway",
+      "price": 363000,
+      "cache_price": 339053,
+      "realtime_price": null,
+      "baseline": 420566,
+      "discount_pct": 13.7,
+      "sparse": true,
+      "departure_at": "2027-02-24T20:05:00+09:00",
+      "return_at": null,
+      "transfers": 2,
+      "airline": "7C",
+      "gate": "Aviakassa",
+      "cache_date": "2026-10-24",
+      "link": "/search/GMP2402SAI1?t=VN18034995001803574500001370GMPPUSHANSAI_5a56ec044bc593f4aa48e588c3d0d261_20579&search_date=24102026&itinerary_key=BqlCSPpiPuFsKBu3kwldqg&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -284,25 +303,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "PUS",
-      "destination": "CXR",
-      "trip": "oneway",
-      "price": 107000,
-      "cache_price": 99891,
-      "realtime_price": null,
-      "baseline": 111736,
-      "discount_pct": 4.2,
-      "sparse": false,
-      "departure_at": "2026-10-29T21:25:00+09:00",
-      "return_at": null,
-      "transfers": 0,
-      "airline": "TW",
-      "gate": "Farera",
-      "cache_date": "2026-10-23",
-      "link": "/search/PUS2910CXR1?t=TW17933091001793320800000315PUSCXR_09b7d685a18d88c7a3851c95639301cf_6182&search_date=23102026&itinerary_key=sCCjtHvVUwO0rHI17KSL3g&destination_airports=0",
-      "cabin_class": "economy"
-    },
-    {
       "from": "ICN",
       "destination": "CNX",
       "trip": "oneway",
@@ -368,7 +368,7 @@
       "realtime_price": null,
       "baseline": 184087,
       "discount_pct": 2.2,
-      "sparse": false,
+      "sparse": true,
       "departure_at": "2026-12-05T08:15:00+09:00",
       "return_at": null,
       "transfers": 1,
@@ -645,6 +645,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "PUS",
+      "destination": "CXR",
+      "trip": "oneway",
+      "price": 114000,
+      "cache_price": 106515,
+      "realtime_price": null,
+      "baseline": 111736,
+      "discount_pct": -2.0,
+      "sparse": false,
+      "departure_at": "2026-10-29T07:35:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "VJ",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-10-24",
+      "link": "/search/PUS2910CXR1?t=VJ17932593001793270100000300PUSCXR_cd52ba7d00bc4fc5f7d6e9d8fa5efdf8_6465&search_date=24102026&itinerary_key=JnSSW8eeVWWQK29hlGChaQ&destination_airports=0",
+      "cabin_class": "economy"
+    },
+    {
       "from": "GMP",
       "destination": "DAD",
       "trip": "oneway",
@@ -908,25 +927,6 @@
       "gate": "Trip.com",
       "cache_date": "2026-10-24",
       "link": "/search/ICN2710TYO28101?t=TW17931249001793133300000140ICNNRT17931777001793188200000175NRTICN_eb775c1d2ad2180e64444696c7c8fe40_13549&search_date=24102026&itinerary_key=GjH-ObeLUp5kIjPt_1yCcA&origin_airports=0&destination_airports=1",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "GMP",
-      "destination": "PVG",
-      "trip": "oneway",
-      "price": 120000,
-      "cache_price": 111919,
-      "realtime_price": null,
-      "baseline": 112890,
-      "discount_pct": -6.3,
-      "sparse": false,
-      "departure_at": "2026-11-24T20:25:00+09:00",
-      "return_at": null,
-      "transfers": 1,
-      "airline": "7C",
-      "gate": "Trip.com",
-      "cache_date": "2026-10-24",
-      "link": "/search/GMP2411PVG1?t=9C17955519001795595400000785GMPCJUPVG_b06de77f0ebe6e566b4d09bfe3dcbfca_6793&search_date=24102026&itinerary_key=1V-kMWZNfavJPfed87_GsA&origin_airports=0&destination_airports=0",
       "cabin_class": "economy"
     },
     {
