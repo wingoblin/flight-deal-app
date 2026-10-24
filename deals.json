@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-24T19:47:51+00:00",
+  "generated_at": "2026-10-24T22:15:29+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -45,7 +45,7 @@
       "realtime_price": null,
       "baseline": 420566,
       "discount_pct": 13.7,
-      "sparse": true,
+      "sparse": false,
       "departure_at": "2027-02-24T20:05:00+09:00",
       "return_at": null,
       "transfers": 2,
@@ -798,25 +798,6 @@
     },
     {
       "from": "GMP",
-      "destination": "CAN",
-      "trip": "oneway",
-      "price": 183000,
-      "cache_price": 170962,
-      "realtime_price": null,
-      "baseline": 175116,
-      "discount_pct": -4.5,
-      "sparse": false,
-      "departure_at": "2026-12-21T06:45:00+09:00",
-      "return_at": null,
-      "transfers": 1,
-      "airline": "ZE",
-      "gate": "Kiwi.com",
-      "cache_date": "2026-10-23",
-      "link": "/search/GMP2112CAN1?t=9C17978355001797861600000495GMPCJUCAN_c58f059b42cb48df951147f46d7b2818_10419&search_date=23102026&itinerary_key=MEgCTEEWLfpAkkZV1tPRyQ&origin_airports=0",
-      "cabin_class": "economy"
-    },
-    {
-      "from": "GMP",
       "destination": "FRA",
       "trip": "roundtrip",
       "price": 958000,
@@ -889,6 +870,25 @@
       "gate": "Trip.com",
       "cache_date": "2026-10-24",
       "link": "/search/GMP2610BKK29101?t=CA17930247001793124300001780GMPPEKBKK17933022001793365500000935BKKPEKGMP_899f95c7a25bada0013b92f061783b88_27554&search_date=24102026&itinerary_key=-KSQwLid_nglbozGgNH0qA&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "GMP",
+      "destination": "CAN",
+      "trip": "oneway",
+      "price": 185000,
+      "cache_price": 172083,
+      "realtime_price": null,
+      "baseline": 175116,
+      "discount_pct": -5.6,
+      "sparse": false,
+      "departure_at": "2026-11-03T06:20:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "TW",
+      "gate": "Trip.com",
+      "cache_date": "2026-10-23",
+      "link": "/search/GMP0311CAN1?t=9C17936868001793717700000575GMPCJUCAN_a2b89a9467231e33168b2daf6d9cd21e_10467&search_date=23102026&itinerary_key=Y6Nx5qA5NzMtDJKfLN-WIQ&origin_airports=0",
       "cabin_class": "economy"
     },
     {
