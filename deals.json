@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-31T20:20:56+00:00",
+  "generated_at": "2026-10-31T23:39:33+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -167,6 +167,25 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-10-30",
       "link": "/search/TAE0311OSA1?t=TW17937249001793729700000080TAEKIX_62f8fe5235a9ad198dfa9c1f6b3d78d3_5526&search_date=30102026&itinerary_key=kxvZSaTh-sC7vaxwdn9qHw",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "SEA",
+      "trip": "oneway",
+      "price": 671000,
+      "cache_price": 626701,
+      "realtime_price": null,
+      "baseline": 729133,
+      "discount_pct": 8.0,
+      "sparse": true,
+      "departure_at": "2026-12-09T18:00:00+09:00",
+      "return_at": null,
+      "transfers": 1,
+      "airline": "UA",
+      "gate": "Kupi.com",
+      "cache_date": "2026-10-31",
+      "link": "/search/ICN0912SEA1?t=UA17968392001796836200000970ICNSFOSJCSEA_27103c49f4c674dc6f0418fc5240a533_37741&search_date=31102026&itinerary_key=gP47yKBRLvBTGWhcIlI2-Q&origin_airports=0",
       "cabin_class": "economy"
     },
     {
@@ -873,25 +892,6 @@
       "cabin_class": "economy"
     },
     {
-      "from": "ICN",
-      "destination": "GUM",
-      "trip": "roundtrip",
-      "price": 251000,
-      "cache_price": 233952,
-      "realtime_price": null,
-      "baseline": 243717,
-      "discount_pct": -3.0,
-      "sparse": false,
-      "departure_at": "2026-11-06T21:50:00+09:00",
-      "return_at": "2026-11-13T04:15:00+10:00",
-      "transfers": 0,
-      "airline": "LJ",
-      "gate": "Farera",
-      "cache_date": "2026-10-31",
-      "link": "/search/ICN0611GUM13111?t=LJ17940018001794020700000255ICNGUM17945433001794557100000290GUMICN_cfc011f6542cc3f17e7f1821a30fac45_14089&search_date=31102026&itinerary_key=d44LFOeiMC2v_-Mo9ZIRWg&origin_airports=0&destination_airports=1",
-      "cabin_class": "economy"
-    },
-    {
       "from": "PUS",
       "destination": "MNL",
       "trip": "roundtrip",
@@ -965,6 +965,25 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-10-30",
       "link": "/search/PUS2312MEL1?t=VJ17980602001798155300001465PUSCXRSGNMEL_d203afb564e448be3c9f93845d955b62_27933&search_date=30102026&itinerary_key=mYjH0bqVA5NL9ZgYOuAeZg",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "GUM",
+      "trip": "roundtrip",
+      "price": 252000,
+      "cache_price": 234616,
+      "realtime_price": null,
+      "baseline": 243717,
+      "discount_pct": -3.4,
+      "sparse": false,
+      "departure_at": "2026-11-06T21:50:00+09:00",
+      "return_at": "2026-11-13T04:15:00+10:00",
+      "transfers": 0,
+      "airline": "LJ",
+      "gate": "Trip.com",
+      "cache_date": "2026-10-31",
+      "link": "/search/ICN0611GUM13111?t=LJ17940018001794020700000255ICNGUM17945433001794557100000290GUMICN_cfc011f6542cc3f17e7f1821a30fac45_14129&search_date=31102026&itinerary_key=d44LFOeiMC2v_-Mo9ZIRWg&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
@@ -1098,6 +1117,25 @@
       "gate": "Kiwi.com",
       "cache_date": "2026-10-31",
       "link": "/search/ICN1011OKA1?t=TW17943114001794320700000155ICNOKA_17bf01df13e3e5299f7002b846931caa_6333&search_date=31102026&itinerary_key=dsbdkRLKk7mM5xMmKbWJUw&origin_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "KUL",
+      "trip": "roundtrip",
+      "price": 357000,
+      "cache_price": 333368,
+      "realtime_price": null,
+      "baseline": 340107,
+      "discount_pct": -5.0,
+      "sparse": false,
+      "departure_at": "2026-12-01T15:40:00+09:00",
+      "return_at": "2026-12-09T04:05:00+08:00",
+      "transfers": 2,
+      "airline": "MU",
+      "gate": "Farera",
+      "cache_date": "2026-10-31",
+      "link": "/search/ICN0112KUL09121?t=MU17961396001796170800000580ICNPKXKUL17967891001796845800000885KULKMGNKGICN_bd35c0043046105fbbc8613b97847b65_20076&search_date=31102026&itinerary_key=aQj23P0kF1gs-U_IYqlx6Q&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
@@ -1310,6 +1348,25 @@
       "cabin_class": "economy"
     },
     {
+      "from": "ICN",
+      "destination": "MNL",
+      "trip": "roundtrip",
+      "price": 337000,
+      "cache_price": 314704,
+      "realtime_price": null,
+      "baseline": 317466,
+      "discount_pct": -6.2,
+      "sparse": false,
+      "departure_at": "2027-01-13T02:15:00+09:00",
+      "return_at": "2027-01-21T19:40:00+08:00",
+      "transfers": 0,
+      "airline": "5J",
+      "gate": "Farera",
+      "cache_date": "2026-10-31",
+      "link": "/search/ICN1301MNL21011?t=5J17998065001799819100000270ICNMNL18005604001800578700000245MNLICN_f470ad5440ce4a015534d2dea14dd569_18952&search_date=31102026&itinerary_key=rHFbeERxse706gh1bof-1A&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
       "from": "GMP",
       "destination": "TAO",
       "trip": "roundtrip",
@@ -1364,6 +1421,25 @@
       "gate": "Farera",
       "cache_date": "2026-10-30",
       "link": "/search/GMP1301IST27011?t=CA17998503001799914800001435GMPPEKIST18010617001801141500000970ISTPEKGMP_260698d822219ba2ac962ebc2bebffed_44352&search_date=30102026&itinerary_key=AhQ8P-qNqi70xJz7o1CWsQ&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "PEK",
+      "trip": "oneway",
+      "price": 181000,
+      "cache_price": 169092,
+      "realtime_price": null,
+      "baseline": 169860,
+      "discount_pct": -6.6,
+      "sparse": false,
+      "departure_at": "2026-12-17T13:10:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "CA",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-10-31",
+      "link": "/search/ICN1712PEK1?t=CA17975130001797517200000130ICNPEK_2b5468d53d08457e777b99a13c6a8aeb_10183&search_date=31102026&itinerary_key=dPRq4BXDM2kS9tc5-WxPLw&origin_airports=0&destination_airports=0",
       "cabin_class": "economy"
     },
     {
