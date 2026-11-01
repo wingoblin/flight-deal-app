@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-01T17:11:45+00:00",
+  "generated_at": "2026-11-01T21:27:57+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -319,6 +319,25 @@
       "gate": "Kupi.com",
       "cache_date": "2026-10-31",
       "link": "/search/ICN1211YNJ13111?t=7C17944989001794504300000150ICNYNJ17945946001794607500000155YNJICN_3dca4132fda6ab32a2839075f55b8ce8_13341&search_date=31102026&itinerary_key=KXBSATujMgXVHnAuWN8wNw&origin_airports=0&destination_airports=1",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "HKG",
+      "trip": "roundtrip",
+      "price": 261000,
+      "cache_price": 243102,
+      "realtime_price": null,
+      "baseline": 264840,
+      "discount_pct": 1.4,
+      "sparse": false,
+      "departure_at": "2026-12-10T02:25:00+09:00",
+      "return_at": "2026-12-14T21:05:00+08:00",
+      "transfers": 0,
+      "airline": "UO",
+      "gate": "Farera",
+      "cache_date": "2026-11-01",
+      "link": "/search/ICN1012HKG14121?t=UO17968695001796880600000245ICNHKG17972823001797298200000205HKGICN_e4eee14bcb153cee8db4091e033ef155_14640&search_date=01112026&itinerary_key=4hzgf8cctq5lO63qpms-Cg&origin_airports=0&destination_airports=1",
       "cabin_class": "economy"
     },
     {
