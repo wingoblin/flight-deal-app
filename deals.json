@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-08T20:45:20+00:00",
+  "generated_at": "2026-11-09T00:23:47+00:00",
   "origin": "ICN",
   "origins": [
     "ICN",
@@ -870,6 +870,25 @@
       "gate": "Trip.com",
       "cache_date": "2026-11-08",
       "link": "/search/ICN2103MNL1?t=5J18055953001805607900000270ICNMNL_db473ba98b558119ab17fecaee62291a_7604&search_date=08112026&itinerary_key=3lNiF7_fCgk91f1sMA4mLw&origin_airports=0",
+      "cabin_class": "economy"
+    },
+    {
+      "from": "ICN",
+      "destination": "SIN",
+      "trip": "oneway",
+      "price": 157000,
+      "cache_price": 145809,
+      "realtime_price": null,
+      "baseline": 148028,
+      "discount_pct": -6.1,
+      "sparse": false,
+      "departure_at": "2027-03-01T11:25:00+09:00",
+      "return_at": null,
+      "transfers": 0,
+      "airline": "TR",
+      "gate": "Kiwi.com",
+      "cache_date": "2026-11-08",
+      "link": "/search/ICN0103SIN1?t=TR18039003001803921000000405ICNSIN_a77133ba35c3ecde990011f888b9ea7c_8759&search_date=08112026&itinerary_key=YlAJNnHSbWJG7fWvaW8rYA&origin_airports=0",
       "cabin_class": "economy"
     },
     {
